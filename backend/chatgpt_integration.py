@@ -14,7 +14,7 @@ import threading
 from collections import deque
 from functools import wraps
 
-import google.generativeai as genai
+import google as genai
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
