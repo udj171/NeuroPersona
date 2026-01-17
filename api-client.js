@@ -1,7 +1,5 @@
 /**
- * EFOPA Platform - API Client Module
- * Version: 2.0
- * Author: EFOPA Development Team
+ * NeuroPersona Platform - API Client Module
  * Description: Comprehensive HTTP client for all backend API communications, request/response handling,
  * error management, retry logic, session management, and real-time progress tracking
  * Production-ready with rate limiting, offline support, CSRF protection, and request queuing
@@ -11,7 +9,7 @@
 'use strict';
 
 /**
- * APIClient - Unified HTTP client for all EFOPA backend API calls
+ * APIClient - Unified HTTP client for all NeuroPersona backend API calls
  * Manages authentication, error handling, retries, offline queueing, and real-time progress
  */
 class APIClient {
