@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="EFOPA Personality Assessment Questionnaire">
+    <meta name="theme-color" content="#208093">
+    <title>Assessment Questionnaire - NeuroPersona</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="questionnaire-page">
+    <!-- Header -->
+    <header class="assessment-header" role="banner">
+        <div class="header-container">
+            <a href="index.html" class="back-link" aria-label="Back to home">← Back to Home</a>
+            <h1 class="assessment-title">NeuroPersona</h1>
+            <div class="header-info">
+                <span class="estimated-time">⏱ Estimated time: 8-15 minutes</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Progress Container -->
+    <div class="assessment-container">
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <span class="progress-label">Question <span id="currentQuestion">1</span> of <span id="totalQuestions">35</span></span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="35">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+                <span class="progress-percentage" id="progressPercentage">3%</span>
+            </div>
+        </div>
+
+        <!-- Main Assessment Content -->
+        <main class="questionnaire-main" role="main">
+            <!-- Instruction Panel -->
+            <div id="instructionPanel" class="instruction-panel">
+                <h2>Instructions</h2>
+                <div class="instruction-content">
+                    <p>
+                        This assessment consists of 35 questions designed to measure your personality traits, 
+                        motivations, and behavioral preferences. There are no right or wrong answers.
+                    </p>
+                    <p>
+                        <strong>Please respond honestly</strong> based on how you truly are, not how you think 
+                        you should be or how you want others to perceive you.
+                    </p>
+                    <h3>Scoring Scale</h3>
+                    <div class="scale-explanation">
+                        <div class="scale-item">
+                            <span class="scale-number">0</span>
+                            <span class="scale-text">Strongly Disagree</span>
+                        </div>
+                        <div class="scale-item">
+                            <span class="scale-number">5</span>
+                            <span class="scale-text">Neutral/Uncertain</span>
+                        </div>
+                        <div class="scale-item">
+                            <span class="scale-number">10</span>
+                            <span class="scale-text">Strongly Agree</span>
+                        </div>
+                    </div>
+                    <p class="instruction-note">
+                        <strong>Note:</strong> Your responses will be analyzed using advanced algorithms 
+                        that detect and correct for response bias and deception patterns. Our AI ensures you get 
+                        the most accurate assessment possible.
+                    </p>
+                </div>
+                <button class="btn btn-primary btn-block" id="beginBtn">Begin Assessment</button>
+            </div>
+
+            <!-- Question Panel -->
+            <div id="questionPanel" class="question-panel" hidden>
+                <div class="question-domain" id="questionDomain"></div>
+                <h2 id="questionText" class="question-text"></h2>
+                
+                <!-- Interactive Slider -->
+                <div class="response-section">
+                    <div class="slider-container">
+                        <div class="slider-track">
+                            <input 
+                                type="range" 
+                                id="responseSlider" 
+                                class="slider-input" 
+                                min="0" 
+                                max="10" 
+                                value="5"
+                                aria-label="Response scale"
+                            >
+                        </div>
+                        <div class="slider-labels">
+                            <span class="slider-label-left">Disagree</span>
+                            <span class="slider-label-middle">Neutral</span>
+                            <span class="slider-label-right">Agree</span>
+                        </div>
+                    </div>
+
+                    <!-- Response Display -->
+                    <div class="response-display">
+                        <div class="response-value-container">
+                            <span class="response-value" id="responseValue">5</span>
+                            <span class="response-label" id="responseLabel">Neutral</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Select Buttons -->
+                    <div class="quick-select">
+                        <button class="quick-btn" data-value="0" aria-label="Strongly disagree">Strongly<br>Disagree</button>
+                        <button class="quick-btn" data-value="3" aria-label="Disagree">Disagree</button>
+                        <button class="quick-btn" data-value="5" aria-label="Neutral">Neutral</button>
+                        <button class="quick-btn" data-value="7" aria-label="Agree">Agree</button>
+                        <button class="quick-btn" data-value="10" aria-label="Strongly agree">Strongly<br>Agree</button>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="navigation-section">
+                    <button class="btn btn-secondary" id="prevBtn" aria-label="Previous question">
+                        ← Previous
+                    </button>
+                    <button class="btn btn-primary" id="nextBtn" aria-label="Next question">
+                        Next →
+                    </button>
+                </div>
+
+                <!-- Question Navigation Dots -->
+                <div class="question-navigator" id="questionNavigator">
+                    <!-- Dots will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div id="summaryPanel" class="summary-panel" hidden>
+                <div class="summary-content">
+                    <h2>Assessment Complete!</h2>
+                    <p>Thank you for completing the EFOPA personality assessment.</p>
+                    
+                    <div class="summary-info">
+                        <h3>What happens next?</h3>
+                        <ol>
+                            <li>
+                                <strong>Scoring:</strong> Your responses are processed through our advanced 
+                                7-step algorithm to calculate personality scores across 7 domains.
+                            </li>
+                            <li>
+                                <strong>Deception Detection:</strong> We analyze response patterns to detect and 
+                                correct for social desirability bias and deliberate deception.
+                            </li>
+                            <li>
+                                <strong>ML Classification:</strong> A variational autoencoder classifies your 
+                                personality type and detects anomalies.
+                            </li>
+                            <li>
+                                <strong>AI Narrative:</strong> Advanced language models generate your personalized 
+                                personality narrative.
+                            </li>
+                            <li>
+                                <strong>Results:</strong> Your comprehensive report will be ready in 30-60 seconds.
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="processing-indicator">
+                        <div class="processing-spinner">
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-text">Processing your assessment...</div>
+                        </div>
+                        <div class="processing-steps">
+                            <div class="step-item" id="scoringStep">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-text">Calculating scores</span>
+                            </div>
+                            <div class="step-item" id="biasStep">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-text">Analyzing bias patterns</span>
+                            </div>
+                            <div class="step-item" id="classificationStep">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-text">Classifying personality type</span>
+                            </div>
+                            <div class="step-item" id="narrativeStep">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-text">Generating narrative</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="questionnaire-sidebar" role="complementary">
+            <div class="sidebar-card">
+                <h3>Assessment Progress</h3>
+                <div class="progress-circle">
+                    <svg viewBox="0 0 100 100" class="circle-svg">
+                        <circle cx="50" cy="50" r="45" class="circle-background"/>
+                        <circle cx="50" cy="50" r="45" class="circle-progress" id="sidebarProgress"/>
+                    </svg>
+                    <div class="circle-text">
+                        <span class="circle-percentage" id="sidebarPercentage">3%</span>
+                        <span class="circle-label">Complete</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>Domain Distribution</h3>
+                <div class="domain-list" id="domainList">
+                    <div class="domain-item">
+                        <span class="domain-name">Relationships</span>
+                        <span class="domain-count">5 Q</span>
+                    </div>
+                    <div class="domain-item">
+                        <span class="domain-name">Stability</span>
+                        <span class="domain-count">5 Q</span>
+                    </div>
+                    <div class="domain-item">
+                        <span class="domain-name">Conscientiousness</span>
+                        <span class="domain-count">5 Q</span>
+                    </div>
+                    <div class="domain-item">
+                        <span class="domain-name">Ambition</span>
+                        <span class="domain-count">5 Q</span>
+                    </div>
+                    <div class="domain-item">
+                        <span class="domain-name">Openness</span>
+                        <span class="domain-count">5 Q</span>
+                    </div>
+                    <div class="domain-item">
+                        <span class="domain-name">Extraversion</span>
+                        <span class="domain-count">5 Q</span>
+                    </div>
+                    <div class="domain-item">
+                        <span class="domain-name">Values</span>
+                        <span class="domain-count">5 Q</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>Tips for Accuracy</h3>
+                <ul class="tips-list">
+                    <li>Answer honestly, not idealistically</li>
+                    <li>No right or wrong answers</li>
+                    <li>Think about your true behavior</li>
+                    <li>Take your time</li>
+                    <li>Avoid over-thinking</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-card info-card">
+                <h3>⏱ Time Estimate</h3>
+                <p>Total: 8-15 minutes</p>
+                <p id="timeElapsed">Elapsed: 0:00</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal for Unsaved Changes -->
+    <div id="unsavedModal" class="modal" role="dialog" aria-labelledby="unsavedTitle" aria-hidden="true">
+        <div class="modal-content small">
+            <h2 id="unsavedTitle">Unsaved Changes</h2>
+            <p>You have unsaved progress. Are you sure you want to leave?</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="confirmLeave">Leave</button>
+                <button class="btn btn-primary" id="cancelLeave">Continue Assessment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment Data Store (Hidden) -->
+    <script type="application/json" id="questionData">
+{
+  "questions": [
+    {
+      "id": 1,
+      "domain": "R",
+      "domainName": "Relationships",
+      "text": " When faced with a major life opportunity that would take time away from my partner, I feel torn
+      between both goals because I genuinely value both my career success and my relationship equally.",
+      "reverse": false
+    },
+    {
+      "id": 2,
+      "domain": "S",
+      "domainName": "Stability",
+      "text": "When I try something challenging for the first time, I can usually judge how well I’ll do fairly
+      accurately—I don’t tend to overestimate or underestimate my abilities.",
+      "reverse": false
+    },
+    {
+      "id": 3,
+      "domain": "C",
+      "domainName": "Conscientiousness",
+      "text": "When I commit to finishing something by a certain date and it turns out to be harder than expected,
+      I work harder to meet the original deadline instead of asking for more time.",
+      "reverse": false
+    },
+    {
+      "id": 4,
+      "domain": "A",
+      "domainName": "Ambition",
+      "text": "Whether I’m helping someone publicly (where others see my good deed) or privately (where nobody
+      knows), I’m equally motivated to actually help them",
+      "reverse": false
+    },
+    {
+      "id": 5,
+      "domain": "O",
+      "domainName": "Openness",
+      "text": "When I’m truly unsure about something in my area of work or expertise, I can say so directly without
+      worrying that it makes me look less knowledgeable.",
+      "reverse": false
+    },
+    {
+      "id": 6,
+      "domain": "E",
+      "domainName": "Extraversion",
+      "text": "It’s natural for me to act calm and in control on the outside, even when I’m really feeling anxious or
+      worried on the inside.",
+      "reverse": false
+    },
+    {
+      "id": 7,
+      "domain": "V",
+      "domainName": "Values",
+      "text": "I find it easy to admit when I make a mistake or when I’m wrong about something.",
+      "reverse": false
+    },
+    {
+      "id": 8,
+      "domain": "R",
+      "domainName": "Relationships",
+      "text": "Early in dating, I think it’s better to be honest about how committed I want to be, rather than
+      creating mystery or seeming less interested to maintain attraction.",
+      "reverse": true
+    },
+    {
+      "id": 9,
+      "domain": "S",
+      "domainName": "Stability",
+      "text": " I notice I talk more about my accomplishments and strengths when I’m speaking with people who
+      seem more successful or important than me.",
+      "reverse": true
+    },
+    {
+      "id": 10,
+      "domain": "C",
+      "domainName": "Conscientiousness",
+      "text": "When I look back at my work, people who know me well probably see me as organized and reliable,
+      or maybe even more reliable than I actually am.",
+      "reverse": true
+    },
+    {
+      "id": 11,
+      "domain": "A",
+      "domainName": "Ambition",
+      "text": "I can tell the difference between feeling real sympathy for someone and being aware of how I might
+      appear to others, and these feelings usually go together for me.",
+      "reverse": true
+    },
+    {
+      "id": 12,
+      "domain": "O",
+      "domainName": "Openness",
+      "text": "When someone disagrees with me about something I know well, my first instinct is to argue for my
+      position, and I have to deliberately remind myself to fairly consider their evidence.",
+      "reverse": true
+    },
+    {
+      "id": 13,
+      "domain": "E",
+      "domainName": "Extraversion",
+      "text": "When I handle stress well, it’s because I genuinely have good self-control, not because I’m fooling
+      myself about how stressed I actually am.",
+      "reverse": true
+    },
+    {
+      "id": 14,
+      "domain": "V",
+      "domainName": "Values",
+      "text": "I would say I’m truly humble, not just appearing humble to get social approval.",
+      "reverse": true
+    },
+    {
+      "id": 15,
+      "domain": "R",
+      "domainName": "Relationships",
+      "text": "When looking for a long-term partner, I notice I become more selective about what I want if I know
+      other attractive people are available.",
+      "reverse": false
+    },
+    {
+      "id": 16,
+      "domain": "S",
+      "domainName": "Stability",
+      "text": "If I’m in a disagreement with someone at my level, I’d only make aggressive threats if I genuinely
+      believed I could back them up with my strength or social influence.",
+      "reverse": false
+    },
+    {
+      "id": 17,
+      "domain": "C",
+      "domainName": "Conscientiousness",
+      "text": " I keep working hard at my tasks even when nobody is watching or evaluating me, which shows that
+      my motivation comes from within rather than from being observed.",
+      "reverse": false
+    },
+    {
+      "id": 18,
+      "domain": "A",
+      "domainName": "Ambition",
+      "text": " When I’ve gone against my public values in private moments, I felt genuine guilt about it on my own,
+      without needing anyone else to find out.",
+      "reverse": false
+    },
+    {
+      "id": 19,
+      "domain": "O",
+      "domainName": "Openness",
+      "text": "Looking back at creative work I’ve gotten credit for, I’ve been honest about where the original ideas
+      came from and haven’t overstated my contribution.",
+      "reverse": false
+    },
+    {
+      "id": 20,
+      "domain": "E",
+      "domainName": "Extraversion",
+      "text": "When I’m tempted by something, I can usually predict whether I’ll resist or give in, and I’m not often
+      wrong about my self-control ability.",
+      "reverse": false
+    },
+    {
+      "id": 21,
+      "domain": "V",
+      "domainName": "Values",
+      "text": "My behavior and values are pretty much the same whether I’m with close friends, at work, with
+      family, or meeting new people.",
+      "reverse": false
+    },
+    {
+      "id": 22,
+      "domain": "R",
+      "domainName": "Relationships",
+      "text": " Even in a committed relationship, I find it hard to avoid noticing attractive people around me, even
+      though I’m deeply committed.",
+      "reverse": true
+    },
+    {
+      "id": 23,
+      "domain": "S",
+      "domainName": "Stability",
+      "text": "If I could become more successful without anyone knowing about it, I’d feel just as good as if everyone
+      praised me for the improvement.",
+      "reverse": true
+    },
+    {
+      "id": 24,
+      "domain": "C",
+      "domainName": "Conscientiousness",
+      "text": "I’m about equally productive whether my work will be recognized and visible or whether I’ll get no
+      credit and it will be anonymous.",
+      "reverse": true
+    },
+    {
+      "id": 25,
+      "domain": "A",
+      "domainName": "Ambition",
+      "text": " In group projects where it’s hard to track individual effort, I keep the same level of effort whether
+      my teammates are working hard or slacking off.",
+      "reverse": true
+    },
+    {
+      "id": 26,
+      "domain": "O",
+      "domainName": "Openness",
+      "text": " When I solve a complicated problem, I usually test my answer thoroughly by trying different ap-
+      proaches, instead of being confident my first solution is right.",
+      "reverse": true
+    },
+    {
+      "id": 27,
+      "domain": "E",
+      "domainName": "Extraversion",
+      "text": "The people closest to me really understand how much I struggle emotionally because I’m comfortable
+      talking to them about my weaknesses and fears.",
+      "reverse": true
+    },
+    {
+      "id": 28,
+      "domain": "V",
+      "domainName": "Values",
+      "text": "I sometimes have trouble understanding my own reasons for doing things, even when I think about
+      it carefully.",
+      "reverse": true
+    },
+    {
+      "id": 29,
+      "domain": "R",
+      "domainName": "Relationships",
+      "text": "In my relationships, my interest in sex and my emotional connection to my partner tend to move
+      together—either both grow stronger or both weaken.",
+      "reverse": false
+    },
+    {
+      "id": 30,
+      "domain": "S",
+      "domainName": "Stability",
+      "text": "When discussing money and finances, which facts I emphasize (salary, savings, investments, home
+      value) depends on which numbers look best compared to the people I’m talking to.",
+      "reverse": false
+    },
+    {
+      "id": 31,
+      "domain": "C",
+      "domainName": "Conscientiousness",
+      "text": "If I became a parent, the amount of time and energy I’d actually spend with my children would match
+      what I’d say to others about how important parenting is to me.",
+      "reverse": false
+    },
+    {
+      "id": 32,
+      "domain": "A",
+      "domainName": "Ambition",
+      "text": " If I promised to help a group or be part of a team, I’d stay committed even if a much better personal
+      opportunity came along that would benefit me more.",
+      "reverse": false
+    },
+    {
+      "id": 33,
+      "domain": "O",
+      "domainName": "Openness",
+      "text": "If someone only saw my best creative work without knowing about all my failed attempts and average
+      projects, they’d get an exaggerated sense of how good and consistent my work really is.",
+      "reverse": false
+    },
+    {
+      "id": 34,
+      "domain": "E",
+      "domainName": "Extraversion",
+      "text": "When I think about how quickly I’ll bounce back after something difficult happens, my predictions
+      are usually accurate—I don’t typically overestimate how fast I’ll recover.",
+      "reverse": false
+    },
+    {
+      "id": 35,
+      "domain": "V",
+      "domainName": "Values",
+      "text": " I can remember specific times when I acted selfishly, even though I tell people that being generous is
+      important to me.",
+      "reverse": false
+    }
+  ]
+}
+    </script>
+
+    <!-- JavaScript -->
+    <script src="questionnaire.js" defer></script>
+</body>
+</html>
