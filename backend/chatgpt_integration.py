@@ -43,7 +43,7 @@ class LLMIntegrationConfig:
     """Configuration for LLM integration."""
     
     # API Configuration
-    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyDlAoB7soQNbNviMEUfz3Rq2WFBSPZ-XHY')
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
     
     # Primary provider
