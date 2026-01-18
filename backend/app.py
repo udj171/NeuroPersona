@@ -11,6 +11,259 @@ from io import BytesIO
 import os
 import logging
 
+
+# CHANGE: Update CORS configuration
+
+# Get frontend URL from environment
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [FRONTEND_URL, "http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-CSRF-Token"],
+        "expose_headers": ["X-Response-Time", "X-Request-ID"],
+        "supports_credentials": True,
+        "max_age": 3600
+    }
+})
+
+
+
+
+
+
+# CHANGE: Add these endpoints for Railway monitoring
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check for monitoring"""
+    try:
+        # Test DB connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        
+        return api_response(data={
+            'status': 'healthy',
+            'database': 'connected',
+            'environment': FLASK_ENV
+        })
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return api_response(success=False, error='Database unavailable', status_code=503)
+
+@app.route('/ready', methods=['GET'])
+def readiness_check():
+    """Readiness check (can accept requests)"""
+    try:
+        # Check all dependencies
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM assessments")
+        cursor.close()
+        
+        # Check ML model loaded
+        from ml_pipeline import get_model_status
+        model_status = get_model_status()
+        
+        if model_status['loaded']:
+            return api_response(data={'ready': True})
+        else:
+            return api_response(success=False, error='ML model not loaded', status_code=503)
+    except Exception as e:
+        return api_response(success=False, error='Not ready', status_code=503)
+
+
+
+# CHANGE: Add to Flask configuration
+app.config['PROPAGATE_EXCEPTIONS'] = True
+app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = True
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = DEBUG
+
+# Add timeout middleware
+@app.before_request
+def before_request():
+    g.request_id = generate_session_id()
+    g.start_time = time.time()
+    log_request_info()
+
+@app.after_request
+def after_request(response):
+    """Add timing headers + security headers"""
+    duration = time.time() - g.start_time
+    response.headers['X-Response-Time'] = f"{duration:.2f}s"
+    
+    # Security headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000'
+    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    
+    return response
+
+
+
+# CHANGE: Create response wrapper function
+def api_response(success=True, data=None, error=None, status_code=200):
+    """Standardize all API responses"""
+    response = {
+        'success': success,
+        'request_id': g.get('request_id', 'unknown'),
+        'timestamp': get_current_timestamp()
+    }
+    
+    if data:
+        response['data'] = data
+    if error:
+        response['error'] = error
+    
+    return jsonify(response), status_code
+
+# Use in all endpoints:
+return api_response(success=True, data={'session_id': '...'})
+return api_response(success=False, error='Invalid input', status_code=400)
+
+
+# CHANGE 1: Add to imports
+from celery import Celery
+from celery.result import AsyncResult
+import redis
+
+# CHANGE 2: Initialize background job queue (use Redis for free tier)
+redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+celery_app = Celery('efopa', broker=redis_url)
+
+# CHANGE 3: Define async task
+@celery_app.task(bind=True)
+def process_assessment_task(self, session_id):
+    """Background task to run entire pipeline"""
+    try:
+        # Run all scoring + ML + narrative generation
+        from scoring import ScoringPipeline
+        from ml_pipeline import VAEInference
+        from chatgpt_integration import NarrativeGenerator
+        
+        # Step 1: Calculate scores
+        pipeline = ScoringPipeline()
+        scores = pipeline.calculate_all(session_id)
+        
+        # Step 2: Run VAE
+        vae = VAEInference()
+        classification = vae.infer(scores['vae_input'])
+        
+        # Step 3: Generate narrative
+        generator = NarrativeGenerator()
+        narrative = generator.generate(scores, classification)
+        
+        # Step 4: Save to database
+        from database import save_complete_results
+        save_complete_results(session_id, scores, classification, narrative)
+        
+        return {'status': 'completed', 'session_id': session_id}
+    except Exception as e:
+        logger.error(f"Assessment processing failed: {e}")
+        self.retry(countdown=60, max_retries=3)
+
+# CHANGE 4: Endpoint to trigger async processing
+@app.route('/api/process-assessment', methods=['POST'])
+def process_assessment():
+    """Trigger background processing (returns job_id immediately)"""
+    data = request.get_json()
+    session_id = data.get('session_id')
+    
+    if not session_id:
+        return jsonify({'success': False, 'error': 'Missing session_id'}), 400
+    
+    # Start background task
+    task = process_assessment_task.delay(session_id)
+    
+    return jsonify({
+        'success': True,
+        'data': {
+            'job_id': task.id,
+            'status': 'processing',
+            'message': 'Assessment queued for processing'
+        }
+    }), 202  # 202 Accepted (async)
+
+
+
+@app.route('/api/demographics', methods=['POST'])
+@limiter.limit("10 per minute")
+def submit_demographics():
+    """
+    CHANGE REQUIRED:
+    - Currently exists but needs these modifications:
+    """
+    try:
+        data = request.get_json()
+        
+        # CHANGE 1: Add comprehensive validation
+        if not data:
+            return jsonify({'success': False, 'error': 'No JSON data provided'}), 400
+        
+        # CHANGE 2: Use marshmallow schema validation (already in code but verify)
+        schema = DemographicsSchema()
+        try:
+            validated_data = schema.load(data)
+        except ValidationError as e:
+            return jsonify({
+                'success': False,
+                'error': 'Validation error',
+                'details': e.messages
+            }), 400
+        
+        # CHANGE 3: Ensure proper session_id generation and storage
+        session_id = generate_session_id()
+        csrf_token = generate_session_id()[:32]
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # CHANGE 4: Add demographics to database
+            cursor.execute(
+                """
+                INSERT INTO assessments (session_id, age, sex, country, status, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING session_id
+                """,
+                (session_id, validated_data['age'], validated_data['sex'],
+                 validated_data['country'], 'started', get_current_timestamp())
+            )
+            conn.commit()
+            
+            # CHANGE 5: Return standardized response format
+            return jsonify({
+                'success': True,
+                'data': {
+                    'session_id': session_id,
+                    'csrf_token': csrf_token,
+                    'message': 'Demographics stored successfully'
+                },
+                'request_id': g.get('request_id', 'unknown')
+            }), 200
+            
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Database insert error: {e}")
+            raise
+            
+    except Exception as e:
+        logger.error(f"Error in submit_demographics: {e}", exc_info=True)
+        if SENTRY_ENABLED:
+            sentry_sdk.capture_exception(e)
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'message': str(e) if DEBUG else 'An error occurred'
+        }), 500
+
+
+
+
 # Check if PyTorch is available
 try:
     import torch
