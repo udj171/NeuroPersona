@@ -8,6 +8,19 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any
 from functools import wraps
 from io import BytesIO
+import os
+import logging
+
+# Check if PyTorch is available
+try:
+    import torch
+    HAS_PYTORCH = True
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    logging.info(f"✅ PyTorch available on {DEVICE}")
+except ImportError:
+    HAS_PYTORCH = False
+    DEVICE = None
+    logging.warning("⚠️ PyTorch not available - VAE inference disabled")
 
 # Flask and extensions
 from flask import (
