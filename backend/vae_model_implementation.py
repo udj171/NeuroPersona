@@ -33,6 +33,200 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings('ignore', category=UserWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
+# CHANGE 1: Ensure model works on CPU or GPU
+
+class VAEFullModel(nn.Module):
+    """Complete VAE with device management"""
+    
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        
+        # Build model on correct device
+        self.build_model()
+        self.to(self.device)
+    
+    def build_model(self):
+        """Build all sub-modules"""
+        # Domain-specific encoders (1 per domain)
+        self.domain_encoders = nn.ModuleDict({
+            domain: DomainSpecificEncoder(
+                input_dim=7,  # 5 items + elephant + press
+                latent_dim=2,
+                hidden_dims=[32, 16]
+            ) for domain in ['R', 'S', 'C', 'A', 'O', 'E']
+        })
+        
+        # Elephant module (overall deception)
+        self.elephant = ElephantModule(input_dim=6, latent_dim=2)
+        
+        # Press secretary module (narrative coherence)
+        self.press = PressModule(input_dim=6, latent_dim=2)
+        
+        # Domain-specific decoders
+        self.domain_decoders = nn.ModuleDict({
+            domain: DomainSpecificDecoder(
+                latent_dim=6,  # 2 domain + 2 elephant + 2 press
+                output_dim=5,
+                hidden_dims=[16, 32]
+            ) for domain in ['R', 'S', 'C', 'A', 'O', 'E']
+        })
+        
+        # Move to device
+        for key in self.domain_encoders:
+            self.domain_encoders[key].to(self.device)
+            self.domain_decoders[key].to(self.device)
+        
+        self.elephant.to(self.device)
+        self.press.to(self.device)
+    
+    def forward(self, x):
+        """Forward pass with device management"""
+        # Ensure input on device
+        if x.device != self.device:
+            x = x.to(self.device)
+        
+        # ... forward pass logic ...
+        
+        return outputs.to(x.device)  # Return on original device
+    
+    def to(self, device):
+        """Override to move model and device reference"""
+        super().to(device)
+        self.device = device
+        return self
+
+# CHANGE 2: Optimize inference for speed
+
+@torch.no_grad()  # Disable gradients for inference
+def infer_fast(self, input_vector):
+    """Fast inference mode (no gradient computation)"""
+    
+    # Convert input to tensor
+    if isinstance(input_vector, np.ndarray):
+        x = torch.from_numpy(input_vector).float().to(self.device)
+    else:
+        x = input_vector.to(self.device)
+    
+    # Add batch dimension if needed
+    if x.dim() == 1:
+        x = x.unsqueeze(0)
+    
+    # Inference
+    with torch.cuda.amp.autocast():  # Mixed precision for speed
+        mu, logvar = self.encoder(x)
+        z = self.reparameterize(mu, logvar)
+        reconstruction = self.decoder(z)
+    
+    return {
+        'latent': mu.cpu().numpy(),
+        'reconstruction': reconstruction.cpu().numpy(),
+        'device_used': str(self.device)
+    }
+
+# CHANGE 3: Proper model save/load with versioning
+
+def save_model(self, path, version='1.0.0'):
+    """Save model with metadata"""
+    
+    checkpoint = {
+        'model_state_dict': self.state_dict(),
+        'config': asdict(self.config),
+        'version': version,
+        'created_at': datetime.now().isoformat(),
+        'pytorch_version': torch.__version__,
+        'architecture': 'VAEFullModel'
+    }
+    
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    torch.save(checkpoint, path)
+    logger.info(f"Model saved to {path} (v{version})")
+
+def load_model_with_version_check(path, required_version=None):
+    """Load model and verify version"""
+    
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Model not found at {path}")
+    
+    checkpoint = torch.load(path, map_location='cpu')
+    
+    # Version check
+    if required_version and checkpoint['version'] != required_version:
+        logger.warning(f"Model version mismatch: found {checkpoint['version']}, "
+                      f"expected {required_version}")
+    
+    # Create model from config
+    config = VAEConfig(**checkpoint['config'])
+    model = VAEFullModel(config)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    
+    logger.info(f"Model loaded from {path} (v{checkpoint['version']})")
+    return model
+
+# CHANGE 4: Ensure batch norm works in inference mode
+
+def set_inference_mode(self):
+    """Prepare model for inference"""
+    self.eval()  # Set to eval mode
+    
+    # Disable batch norm running stats update
+    for module in self.modules():
+        if isinstance(module, nn.BatchNorm1d):
+            module.momentum = 0  # Freeze batch norm statistics
+    
+    return self
+
+def set_training_mode(self):
+    """Prepare model for training"""
+    self.train()
+    
+    for module in self.modules():
+        if isinstance(module, nn.BatchNorm1d):
+            module.momentum = 0.1  # Restore momentum
+    
+    return self
+
+
+# CHANGE 5: Support latent space analysis
+
+def get_latent_statistics(self, dataloader):
+    """Compute statistics of latent space from data"""
+    
+    latent_vectors = []
+    
+    with torch.no_grad():
+        for batch in dataloader:
+            x = batch.to(self.device)
+            mu, _ = self.encoder(x)
+            latent_vectors.append(mu.cpu().numpy())
+    
+    latent_vectors = np.concatenate(latent_vectors, axis=0)
+    
+    return {
+        'mean': latent_vectors.mean(axis=0),
+        'std': latent_vectors.std(axis=0),
+        'min': latent_vectors.min(axis=0),
+        'max': latent_vectors.max(axis=0),
+        'shape': latent_vectors.shape
+    }
+
+# Use for diagnostics:
+@app.route('/api/model-stats', methods=['GET'])
+def get_model_stats():
+    stats = vae_model.get_latent_statistics(...)
+    return api_response(data=stats)
+
+
+
+
+
+
+
+
+
+
+
 
 # ============================================================================
 # DATA CLASSES & CONFIGURATION
