@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+
+# Models (critical for VAE projects)
+*.pt
+*.pth
+models/*.pt
+checkpoints/
+
+# Data
+data/
+*.csv
+*.json
+
+# Logs
+*.log
+vae_model.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Outputs
+output/
+results/
+plots/
+
