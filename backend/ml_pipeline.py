@@ -30,6 +30,242 @@ from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import mahalanobis
 from scipy.stats import gaussian_kde
 
+# CHANGE 5: Monitor model performance
+
+def log_inference_metrics(self, input_vector, output):
+    """Log metrics for model monitoring"""
+    
+    metrics = {
+        'inference_timestamp': datetime.utcnow().isoformat(),
+        'personality_type': output['personality_type'],
+        'confidence': output['confidence'],
+        'anomaly_score': output['anomaly_score'],
+        'is_anomalous': output['is_anomalous'],
+        'reconstruction_error': output['reconstruction_error'],
+        'model_version': self.model_config.version
+    }
+    
+    # Store in database for analysis
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """INSERT INTO model_metrics 
+           (personality_type, confidence, anomaly_score, created_at)
+           VALUES (%s, %s, %s, %s)""",
+        (metrics['personality_type'], metrics['confidence'], 
+         metrics['anomaly_score'], metrics['inference_timestamp'])
+    )
+    conn.commit()
+    
+    logger.info(f"Inference metrics: {metrics}")
+
+
+
+
+
+
+
+
+# CHANGE 4: Support batch inference for scaling
+
+def infer_batch(self, input_vectors_batch):
+    """Infer on multiple assessments (for batch processing)"""
+    batch_size = len(input_vectors_batch)
+    results = []
+    
+    try:
+        # Convert to tensor
+        batch_tensor = torch.from_numpy(
+            np.array(input_vectors_batch, dtype=np.float32)
+        ).to(self.device)
+        
+        with torch.no_grad():
+            # Forward pass
+            mu, logvar = self.model.encoder(batch_tensor)
+            z = self.model.reparameterize(mu, logvar)
+            
+            # Get classifications for batch
+            for i in range(batch_size):
+                latent_vec = z[i:i+1]
+                result = self._classify_from_latent(latent_vec)
+                results.append(result)
+        
+        return {'success': True, 'results': results}
+    
+    except Exception as e:
+        logger.error(f"Batch inference failed: {e}")
+        return {'success': False, 'error': str(e), 'results': []}
+
+
+
+
+
+# CHANGE 3: Provide detailed anomaly information
+
+def detect_anomalies(self, latent_vector, scores):
+    """
+    Comprehensive anomaly detection
+    
+    Returns:
+    - is_anomalous: bool
+    - anomaly_score: 0-1
+    - anomaly_reason: string (why it's unusual)
+    - anomaly_severity: 'low', 'medium', 'high'
+    """
+    
+    # Factor 1: Distance from population mean
+    population_mean = torch.zeros_like(latent_vector)
+    distance_from_mean = torch.norm(latent_vector - population_mean)
+    
+    # Factor 2: Local density
+    nearest_distances = self._compute_knn_distances(latent_vector, k=5)
+    mean_neighbor_distance = nearest_distances.mean()
+    
+    # Factor 3: Score inconsistency
+    score_std = np.std(scores)
+    
+    # Combine factors
+    anomaly_score = (
+        0.3 * (distance_from_mean / 5.0) +  # Normalize by typical distance
+        0.4 * (1 / (mean_neighbor_distance + 1)) +  # Invert density
+        0.3 * score_std / 2.5  # Inconsistency
+    )
+    
+    anomaly_score = max(0, min(1, anomaly_score))
+    is_anomalous = anomaly_score > 0.6
+    
+    # Determine reason
+    if distance_from_mean > 4.0:
+        reason = "Unusual trait combination (far from typical profiles)"
+    elif mean_neighbor_distance > 2.0:
+        reason = "Isolated in personality space (rare profile)"
+    elif score_std > 2.5:
+        reason = "High inconsistency across domains"
+    else:
+        reason = "Profile within normal range"
+    
+    return {
+        'is_anomalous': is_anomalous,
+        'anomaly_score': float(anomaly_score),
+        'anomaly_reason': reason,
+        'anomaly_severity': 'high' if anomaly_score > 0.8 else 'medium' if anomaly_score > 0.6 else 'low'
+    }
+
+
+
+
+
+# CHANGE 2: Calibrate confidence scores
+
+def calculate_confidence(self, latent_vector, reconstruction_error, distances):
+    """
+    Calculate calibrated confidence score
+    
+    Factors:
+    - Reconstruction error (lower = more confident)
+    - Distance to nearest cluster (closer = more confident)
+    - Distance to population center
+    - Entropy of cluster probabilities
+    """
+    
+    # Factor 1: Reconstruction error (0-1 scale)
+    # Good model fit = high confidence
+    reconstruction_confidence = max(0, 1 - reconstruction_error / 0.5)
+    
+    # Factor 2: Cluster distance
+    # Close to cluster center = high confidence
+    min_distance = min(distances)
+    distance_confidence = max(0, 1 - min_distance / 3.0)
+    
+    # Factor 3: Entropy of probabilities
+    probabilities = torch.softmax(torch.tensor(distances, dtype=torch.float32), dim=0)
+    entropy = -torch.sum(probabilities * torch.log(probabilities + 1e-8))
+    entropy_confidence = max(0, 1 - entropy / 2.0)
+    
+    # Combine factors
+    overall_confidence = (
+        0.4 * reconstruction_confidence +
+        0.4 * distance_confidence +
+        0.2 * entropy_confidence
+    )
+    
+    return max(0, min(1, overall_confidence))
+
+
+
+
+
+
+
+# CHANGE 1: Add robust model loading
+
+class VAEInference:
+    def __init__(self):
+        self.model = None
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model_config = VAEConfig()
+        self.load_model()
+    
+    def load_model(self):
+        """Load pre-trained VAE model with error handling"""
+        try:
+            model_path = self.model_config.model_save_path
+            
+            if not os.path.exists(model_path):
+                logger.warning(f"Model not found at {model_path}, using fallback classifier")
+                self.model = None
+                self.use_fallback = True
+                return
+            
+            logger.info(f"Loading VAE model from {model_path}")
+            
+            # Load model
+            self.model = VAEFullModel(self.model_config)
+            checkpoint = torch.load(model_path, map_location=self.device)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.model.to(self.device)
+            self.model.eval()
+            
+            logger.info("VAE model loaded successfully")
+            self.use_fallback = False
+            
+        except Exception as e:
+            logger.error(f"Failed to load VAE model: {e}")
+            logger.warning("Falling back to rule-based classification")
+            self.model = None
+            self.use_fallback = True
+    
+    def infer(self, input_vector):
+        """Run inference with fallback"""
+        if self.model and not self.use_fallback:
+            return self._vae_inference(input_vector)
+        else:
+            logger.warning("Using fallback classification")
+            return self._fallback_classification(input_vector)
+    
+    def _fallback_classification(self, input_vector):
+        """Rule-based classification when model unavailable"""
+        scores = input_vector[:6]  # First 6 are domain scores
+        
+        # Simple rule-based classification
+        personality_type = self._classify_by_rules(scores)
+        confidence = 0.65  # Lower confidence for fallback
+        
+        return {
+            'personality_type': personality_type,
+            'confidence': confidence,
+            'novelty_score': 0.5,
+            'is_anomalous': False,
+            'method': 'fallback_rule_based'
+        }
+
+
+
+
+
+
+
+
 
 # ============================================================================
 # CONFIGURATION & CONSTANTS
