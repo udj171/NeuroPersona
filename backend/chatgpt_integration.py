@@ -20,6 +20,237 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 
+
+
+
+
+
+
+# CHANGE 6: Validate narrative quality
+
+def validate_narrative(narrative):
+    """Ensure narrative meets quality standards"""
+    issues = []
+    
+    # Check length (350-500 words)
+    word_count = len(narrative.split())
+    if word_count < 300:
+        issues.append(f"Too short: {word_count} words (min 300)")
+    if word_count > 600:
+        issues.append(f"Too long: {word_count} words (max 600)")
+    
+    # Check for required elements
+    if 'personality' not in narrative.lower() and 'profile' not in narrative.lower():
+        issues.append("Missing personality reference")
+    
+    # Check for quality issues
+    if '...' in narrative or '[' in narrative or ']' in narrative:
+        issues.append("Contains template markers")
+    
+    # Check structure
+    sentences = narrative.count('.')
+    if sentences < 5:
+        issues.append("Too few sentences")
+    
+    return {
+        'valid': len(issues) == 0,
+        'word_count': word_count,
+        'issues': issues,
+        'quality_score': max(0, 1 - len(issues) * 0.1)
+    }
+
+# In generate_narrative:
+validation = validate_narrative(narrative)
+if not validation['valid']:
+    logger.warning(f"Narrative quality issues: {validation['issues']}")
+    # Could use fallback if quality too low
+
+
+
+
+
+
+# CHANGE 5: Track API costs
+
+def track_gemini_cost(prompt_tokens, completion_tokens):
+    """Track Gemini API costs"""
+    # Gemini pricing: usually free tier for limited requests
+    # But track for monitoring
+    
+    cost = (prompt_tokens * 0.0001 + completion_tokens * 0.0003) / 1000
+    
+    logger.info(f"Gemini cost: ${cost:.4f}")
+    
+    # Store in database
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO api_costs (service, cost, tokens) VALUES (%s, %s, %s)",
+        ('gemini', cost, prompt_tokens + completion_tokens)
+    )
+    conn.commit()
+    
+    return cost
+
+# In generate_narrative:
+response = call_gemini_api(prompt)
+cost = track_gemini_cost(response.prompt_tokens, response.completion_tokens)
+
+
+
+
+
+
+
+# CHANGE 4: Handle Gemini rate limits
+
+class LLMRateLimiter:
+    """Track API usage to avoid rate limits"""
+    
+    def __init__(self, max_requests_per_minute=60):
+        self.max_rpm = max_requests_per_minute
+        self.request_times = []
+    
+    def can_request(self):
+        """Check if request is within rate limit"""
+        now = time.time()
+        # Remove requests older than 1 minute
+        self.request_times = [t for t in self.request_times if now - t < 60]
+        return len(self.request_times) < self.max_rpm
+    
+    def record_request(self):
+        """Record that a request was made"""
+        self.request_times.append(time.time())
+
+# Use in endpoint
+rate_limiter = LLMRateLimiter()
+
+def generate_narrative_with_limit(assessment_data):
+    if not rate_limiter.can_request():
+        logger.warning("Rate limit approaching, using fallback")
+        return {
+            'narrative': generate_fallback_narrative(assessment_data),
+            'source': 'fallback',
+            'reason': 'rate_limit'
+        }
+    
+    rate_limiter.record_request()
+    return generate_narrative(assessment_data)
+
+
+
+
+
+
+
+
+# CHANGE 3: Create fallback templates
+
+PERSONALITY_TEMPLATES = {
+    'Ambitious Explorer': """
+        You are an Ambitious Explorer, characterized by your drive for achievement 
+        and willingness to take social risks. Your personality profile shows...
+        
+        Key strengths:
+        - High motivation and goal-orientation
+        - Confidence in social situations
+        - Openness to new experiences
+        
+        Areas for development:
+        - Balance ambition with deeper relationships
+        - Consider long-term consequences of risky behavior
+        
+        Recommendations:
+        1. Channel ambition into meaningful goals aligned with values
+        2. Cultivate relationships with people who ground and support you
+        3. Regular reflection on decisions and their impact
+    """,
+    # ... more templates for other personality types
+}
+
+def generate_fallback_narrative(assessment_data):
+    """Generate narrative from templates if API fails"""
+    personality_type = assessment_data.get('personality_type', 'Unknown')
+    
+    template = PERSONALITY_TEMPLATES.get(
+        personality_type,
+        "Your personality assessment shows a unique profile..."
+    )
+    
+    # Fill in scores
+    narrative = template.format(
+        relationship_score=assessment_data.get('relationship_score', '?'),
+        status_score=assessment_data.get('status_score', '?'),
+        # ... more fields
+    )
+    
+    return narrative
+
+
+
+
+
+
+
+
+# CHANGE 1: Add retry mechanism
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    reraise=True
+)
+def call_gemini_api(prompt, max_tokens=500):
+    """Call Gemini API with automatic retries"""
+    try:
+        response = genai.generate_text(
+            model='models/text-bison-001',
+            prompt=prompt,
+            max_output_tokens=max_tokens,
+            temperature=0.7,
+            top_k=40,
+            top_p=0.9,
+            timeout=10
+        )
+        return response.result
+    except Exception as e:
+        logger.error(f"Gemini API call failed: {e}")
+        raise
+
+# CHANGE 2: Call with fallback
+def generate_narrative(assessment_data):
+    """Generate narrative with fallback"""
+    try:
+        # Try primary API
+        narrative = call_gemini_api(build_prompt(assessment_data))
+        
+        return {
+            'narrative': narrative,
+            'source': 'gemini',
+            'status': 'success',
+            'fallback_used': False
+        }
+    except Exception as e:
+        logger.warning(f"LLM generation failed, using fallback: {e}")
+        
+        # Use fallback rule-based narrative
+        fallback = generate_fallback_narrative(assessment_data)
+        
+        return {
+            'narrative': fallback,
+            'source': 'fallback',
+            'status': 'fallback_used',
+            'fallback_used': True,
+            'error': str(e)
+        }
+
+
+
+
+
+
+
 # ============================================================================
 # CONFIGURATION & CONSTANTS
 # ============================================================================
