@@ -348,6 +348,31 @@ logger = logging.getLogger(__name__)
 
 # Create Flask app
 app = Flask(__name__)
+import uuid
+from flask import g
+from datetime import datetime
+
+def generate_request_id():
+    return str(uuid.uuid4())[:8]
+
+def get_current_timestamp():
+    return datetime.utcnow().isoformat() + 'Z'
+
+@app.before_request
+def setup_request_context():
+    g.request_id = generate_request_id()
+    g.start_time = datetime.utcnow()
+
+def api_response(success=True, data=None, error=None, status_code=200):
+    return jsonify({
+        'success': success,
+        'data': data,
+        'error': error,
+        'request_id': g.get('request_id', 'unknown'),
+        'timestamp': get_current_timestamp(),
+        'duration_ms': int((datetime.utcnow() - g.start_time).total_seconds() * 1000)
+    }), status_code
+
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = DEBUG
