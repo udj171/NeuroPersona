@@ -11,6 +11,9 @@ google-generativeai==0.3.0
 gunicorn==21.0.0
 requests==2.31.0
 Flask-Limiter==3.5.0
+marshmallow==4.1.0
+sentry-sdk[flask]
+reportlab==3.6.13
 
 
 
