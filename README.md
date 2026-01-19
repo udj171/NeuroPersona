@@ -1,3 +1,12 @@
+title: NeuroPersona Backend
+emoji: 🐳
+colorFrom: blue
+colorTo: gray
+sdk: docker
+app_port: 7860
+pinned: false
+
+
 # NeuroPersona
 Enhanced Framework for personality assessment
 
@@ -26,12 +35,6 @@ A scientific personality assessment platform with deception correction, ML-power
 pip install -r requirements.txt
 python backend/app.py
 
-### HuggingFace Space
-title: NeuroPersona Backend
-emoji: 🐳
-colorFrom: blue
-colorTo: gray
-sdk: docker
-app_port: 7860
-pinned: false
+
+
 
