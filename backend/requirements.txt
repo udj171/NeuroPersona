@@ -10,6 +10,7 @@ torch==2.5.0
 google-generativeai==0.3.0
 gunicorn==21.0.0
 requests==2.31.0
+Flask-Limiter==3.5.0
 
 
 
