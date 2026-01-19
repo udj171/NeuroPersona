@@ -1,5 +1,5 @@
 ---
-title: EFOPA Backend
+title: NeuroPersona Backend
 emoji: 🐳
 colorFrom: blue
 colorTo: gray
