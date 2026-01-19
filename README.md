@@ -25,3 +25,13 @@ A scientific personality assessment platform with deception correction, ML-power
 ```bash
 pip install -r requirements.txt
 python backend/app.py
+
+### HuggingFace Space
+title: NeuroPersona Backend
+emoji: 🐳
+colorFrom: blue
+colorTo: gray
+sdk: docker
+app_port: 7860
+pinned: false
+
