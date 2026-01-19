@@ -1820,7 +1820,7 @@ def create_app():
 # ==============================================================================
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
+    port = int(os.getenv('PORT', 7860))
     
     logger.info(f"Starting Flask server on port {port}")
     
