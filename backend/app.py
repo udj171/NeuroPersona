@@ -64,7 +64,7 @@ from reportlab.lib.units import inch
 # ==============================================================================
 
 # Load environment variables
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://localhost/efopa')
+DATABASE_URL = os.getenv('DATABASE_URL', '')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 SENTRY_DSN = os.getenv('SENTRY_DSN', '')
