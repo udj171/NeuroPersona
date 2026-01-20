@@ -107,14 +107,13 @@ app.config['JSON_SORT_KEYS'] = False
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = DEBUG
 
 # ⭐ ENABLE CORS
-CORS(app, resources={
-    r"/api/*": {
-        "origins": ["https://predictmypersonality.com", "http://localhost:*"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
-        "supports_credentials": True
-    }
-})
+CORS(
+    app,
+    resources={r"/api/*": {"origins": ["https://predictmypersonality.com"]}},
+    allow_headers=["Content-Type", "Authorization", "X-Request-ID", "X-Client-Version", "X-CSRF-Token"],
+    methods=["GET", "POST", "OPTIONS"],
+    supports_credentials=True,
+)
 
 # Rate limiting
 limiter = Limiter(
