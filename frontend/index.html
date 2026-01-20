@@ -580,7 +580,33 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
-    <script src="index.js" defer></script>
+    l
+  <!-- Scripts -->
+  <script src="api-client.js" defer></script>
+  <script src="form-logic.js" defer></script>
+  <script src="index.js" defer></script>
+  
+  <!-- CRITICAL FIX: Initialize API Client -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize with YOUR RENDER backend
+      window.apiClient = new APIClient({
+        baseUrl: 'https://neuropersona.onrender.com',
+        timeout: 30000,
+        maxRetries: 3,
+        enableDetailedLogging: true
+      });
+      
+      console.log('✅ API Client Ready');
+      console.log('Backend URL:', window.apiClient.config.baseUrl);
+      console.log('Timeout:', window.apiClient.config.timeout + 'ms');
+      
+      // Verify all scripts loaded
+      if (window.EFOPAFormLogic) {
+        console.log('✅ Form Logic Loaded');
+      }
+    });
+  </script>
+    
 </body>
 </html>
