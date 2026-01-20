@@ -580,33 +580,75 @@
         </div>
     </footer>
 
-    l
-  <!-- Scripts -->
+      <!-- Scripts Loading -->
   <script src="api-client.js" defer></script>
   <script src="form-logic.js" defer></script>
-  <script src="index.js" defer></script>
   
   <!-- CRITICAL FIX: Initialize API Client -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Initialize with YOUR RENDER backend
+      console.log('✅ Initializing API Client...');
+      
       window.apiClient = new APIClient({
-        baseUrl: 'https://neuropersona.onrender.com',
+        baseUrl: 'https://neuropersona.onrender.com/api',
         timeout: 30000,
         maxRetries: 3,
         enableDetailedLogging: true
       });
       
-      console.log('✅ API Client Ready');
-      console.log('Backend URL:', window.apiClient.config.baseUrl);
-      console.log('Timeout:', window.apiClient.config.timeout + 'ms');
-      
-      // Verify all scripts loaded
-      if (window.EFOPAFormLogic) {
-        console.log('✅ Form Logic Loaded');
-      }
+      console.log('✅ Backend URL set:', window.apiClient.config.baseUrl);
     });
   </script>
-    
+  
+  <!-- CRITICAL FIX: Override form submit -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const registrationForm = document.getElementById('registrationForm');
+      if (!registrationForm) return;
+      
+      registrationForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email')?.value;
+        const age = document.getElementById('age')?.value;
+        const country = document.getElementById('country')?.value;
+        const sex = document.getElementById('sex')?.value;
+        const consent = document.getElementById('consent')?.checked;
+        
+        if (!email || !age || !country || !sex || !consent) {
+          alert('❌ Please fill all fields');
+          return;
+        }
+        
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.disabled = true;
+        
+        try {
+          console.log('🚀 Submitting to backend...');
+          
+          const response = await window.apiClient.submitDemographics({
+            email: email,
+            age: parseInt(age),
+            country: country,
+            sex: sex,
+            consent: consent
+          });
+          
+          console.log('✅ Success! Response:', response);
+          
+          localStorage.setItem('sessionId', response.sessionId);
+          localStorage.setItem('assessmentId', response.assessmentId);
+          
+          window.location.href = 'questionnaire.html';
+        } catch (error) {
+          console.error('❌ Error:', error.message);
+          alert('Error: ' + error.message);
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    });
+  </script>
+
 </body>
+
 </html>
