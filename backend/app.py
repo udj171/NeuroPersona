@@ -10,6 +10,8 @@ from functools import wraps
 from io import BytesIO
 import os
 import logging
+from flask import g
+
 
 # Check if PyTorch is available
 try:
@@ -84,10 +86,6 @@ logger = logging.getLogger(__name__)
 
 # Create Flask app
 app = Flask(__name__)
-import uuid
-from flask import g
-from datetime import datetime
-
 def generate_request_id():
     return str(uuid.uuid4())[:8]
 
