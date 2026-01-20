@@ -594,16 +594,17 @@ const EFOPAFormLogic = (() => {
         // Create user via API
         const response = await apiClient.submitDemographics({
           age: parseInt(formState.registrationData.age, 10),
-          sex: formState.registrationData.sex === 'male' ? 'M'
-            : formState.registrationData.sex === 'female' ? 'F'
-            : 'O',
-            country: formState.registrationData.country
+          sex: formState.registrationData.sex,
+          country: formState.registrationData.country
         });
         
 
-        if (response.success) {
-          formState.assessmentId = response.data.assessment_id;
-          formState.sessionToken = response.data.session_token;
+        if (response.success || response.sessionId) {
+          // Backend returns sessionId and csrftoken at root level
+          formState.sessionToken = response.csrftoken || response.sessionId;
+          // Don't expect assessmentId from demographics endpoint
+          console.log('✓ Demographics submitted:', response);
+
 
           // Save to storage
           Storage.set(STORAGE_KEYS.ASSESSMENT_ID, formState.assessmentId);
