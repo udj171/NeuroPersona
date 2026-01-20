@@ -593,11 +593,11 @@ const EFOPAFormLogic = (() => {
 
         // Create user via API
         const response = await apiClient.submitDemographics({
-          email: formState.registrationData.email,
-          age: parseInt(formState.registrationData.age),
-          country: formState.registrationData.country,
-          sex: formState.registrationData.sex,
-          consent: formState.registrationData.consent
+          age: parseInt(formState.registrationData.age, 10),
+          sex: formState.registrationData.sex === 'male' ? 'M'
+            : formState.registrationData.sex === 'female' ? 'F'
+            : 'O',
+            country: formState.registrationData.country
         });
         
 
