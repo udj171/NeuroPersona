@@ -257,7 +257,7 @@ class DemographicsSchema(Schema):
         unknown = EXCLUDE
         email = fields.Str(required=True)  
         age = fields.Int(required=True, validate=lambda x: 18 <= x <= 120)
-        sex = fields.Str(required=True, validate=lambda x: x in ['Select Gender', 'M', 'F', 'NB', 'Other', 'Prefer not to answer'])
+        sex = fields.Str(required=True, validate=lambda x: x in ['M', 'F', 'NB', 'Other', 'Prefer not to answer'])
         country = fields.Str(required=True, validate=lambda x: len(x) >= 2)
 
     @pre_load
