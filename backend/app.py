@@ -253,11 +253,11 @@ def log_response_info(response_data: Dict, status_code: int):
 
 class DemographicsSchema(Schema):
     """Validate demographic data."""
-    
+    email = fields.Str(required=True)  
     age = fields.Int(required=True, validate=lambda x: 18 <= x <= 120)
-    sex = fields.Str(required=True, validate=lambda x: x in ['M', 'F', 'NB', 'Other', 'Prefer not to answer'])
+    sex = fields.Str(required=True, validate=lambda x: x in ['Select Gender', 'Male', 'Female', 'Non-Binary', 'Prefer not to answer'])
     country = fields.Str(required=True, validate=lambda x: len(x) >= 2)
-    
+
     @pre_load
     def process_data(self, data, **kwargs):
         """Pre-process input data."""
@@ -267,7 +267,6 @@ class DemographicsSchema(Schema):
             except json.JSONDecodeError:
                 return data
         return data
-
 
 class QuestionnaireResponseSchema(Schema):
     """Validate questionnaire responses."""
@@ -564,13 +563,8 @@ def submit_demographics():
         
         try:
             cursor.execute(
-                """
-                INSERT INTO assessments (session_id, age, sex, country, status, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING session_id
-                """,
-                (session_id, validated_data['age'], validated_data['sex'], 
-                 validated_data['country'], 'started', get_current_timestamp())
+                """INSERT INTO assessments (session_id, email, age, sex, country, status, created_at VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING session_id""",
+                (session_id, validated_data['email'], validated_data['age'], validated_data['sex'],validated_data['country'], 'started', get_current_timestamp())
             )
             
             conn.commit()
