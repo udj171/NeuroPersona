@@ -63,9 +63,44 @@ from reportlab.lib.units import inch
 # CONFIGURATION & INITIALIZATION
 # ==============================================================================
 
+# ⭐ CRITICAL: Enable CORS for your frontend domain
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "https://predictmypersonality.com",
+            "http://localhost:3000",  # for local testing
+            "http://localhost:5000"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
+
+# Your existing routes...
+@app.route('/api/demographics', methods=['POST'])
+def submit_demographics():
+    data = request.json
+    
+    session_id = str(uuid.uuid4())
+    assessment_id = str(uuid.uuid4())
+    
+    return jsonify({
+        'success': True,
+        'sessionId': session_id,
+        'assessmentId': assessment_id,
+        'message': 'Demographics saved'
+    }), 201
+
+
+
+
+
+
+
 # Load environment variables
 DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://postgres.trwmfrwqjycwdafwirlx:Vanshita0108@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres')
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyDlAoB7soQNbNviMEUfz3Rq2WFBSPZ-XHY')
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG = FLASK_ENV == 'development'
