@@ -599,8 +599,8 @@ const EFOPAFormLogic = (() => {
         
         const response = await apiClient.submitDemographics({
           age: parseInt(formState.registrationData.age, 10),
-          sex,
-          country: formState.registrationData.country
+          sex: formState.registrationData.sex,     // "M" is fine
+          country: formState.registrationData.country // "US" is fine if backend accepts it
         });
         
 
