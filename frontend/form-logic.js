@@ -583,25 +583,31 @@ const EFOPAFormLogic = (() => {
 
         // Create user via API
         const payload = {
+          email: formState.registrationData.email,
           age: parseInt(formState.registrationData.age, 10),
           sex: formState.registrationData.sex,
           country: formState.registrationData.country
         };
 
-        const response = await apiClient.submitDemographics(payload);
+        if (!window.apiClient) {
+                throw new Error('APIClient not initialized');
+            }
+            const response = awaitwindow.apiClient.submitDemographics(payload); 
+        
 
         
-        if (response.success || response.sessionId) {
-          // Backend returns sessionId and csrftoken at root level
-          formState.sessionToken = response.csrftoken || response.sessionId;
-          // Don't expect assessmentId from demographics endpoint
+        if (response.success) {
+          formState.sessionToken = response.session_id;
+          formState.assessmentId = response.session_id;
           console.log('✓ Demographics submitted:', response);
+          Storage.set(STORAGE_KEYS.ASSESSMENT_ID,formState.assessmentId);
+          Storage.set(STORAGE_KEYS.SESSION_TOKEN,formState.sessionToken);
+          emitEvent(EVENT_TYPES.FORM_SUBMITTED, {
+            assessmentId: formState.assessmentId,
+            registrationData: formState.registrationData,
+            });
 
-
-          // Save to storage
-          Storage.set(STORAGE_KEYS.ASSESSMENT_ID, formState.assessmentId);
-          Storage.set(STORAGE_KEYS.SESSION_TOKEN, formState.sessionToken);
-
+          
           // Navigate to questionnaire
           emitEvent(EVENT_TYPES.FORM_SUBMITTED, {
             assessmentId: formState.assessmentId,
@@ -611,7 +617,7 @@ const EFOPAFormLogic = (() => {
           // Redirect to questionnaire
           window.location.href = 'questionnaire.html';
         } else {
-          throw new Error(response.message || 'Failed to create user');
+          throw new Error(response.error || response.message || 'Failedto create user');
         }
       } catch (error) {
         log('Form submission error', error, 'error');
