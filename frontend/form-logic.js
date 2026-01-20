@@ -592,9 +592,14 @@ const EFOPAFormLogic = (() => {
         this.saveFormData();
 
         // Create user via API
+        const sexRaw = formState.registrationData.sex;
+          sexRaw === 'male' ? 'M' :
+          sexRaw === 'female' ? 'F' :
+          sexRaw;
+        
         const response = await apiClient.submitDemographics({
           age: parseInt(formState.registrationData.age, 10),
-          sex: formState.registrationData.sex,
+          sex,
           country: formState.registrationData.country
         });
         
