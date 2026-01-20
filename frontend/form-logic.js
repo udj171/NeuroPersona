@@ -516,13 +516,8 @@ const EFOPAFormLogic = (() => {
       formState.isDirty = true;
 
       // Validate on input for better UX
-      if (id === 'email') {
+      if (id === 'age') {
         const validation = Validation.validateEmail(value);
-        if (validation.valid) {
-          Validation.clearErrors(id);
-        }
-      } else if (id === 'age') {
-        const validation = Validation.validateAge(value);
         if (validation.valid) {
           Validation.clearErrors(id);
         }
@@ -552,11 +547,6 @@ const EFOPAFormLogic = (() => {
         }
       } else if (id === 'sex') {
         const validation = Validation.validateSex(value);
-        if (validation.valid) {
-          Validation.clearErrors(id);
-        }
-      } else if (id === 'consent') {
-        const validation = Validation.validateConsent(checked);
         if (validation.valid) {
           Validation.clearErrors(id);
         }
@@ -592,15 +582,15 @@ const EFOPAFormLogic = (() => {
         this.saveFormData();
 
         // Create user via API
-      
-        
-        const response = await apiClient.submitDemographics({
+        const payload = {
           age: parseInt(formState.registrationData.age, 10),
-          sex: formState.registrationData.sex,     // "M" is fine
-          country: formState.registrationData.country // "US" is fine if backend accepts it
-        });
-        
+          sex: formState.registrationData.sex,
+          country: formState.registrationData.country
+        };
 
+        const response = await apiClient.submitDemographics(payload);
+
+        
         if (response.success || response.sessionId) {
           // Backend returns sessionId and csrftoken at root level
           formState.sessionToken = response.csrftoken || response.sessionId;
