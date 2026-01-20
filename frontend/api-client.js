@@ -693,7 +693,11 @@ class APIClient {
 
   _createError(response, data) {
     const status = response.status;
-    const message = data?.error?.message || data?.message || response.statusText;
+    const message =
+      (typeof data?.error === 'string' ? data.error : data?.error?.message) ||
+      data?.message ||
+      (data?.details ? JSON.stringify(data.details) : '') ||
+      response.statusText;
 
     if (status === 401 || status === 403) {
       return new AuthenticationError(message, status);
