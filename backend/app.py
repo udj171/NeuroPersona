@@ -92,11 +92,6 @@ def generate_request_id():
 def get_current_timestamp():
     return datetime.utcnow().isoformat() + 'Z'
 
-@app.before_request
-def setup_request_context():
-    g.request_id = generate_request_id()
-    g.start_time = datetime.utcnow()
-
 def api_response(success=True, data=None, error=None, status_code=200):
     return jsonify({
         'success': success,
@@ -120,37 +115,6 @@ CORS(app, resources={
         "supports_credentials": True
     }
 })
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    return jsonify({'status': 'ok', 'message': 'Backend is running'}), 200
-
-@app.route('/api/demographics', methods=['POST', 'OPTIONS'])
-def submit_demographics():
-    if request.method == 'OPTIONS':
-        return '', 204
-    
-    try:
-        data = request.json
-        
-        # Validate required fields
-        if not data.get('email') or not data.get('age'):
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        # Generate IDs
-        session_id = str(uuid.uuid4())
-        assessment_id = str(uuid.uuid4())
-        
-        # Return response
-        return jsonify({
-            'success': True,
-            'sessionId': session_id,
-            'assessmentId': assessment_id,
-            'message': 'Demographics saved'
-        }), 201
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # Rate limiting
 limiter = Limiter(
