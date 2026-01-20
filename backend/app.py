@@ -44,7 +44,7 @@ from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import RealDictCursor
 
 # Data validation
-from marshmallow import Schema, fields, ValidationError, pre_load
+from marshmallow import Schema, fields, ValidationError, pre_load, EXCLUDE
 
 # Logging and monitoring
 try:
@@ -253,10 +253,12 @@ def log_response_info(response_data: Dict, status_code: int):
 
 class DemographicsSchema(Schema):
     """Validate demographic data."""
-    email = fields.Str(required=True)  
-    age = fields.Int(required=True, validate=lambda x: 18 <= x <= 120)
-    sex = fields.Str(required=True, validate=lambda x: x in ['Select Gender', 'Male', 'Female', 'Non-Binary', 'Prefer not to answer'])
-    country = fields.Str(required=True, validate=lambda x: len(x) >= 2)
+    class Meta:
+        unknown = EXCLUDE
+        email = fields.Str(required=True)  
+        age = fields.Int(required=True, validate=lambda x: 18 <= x <= 120)
+        sex = fields.Str(required=True, validate=lambda x: x in ['Select Gender', 'M', 'F', 'NB', 'Other', 'Prefer not to answer'])
+        country = fields.Str(required=True, validate=lambda x: len(x) >= 2)
 
     @pre_load
     def process_data(self, data, **kwargs):
@@ -563,7 +565,7 @@ def submit_demographics():
         
         try:
             cursor.execute(
-                """INSERT INTO assessments (session_id, email, age, sex, country, status, created_at VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING session_id""",
+                """INSERT INTO assessments (session_id, email, age, sex, country, status, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING session_id""",
                 (session_id, validated_data['email'], validated_data['age'], validated_data['sex'],validated_data['country'], 'started', get_current_timestamp())
             )
             
