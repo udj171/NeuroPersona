@@ -649,16 +649,25 @@ def submit_questionnaire_responses():
         try:
             # Store assessment
             cursor.execute(
-                """
-                INSERT INTO assessments (
-                    assessment_id, session_id, responses, completion_time, 
-                    status, created_at
+              """
+              INSERT INTO assessments (
+              assessment_uuid, session_id, responses, completion_time, status, created_at
+              )
+              VALUES (%s, %s, %s, %s, %s, %s)
+              """,
+                (
+                assessment_id,  # keep variable name, but it is the UUID value
+                session_id,
+                safe_json_dumps(validated_data['responses']),
+                validated_data.get('completion_time', 0),
+                'processing',
+                get_current_timestamp(),
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """,
-                (assessment_id, session_id, safe_json_dumps(validated_data['responses']),
-                 validated_data.get('completion_time', 0), 'processing', get_current_timestamp())
             )
+
+
+                
+            
             
             # Store individual responses
             for item_id, score in validated_data['responses'].items():
