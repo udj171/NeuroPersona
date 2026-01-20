@@ -105,15 +105,6 @@ FLASK_ENV = os.getenv('FLASK_ENV', 'development')
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG = FLASK_ENV == 'development'
 
-# Initialize Sentry error tracking
-if SENTRY_ENABLED and SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[FlaskIntegration()],
-        traces_sample_rate=0.1,
-        debug=DEBUG,
-        attach_stacktrace=True
-    )
 
 # Configure logging
 logging.basicConfig(
