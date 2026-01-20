@@ -1783,7 +1783,7 @@ def get_statistics():
 # INITIALIZATION & STARTUP
 # ==============================================================================
 
-@app.before_first_request
+@app.before_serving
 def initialize_database():
     """Initialize database schema on first request."""
     try:
