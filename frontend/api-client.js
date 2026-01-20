@@ -18,7 +18,7 @@ class APIClient {
   constructor(config = {}) {
     // Configuration with sensible defaults
     this.config = {
-      baseUrl: config.baseUrl || `${window.location.protocol}//${window.location.host}/api`,
+      baseUrl: config.baseUrl || `https://neuropersona.onrender.com`,
       timeout: config.timeout || 30000, // 30 second timeout
       maxRetries: config.maxRetries || 3,
       retryDelay: config.retryDelay || 1000,
