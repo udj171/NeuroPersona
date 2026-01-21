@@ -523,6 +523,16 @@ def health_check():
 # ASSESSMENT ENDPOINTS
 # ==============================================================================
 
+
+@app.route('/api/csrf-token', methods=['GET'])
+@cross_origin()
+def get_csrf_token():
+    """Provide CSRF token to frontend"""
+    from flask_wtf.csrf import generate_csrf
+    token = generate_csrf()
+    return jsonify({'csrf_token': token}), 200
+
+
 @app.route('/api/demographics', methods=['POST'])
 @cross_origin()
 def submit_demographics():
