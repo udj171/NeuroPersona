@@ -585,22 +585,6 @@
   <script src="api-client.js" defer></script>
   <script src="form-logic.js" defer></script>
   
-  <!-- CRITICAL FIX: Initialize API Client -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('✅ Initializing API Client...');
-      
-      window.apiClient = new APIClient({
-        baseUrl: 'https://neuropersona.onrender.com',
-        timeout: 30000,
-        maxRetries: 3,
-        enableDetailedLogging: true
-      });
-      
-      console.log('✅ Backend URL set:', window.apiClient.config.baseUrl);
-    });
-  </script>
-  
   <!-- CRITICAL FIX: Override form submit -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
