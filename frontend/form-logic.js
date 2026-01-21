@@ -27,7 +27,35 @@
  * EFOPA FormLogic Module
  * Main namespace for all form-related logic
  */
-const EFOPAFormLogic = (() => {
+
+
+  const EFOPAFormLogic = (() => {
+
+  // ============================================
+  // CSRF TOKEN INITIALIZATION
+  // ============================================
+
+    async function initializeCSRFToken() {
+      try {
+        const response = await fetch('/api/csrf-token');
+        const data = await response.json();
+        const csrfMeta = document.getElementById('csrf-token');
+        if (csrfMeta && data.csrf_token) {
+        csrfMeta.content = data.csrf_token;
+      }
+    } catch (error) {
+      console.warn('CSRF token fetch failed:', error);
+    }
+  }
+
+  // Initialize CSRF token on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeCSRFToken);
+  } else {
+    initializeCSRFToken();
+  }
+
+  
   // ============================================
   // PRIVATE CONSTANTS
   // ============================================
