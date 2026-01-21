@@ -11,6 +11,7 @@ from io import BytesIO
 import os
 import logging
 from flask import g
+import secrets
 
 
 # Check if PyTorch is available
@@ -29,7 +30,7 @@ from flask import (
     Flask, request, jsonify, send_file, current_app, 
     Blueprint, session, g
 )
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
@@ -485,32 +486,37 @@ def require_session(f):
 # ==============================================================================
 
 @app.route('/api/health', methods=['GET'])
+@cross_origin()
 def health_check():
-    """Health check endpoint for monitoring."""
+    """
+    Health check endpoint for deployment verification.
+    
+    Response:
+    {
+      "status": "healthy",
+      "database": "connected",
+      "timestamp": "2026-01-21T10:30:00"
+    }
+    """
     try:
         # Test database connection
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.close()
+        db.session.execute('SELECT 1')
         
         return jsonify({
-            'success': True,
             'status': 'healthy',
-            'timestamp': get_current_timestamp(),
-            'environment': FLASK_ENV,
             'database': 'connected',
-            'request_id': g.get('request_id', 'unknown')
+            'timestamp': datetime.utcnow().isoformat(),
+            'version': '1.0.0'
         }), 200
-    
+        
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        app.logger.error(f'Health check failed: {str(e)}')
         return jsonify({
-            'success': False,
             'status': 'unhealthy',
+            'database': 'disconnected',
             'error': str(e),
-            'timestamp': get_current_timestamp()
-        }), 503
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
 
 
 # ==============================================================================
@@ -518,647 +524,509 @@ def health_check():
 # ==============================================================================
 
 @app.route('/api/demographics', methods=['POST'])
-@limiter.limit("10 per minute")
+@cross_origin()
 def submit_demographics():
     """
-    Submit demographic information and create assessment session.
+    Create user and assessment from demographic data.
     
     Request body:
     {
-        "age": 25,
-        "sex": "M",
-        "country": "United States"
+      "email": "user@example.com",
+      "age": 28,
+      "country": "US",
+      "sex": "M",
+      "consent": true
     }
     
-    Returns:
+    Response:
     {
-        "success": true,
-        "session_id": "uuid",
-        "csrf_token": "token",
-        "message": "Demographics stored successfully"
+      "success": true,
+      "data": {
+        "assessment_id": "uuid",
+        "session_token": "token",
+        "user_id": "uuid"
+      }
     }
     """
     try:
-        # Parse and validate input
         data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': 'No JSON data provided'}), 400
         
-        # Validate schema
-        schema = DemographicsSchema()
-        try:
-            validated_data = schema.load(data)
-        except ValidationError as e:
+        # Validate required fields
+        required_fields = ['email', 'age', 'country', 'sex', 'consent']
+        if not all(field in data for field in required_fields):
             return jsonify({
                 'success': False,
-                'error': 'Validation error',
-                'details': e.messages
+                'message': 'Missing required fields'
             }), 400
         
-        # Generate IDs
-        session_id = generate_session_id()
-        csrf_token = generate_session_id()[:32]
-        
-        # Store in database
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute(
-                """INSERT INTO assessments (session_id, email, age, sex, country, status, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING session_id""",
-                (session_id, validated_data['email'], validated_data['age'], validated_data['sex'],validated_data['country'], 'started', get_current_timestamp())
-            )
-            
-            conn.commit()
-            result = cursor.fetchone()
-            cursor.close()
-            
-            logger.info(f"Demographics submitted: session_id={session_id}")
-            
+        # Validate email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, data['email']):
             return jsonify({
-                'success': True,
-                'session_id': session_id,
-                'csrf_token': csrf_token,
-                'message': 'Demographics stored successfully',
-                'request_id': g.get('request_id', 'unknown')
-            }), 200
+                'success': False,
+                'message': 'Invalid email format'
+            }), 400
         
-        except Exception as e:
-            conn.rollback()
-            cursor.close()
-            logger.error(f"Database insert error: {e}")
-            raise
-    
+        # Validate age
+        try:
+            age = int(data['age'])
+            if age < 18 or age > 120:
+                return jsonify({
+                    'success': False,
+                    'message': 'Age must be between 18 and 120'
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'message': 'Invalid age value'
+            }), 400
+        
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=data['email']).first()
+        if existing_user:
+            user = existing_user
+        else:
+            # Create new user
+            from uuid import uuid4
+            user = User(
+                id=str(uuid4()),
+                email=data['email'],
+                age=age,
+                country=data['country'],
+                sex=data['sex'],
+                consent_given=data.get('consent', False),
+                created_at=datetime.utcnow()
+            )
+            db.session.add(user)
+            db.session.commit()
+        
+        # Create new assessment
+        from uuid import uuid4
+        assessment = Assessment(
+            id=str(uuid4()),
+            user_id=user.id,
+            status='in_progress',
+            created_at=datetime.utcnow()
+        )
+        db.session.add(assessment)
+        db.session.commit()
+        
+        # Generate session token
+        session_token = secrets.token_urlsafe(32)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'assessment_id': str(assessment.id),
+                'session_token': session_token,
+                'user_id': str(user.id)
+            }
+        }), 201
+        
     except Exception as e:
-        logger.error(f"Error in submit_demographics: {e}", exc_info=True)
-        if SENTRY_ENABLED:
-            sentry_sdk.capture_exception(e)
+        db.session.rollback()
+        app.logger.error(f'Demographics submission error: {str(e)}')
         return jsonify({
             'success': False,
-            'error': 'Internal server error',
-            'message': str(e) if DEBUG else 'An error occurred'
+            'message': 'Server error: ' + str(e)
         }), 500
 
-
-@app.route('/api/submit-responses', methods=['POST'])
-@limiter.limit("10 per minute")
-@require_session
-def submit_questionnaire_responses():
+@app.route('/api/questions', methods=['GET'])
+@cross_origin()
+def get_questions():
     """
-    Submit questionnaire responses (35 items) and trigger scoring pipeline.
+    Retrieve all 35 personality assessment questions.
     
-    Request body:
+    Response:
     {
-        "session_id": "uuid",
-        "responses": {
-            "R1": 8,
-            "R2": 7,
-            ...
-            "V35": 5
+      "success": true,
+      "data": [
+        {
+          "id": "R1",
+          "text": "Question text here",
+          "domain": "R",
+          "reverse_scored": false,
+          "order": 1
         },
-        "completion_time": 480
-    }
-    
-    Returns:
-    {
-        "success": true,
-        "assessment_id": "uuid",
-        "status": "processing",
-        "message": "Responses submitted successfully"
+        ...
+      ],
+      "total": 35
     }
     """
     try:
-        data = request.get_json()
+        questions = Question.query.order_by(Question.order).all()
         
-        # Validate schema
-        schema = QuestionnaireResponseSchema()
-        try:
-            validated_data = schema.load(data)
-        except ValidationError as e:
+        if not questions:
+            app.logger.warning('No questions found in database')
             return jsonify({
                 'success': False,
-                'error': 'Validation error',
-                'details': e.messages
-            }), 400
+                'message': 'No questions configured'
+            }), 500
         
-        session_id = g.session_id
-        assessment_id = generate_assessment_id()
+        questions_data = []
+        for q in questions:
+            questions_data.append({
+                'id': q.item_code,
+                'text': q.item_text,
+                'domain': q.domain,
+                'reverse_scored': getattr(q, 'reverse_scored', False),
+                'order': q.order
+            })
         
-        # Store responses in database
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        return jsonify({
+            'success': True,
+            'data': questions_data,
+            'total': len(questions_data)
+        }), 200
         
-        try:
-            # Store assessment
-            cursor.execute(
-              """
-              INSERT INTO assessments (
-              assessment_uuid, session_id, responses, completion_time, status, created_at
-              )
-              VALUES (%s, %s, %s, %s, %s, %s)
-              """,
-                (
-                assessment_id,  # keep variable name, but it is the UUID value
-                session_id,
-                safe_json_dumps(validated_data['responses']),
-                validated_data.get('completion_time', 0),
-                'processing',
-                get_current_timestamp(),
-                )
-            )
-
-
-                
-            
-            
-            # Store individual responses
-            for item_id, score in validated_data['responses'].items():
-                cursor.execute(
-                    """
-                    INSERT INTO responses (assessment_id, item_id, score, created_at)
-                    VALUES (%s, %s, %s, %s)
-                    """,
-                    (assessment_id, item_id, score, get_current_timestamp())
-                )
-            
-            conn.commit()
-            cursor.close()
-            
-            logger.info(f"Questionnaire responses submitted: assessment_id={assessment_id}")
-            
-            return jsonify({
-                'success': True,
-                'assessment_id': assessment_id,
-                'status': 'processing',
-                'message': 'Responses submitted successfully. Processing assessment...',
-                'request_id': g.get('request_id', 'unknown')
-            }), 202
-        
-        except Exception as e:
-            conn.rollback()
-            cursor.close()
-            logger.error(f"Database error in submit_questionnaire_responses: {e}")
-            raise
-    
     except Exception as e:
-        logger.error(f"Error in submit_questionnaire_responses: {e}", exc_info=True)
-        if SENTRY_ENABLED:
-            sentry_sdk.capture_exception(e)
+        app.logger.error(f'Get questions error: {str(e)}')
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'message': 'Server error: ' + str(e)
         }), 500
 
 
 @app.route('/api/calculate-scores', methods=['POST'])
-@limiter.limit("20 per minute")
+@cross_origin()
 def calculate_scores():
     """
-    Calculate personality scores using 7-step pipeline.
+    Run 7-step scoring pipeline to calculate personality scores.
     
     Request body:
     {
-        "assessment_id": "uuid"
+      "assessmentId": "uuid"
     }
     
-    Returns:
+    Response:
     {
-        "success": true,
-        "raw_scores": {...},
-        "corrected_scores": {...},
-        "validity_score": 0.85,
-        "confidence_intervals": {...},
-        "deception_parameters": {...}
+      "success": true,
+      "data": {
+        "raw_scores": { "R": 3.2, "S": 4.1, ... },
+        "corrected_scores": { "R": 3.4, "S": 4.0, ... },
+        "percentiles": { "R": 65, "S": 78, ... }
+      }
     }
     """
     try:
+        from scoring import ScoringPipeline
+        
         data = request.get_json()
-        assessment_id = data.get('assessment_id')
+        assessment_id = data.get('assessmentId')
         
         if not assessment_id:
-            return jsonify({'success': False, 'error': 'Missing assessment_id'}), 400
-        
-        # Retrieve responses from database
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        try:
-            cursor.execute(
-                "SELECT item_id, score FROM responses WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            response_records = cursor.fetchall()
-            
-            if not response_records:
-                cursor.close()
-                return jsonify({'success': False, 'error': 'Assessment not found'}), 404
-            
-            # Convert to dictionary
-            responses = {r['item_id']: r['score'] for r in response_records}
-            
-            # Step 1: Calculate raw domain scores
-            raw_scores = calculate_raw_scores(responses)
-            
-            # Step 2: Assess response validity
-            validity_score = assess_response_validity(responses)
-            
-            # Step 3: Calculate deception susceptibility
-            lambda_param = calculate_deception_susceptibility(responses, raw_scores)
-            
-            # Step 4: Calculate domain-specific deception pressure
-            delta_values = get_delta_values()
-            
-            # Step 5: Apply deception correction
-            corrected_scores = apply_deception_correction(raw_scores, lambda_param, delta_values)
-            
-            # Step 6: Prepare VAE input
-            vae_input = prepare_vae_input(corrected_scores, lambda_param, validity_score)
-            
-            # Step 7: Calculate confidence intervals
-            confidence_intervals = calculate_confidence_intervals(raw_scores, corrected_scores, validity_score)
-            
-            # Store results
-            cursor.execute(
-                """
-                INSERT INTO scoring_results (
-                    assessment_id, raw_scores, corrected_scores, validity_score,
-                    deception_lambda, delta_values, confidence_intervals, created_at
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (assessment_id, safe_json_dumps(raw_scores), safe_json_dumps(corrected_scores),
-                 validity_score, lambda_param, safe_json_dumps(delta_values),
-                 safe_json_dumps(confidence_intervals), get_current_timestamp())
-            )
-            
-            # Store VAE input for next step
-            cursor.execute(
-                """
-                INSERT INTO vae_inputs (assessment_id, input_vector, created_at)
-                VALUES (%s, %s, %s)
-                """,
-                (assessment_id, safe_json_dumps(vae_input), get_current_timestamp())
-            )
-            
-            conn.commit()
-            cursor.close()
-            
-            logger.info(f"Scores calculated: assessment_id={assessment_id}, validity={validity_score:.2f}")
-            
             return jsonify({
-                'success': True,
-                'assessment_id': assessment_id,
-                'raw_scores': raw_scores,
-                'corrected_scores': corrected_scores,
-                'validity_score': validity_score,
-                'confidence_intervals': confidence_intervals,
-                'deception_parameters': {
-                    'lambda': lambda_param,
-                    'delta_values': delta_values
-                },
-                'request_id': g.get('request_id', 'unknown')
-            }), 200
+                'success': False,
+                'message': 'Missing assessmentId'
+            }), 400
         
-        except Exception as e:
-            conn.rollback()
-            cursor.close()
-            logger.error(f"Error in calculate_scores: {e}")
-            raise
-    
+        # Get assessment
+        assessment = Assessment.query.get(assessment_id)
+        if not assessment:
+            return jsonify({
+                'success': False,
+                'message': 'Assessment not found'
+            }), 404
+        
+        # Get all responses
+        responses = Response.query.filter_by(assessment_id=assessment_id).all()
+        if len(responses) != 35:
+            return jsonify({
+                'success': False,
+                'message': f'Expected 35 responses, found {len(responses)}'
+            }), 400
+        
+        # Build response dictionary
+        response_dict = {}
+        for r in responses:
+            response_dict[r.item_code] = r.raw_response
+        
+        # Run scoring pipeline
+        pipeline = ScoringPipeline()
+        scores = pipeline.calculate_scores(response_dict)
+        
+        # Store in assessment
+        import json
+        assessment.raw_scores = json.dumps(scores.get('raw_scores', {}))
+        assessment.corrected_scores = json.dumps(scores.get('corrected_scores', {}))
+        assessment.confidence_intervals = json.dumps(scores.get('confidence_intervals', {}))
+        assessment.percentiles = json.dumps(scores.get('percentiles', {}))
+        assessment.status = 'scores_calculated'
+        assessment.scores_calculated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'raw_scores': scores.get('raw_scores', {}),
+                'corrected_scores': scores.get('corrected_scores', {}),
+                'percentiles': scores.get('percentiles', {})
+            }
+        }), 200
+        
     except Exception as e:
-        logger.error(f"Error in calculate_scores: {e}", exc_info=True)
-        if SENTRY_ENABLED:
-            sentry_sdk.capture_exception(e)
+        db.session.rollback()
+        app.logger.error(f'Calculate scores error: {str(e)}')
         return jsonify({
             'success': False,
-            'error': 'Scoring calculation failed'
+            'message': 'Server error: ' + str(e)
         }), 500
 
-
 @app.route('/api/run-vae', methods=['POST'])
-@limiter.limit("20 per minute")
-def run_vae_inference():
+@cross_origin()
+def run_vae():
     """
     Run VAE inference for personality classification.
     
     Request body:
     {
-        "assessment_id": "uuid"
+      "assessmentId": "uuid"
     }
     
-    Returns:
+    Response:
     {
-        "success": true,
-        "primary_type": "Ambitious Explorer",
-        "confidence": 0.68,
-        "anomaly_score": 0.23,
-        "personality_blend": {...}
+      "success": true,
+      "data": {
+        "personality_type": "A",
+        "personality_label": "Ambitious Explorer",
+        "novelty_score": 2.3
+      }
     }
     """
     try:
+        from vae_model_implementation import VAEInference
+        import json
+        
         data = request.get_json()
-        assessment_id = data.get('assessment_id')
+        assessment_id = data.get('assessmentId')
         
         if not assessment_id:
-            return jsonify({'success': False, 'error': 'Missing assessment_id'}), 400
-        
-        # Retrieve VAE input from database
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        try:
-            cursor.execute(
-                "SELECT input_vector FROM vae_inputs WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            vae_record = cursor.fetchone()
-            
-            if not vae_record:
-                cursor.close()
-                return jsonify({'success': False, 'error': 'VAE input not found'}), 404
-            
-            vae_input = json.loads(vae_record['input_vector'])
-            
-            # Run VAE inference
-            classification = run_vae_classification(vae_input)
-            
-            # Store VAE results
-            cursor.execute(
-                """
-                INSERT INTO vae_outputs (
-                    assessment_id, latent_vector, anomaly_score,
-                    primary_type, primary_confidence, type_blend, created_at
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """,
-                (assessment_id, safe_json_dumps(classification['latent_vector']),
-                 classification['anomaly_score'], classification['primary_type'],
-                 classification['primary_confidence'], safe_json_dumps(classification['type_blend']),
-                 get_current_timestamp())
-            )
-            
-            conn.commit()
-            cursor.close()
-            
-            logger.info(f"VAE inference complete: assessment_id={assessment_id}, "
-                       f"type={classification['primary_type']}")
-            
             return jsonify({
-                'success': True,
-                'assessment_id': assessment_id,
-                'primary_type': classification['primary_type'],
-                'primary_confidence': classification['primary_confidence'],
-                'secondary_type': classification.get('secondary_type', ''),
-                'secondary_confidence': classification.get('secondary_confidence', 0),
-                'anomaly_score': classification['anomaly_score'],
-                'is_anomalous': classification['anomaly_score'] > 0.7,
-                'personality_blend': classification['type_blend'],
-                'descriptors': classification.get('descriptors', []),
-                'request_id': g.get('request_id', 'unknown')
-            }), 200
+                'success': False,
+                'message': 'Missing assessmentId'
+            }), 400
         
-        except Exception as e:
-            conn.rollback()
-            cursor.close()
-            logger.error(f"Error in run_vae_inference: {e}")
-            raise
-    
+        # Get assessment
+        assessment = Assessment.query.get(assessment_id)
+        if not assessment:
+            return jsonify({
+                'success': False,
+                'message': 'Assessment not found'
+            }), 404
+        
+        if not assessment.corrected_scores:
+            return jsonify({
+                'success': False,
+                'message': 'Scores not calculated yet'
+            }), 400
+        
+        # Parse scores
+        scores = json.loads(assessment.corrected_scores)
+        
+        # Run VAE inference
+        vae = VAEInference()
+        personality_type = vae.classify(scores)
+        novelty_score = vae.calculate_novelty(scores)
+        
+        # Personality type mapping
+        type_labels = {
+            'A': 'Ambitious Explorer',
+            'B': 'Stable Organizer',
+            'C': 'Creative Innovator',
+            'D': 'Analytical Thinker',
+            'E': 'Empathetic Connector',
+            'F': 'Free Spirit'
+        }
+        
+        # Store results
+        assessment.personality_type = personality_type
+        assessment.personality_label = type_labels.get(personality_type, 'Unknown')
+        assessment.novelty_score = float(novelty_score)
+        assessment.status = 'vae_classified'
+        assessment.vae_classified_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'personality_type': personality_type,
+                'personality_label': type_labels.get(personality_type),
+                'novelty_score': float(novelty_score)
+            }
+        }), 200
+        
     except Exception as e:
-        logger.error(f"Error in run_vae_inference: {e}", exc_info=True)
-        if SENTRY_ENABLED:
-            sentry_sdk.capture_exception(e)
+        db.session.rollback()
+        app.logger.error(f'VAE inference error: {str(e)}')
         return jsonify({
             'success': False,
-            'error': 'VAE inference failed'
+            'message': 'Server error: ' + str(e)
         }), 500
 
 
 @app.route('/api/generate-narrative', methods=['POST'])
-@limiter.limit("20 per minute")
+@cross_origin()
 def generate_narrative():
     """
-    Generate AI-powered personality narrative.
+    Generate AI-powered personality narrative using LLM.
     
     Request body:
     {
-        "assessment_id": "uuid"
+      "assessmentId": "uuid"
     }
     
-    Returns:
+    Response:
     {
-        "success": true,
-        "narrative": "Your personality narrative...",
-        "word_count": 437,
-        "api_used": "gemini-pro",
-        "tokens_used": 150
+      "success": true,
+      "data": {
+        "narrative": "Your personality type is..."
+      }
     }
     """
     try:
+        from chatgpt_integration import NarrativeGenerator
+        import json
+        
         data = request.get_json()
-        assessment_id = data.get('assessment_id')
+        assessment_id = data.get('assessmentId')
         
         if not assessment_id:
-            return jsonify({'success': False, 'error': 'Missing assessment_id'}), 400
-        
-        # Retrieve assessment data
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        try:
-            # Get scoring results
-            cursor.execute(
-                "SELECT * FROM scoring_results WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            scoring_results = cursor.fetchone()
-            
-            # Get VAE classification
-            cursor.execute(
-                "SELECT * FROM vae_outputs WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            vae_results = cursor.fetchone()
-            
-            if not scoring_results or not vae_results:
-                cursor.close()
-                return jsonify({'success': False, 'error': 'Assessment data not found'}), 404
-            
-            # Build context for narrative generation
-            narrative_context = {
-                'personality_type': vae_results['primary_type'],
-                'confidence': vae_results['primary_confidence'],
-                'raw_scores': json.loads(scoring_results['raw_scores']),
-                'corrected_scores': json.loads(scoring_results['corrected_scores']),
-                'anomaly_score': vae_results['anomaly_score'],
-                'type_blend': json.loads(vae_results['type_blend'])
-            }
-            
-            # Generate narrative
-            narrative_data = generate_personality_narrative(narrative_context)
-            
-            # Store narrative
-            cursor.execute(
-                """
-                INSERT INTO narratives (
-                    assessment_id, narrative_text, word_count,
-                    api_used, tokens_used, quality_score, created_at
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """,
-                (assessment_id, narrative_data['narrative'], narrative_data['word_count'],
-                 narrative_data['api_used'], narrative_data.get('tokens_used', 0),
-                 narrative_data.get('quality_score', 0.8), get_current_timestamp())
-            )
-            
-            # Mark assessment as complete
-            cursor.execute(
-                """
-                UPDATE assessments SET status = %s, completed_at = %s
-                WHERE assessment_id = %s
-                """,
-                ('completed', get_current_timestamp(), assessment_id)
-            )
-            
-            conn.commit()
-            cursor.close()
-            
-            logger.info(f"Narrative generated: assessment_id={assessment_id}")
-            
             return jsonify({
-                'success': True,
-                'assessment_id': assessment_id,
-                'narrative': narrative_data['narrative'],
-                'word_count': narrative_data['word_count'],
-                'api_used': narrative_data['api_used'],
-                'tokens_used': narrative_data.get('tokens_used', 0),
-                'quality_score': narrative_data.get('quality_score', 0.8),
-                'request_id': g.get('request_id', 'unknown')
-            }), 200
+                'success': False,
+                'message': 'Missing assessmentId'
+            }), 400
         
-        except Exception as e:
-            conn.rollback()
-            cursor.close()
-            logger.error(f"Error in generate_narrative: {e}")
-            raise
-    
+        # Get assessment
+        assessment = Assessment.query.get(assessment_id)
+        if not assessment:
+            return jsonify({
+                'success': False,
+                'message': 'Assessment not found'
+            }), 404
+        
+        if not assessment.personality_type:
+            return jsonify({
+                'success': False,
+                'message': 'VAE classification not completed'
+            }), 400
+        
+        # Parse scores
+        corrected_scores = json.loads(assessment.corrected_scores)
+        percentiles = json.loads(assessment.percentiles)
+        
+        # Build narrative request
+        narrative_request = {
+            'assessment_id': assessment_id,
+            'personality_type': assessment.personality_type,
+            'personality_label': assessment.personality_label,
+            'trait_scores': corrected_scores,
+            'novelty_score': float(assessment.novelty_score),
+            'percentiles': percentiles,
+            'style': 'professional',
+            'language': 'en'
+        }
+        
+        # Generate narrative
+        try:
+            generator = NarrativeGenerator()
+            narrative_result = generator.generate(narrative_request)
+            narrative_text = narrative_result if isinstance(narrative_result, str) else narrative_result.get('narrative', 'Unable to generate narrative')
+        except Exception as llm_error:
+            app.logger.warning(f'LLM generation failed, using fallback: {str(llm_error)}')
+            narrative_text = f"You are a {assessment.personality_label}. Your personality is characterized by your unique combination of traits and motivations."
+        
+        # Store narrative
+        assessment.narrative = narrative_text
+        assessment.status = 'narrative_generated'
+        assessment.narrative_generated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'narrative': narrative_text
+            }
+        }), 200
+        
     except Exception as e:
-        logger.error(f"Error in generate_narrative: {e}", exc_info=True)
-        if SENTRY_ENABLED:
-            sentry_sdk.capture_exception(e)
+        db.session.rollback()
+        app.logger.error(f'Generate narrative error: {str(e)}')
         return jsonify({
             'success': False,
-            'error': 'Narrative generation failed'
+            'message': 'Server error: ' + str(e)
         }), 500
 
-
 @app.route('/api/results/<assessment_id>', methods=['GET'])
-@limiter.limit("30 per minute")
+@cross_origin()
 def get_results(assessment_id):
     """
     Retrieve complete assessment results.
     
-    URL params:
-    - assessment_id: UUID of assessment
-    
-    Returns:
+    Response:
     {
-        "success": true,
-        "assessment": {...},
-        "demographics": {...},
-        "raw_scores": {...},
+      "success": true,
+      "data": {
+        "assessment_id": "uuid",
+        "personality_type": "A",
+        "personality_label": "Ambitious Explorer",
         "corrected_scores": {...},
-        "personality_type": "...",
-        "narrative": "...",
-        "confidence_intervals": {...}
+        "percentiles": {...},
+        "narrative": "Your personality narrative...",
+        "completed_at": "2026-01-21T10:30:00"
+      }
     }
     """
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        import json
+        
+        assessment = Assessment.query.get(assessment_id)
+        if not assessment:
+            return jsonify({
+                'success': False,
+                'message': 'Assessment not found'
+            }), 404
+        
+        # Parse JSON fields
+        corrected_scores = {}
+        percentiles = {}
+        confidence_intervals = {}
         
         try:
-            # Get assessment
-            cursor.execute(
-                "SELECT * FROM assessments WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            assessment = cursor.fetchone()
-            
-            if not assessment:
-                cursor.close()
-                return jsonify({'success': False, 'error': 'Assessment not found'}), 404
-            
-            # Get scoring results
-            cursor.execute(
-                "SELECT * FROM scoring_results WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            scoring = cursor.fetchone()
-            
-            # Get VAE results
-            cursor.execute(
-                "SELECT * FROM vae_outputs WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            vae = cursor.fetchone()
-            
-            # Get narrative
-            cursor.execute(
-                "SELECT * FROM narratives WHERE assessment_id = %s",
-                (assessment_id,)
-            )
-            narrative = cursor.fetchone()
-            
-            cursor.close()
-            
-            # Build response
-            result = {
-                'success': True,
-                'assessment_id': assessment_id,
-                'status': assessment['status'],
-                'demographics': {
-                    'age': assessment['age'],
-                    'sex': assessment['sex'],
-                    'country': assessment['country']
-                },
-                'created_at': assessment['created_at']
-            }
-            
-            if scoring:
-                result['raw_scores'] = json.loads(scoring['raw_scores'])
-                result['corrected_scores'] = json.loads(scoring['corrected_scores'])
-                result['validity_score'] = scoring['validity_score']
-                result['confidence_intervals'] = json.loads(scoring['confidence_intervals'])
-                result['deception_lambda'] = scoring['deception_lambda']
-            
-            if vae:
-                result['personality_type'] = vae['primary_type']
-                result['confidence'] = vae['primary_confidence']
-                result['anomaly_score'] = vae['anomaly_score']
-                result['type_blend'] = json.loads(vae['type_blend'])
-            
-            if narrative:
-                result['narrative'] = narrative['narrative_text']
-                result['narrative_metadata'] = {
-                    'word_count': narrative['word_count'],
-                    'api_used': narrative['api_used'],
-                    'generated_at': narrative['created_at']
-                }
-            
-            return jsonify(result), 200
+            if assessment.corrected_scores:
+                corrected_scores = json.loads(assessment.corrected_scores)
+            if assessment.percentiles:
+                percentiles = json.loads(assessment.percentiles)
+            if assessment.confidence_intervals:
+                confidence_intervals = json.loads(assessment.confidence_intervals)
+        except json.JSONDecodeError:
+            pass
         
-        except Exception as e:
-            cursor.close()
-            logger.error(f"Error in get_results: {e}")
-            raise
-    
+        # Compile results
+        results = {
+            'assessment_id': str(assessment.id),
+            'personality_type': assessment.personality_type or 'Not classified',
+            'personality_label': assessment.personality_label or 'Unknown',
+            'corrected_scores': corrected_scores,
+            'percentiles': percentiles,
+            'confidence_intervals': confidence_intervals,
+            'novelty_score': float(assessment.novelty_score) if assessment.novelty_score else None,
+            'narrative': assessment.narrative or 'Narrative pending...',
+            'status': assessment.status,
+            'completed_at': assessment.completed_at.isoformat() if assessment.completed_at else None,
+            'created_at': assessment.created_at.isoformat() if assessment.created_at else None
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': results
+        }), 200
+        
     except Exception as e:
-        logger.error(f"Error in get_results: {e}", exc_info=True)
-        if SENTRY_ENABLED:
-            sentry_sdk.capture_exception(e)
+        app.logger.error(f'Get results error: {str(e)}')
         return jsonify({
             'success': False,
-            'error': 'Failed to retrieve results'
+            'message': 'Server error: ' + str(e)
         }), 500
 
 
