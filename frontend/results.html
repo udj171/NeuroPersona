@@ -369,7 +369,102 @@
             </div>
         </div>
     </footer>
-
+    
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const loadingDiv = document.getElementById('loadingContainer');
+  const resultsDiv = document.getElementById('resultsContainer');
+  
+  try {
+    // Get assessment ID from localStorage
+    const assessmentId = localStorage.getItem('efopa_assessment_id');
+    
+    if (!assessmentId) {
+      throw new Error('No assessment ID found. Please start from the beginning.');
+    }
+    
+    console.log('Loading results for assessment:', assessmentId);
+    
+    // Fetch results from API
+    const response = await fetch(`/api/results/${assessmentId}`);
+    
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to load results');
+    }
+    
+    const results = data.data;
+    
+    // Hide loading spinner
+    loadingDiv.style.display = 'none';
+    resultsDiv.style.display = 'block';
+    
+    // Populate personality type
+    document.querySelector('.personality-type-display').innerHTML = `
+      <h1>${results.personality_type}</h1>
+      <p class="personality-label">${results.personality_label}</p>
+    `;
+    
+    // Populate domain scores table
+    const domainsTableBody = document.querySelector('.domains-table tbody');
+    domainsTableBody.innerHTML = '';
+    
+    const domainLabels = {
+      'R': 'Relationships',
+      'S': 'Status/Stability',
+      'C': 'Conscientiousness',
+      'A': 'Agreeableness',
+      'O': 'Openness',
+      'E': 'Emotional Stability'
+    };
+    
+    for (const [domain, score] of Object.entries(results.corrected_scores)) {
+      const percentile = results.percentiles[domain] || 'N/A';
+      const ci = results.confidence_intervals[domain] || {};
+      
+      domainsTableBody.innerHTML += `
+        <tr>
+          <td>${domainLabels[domain] || domain}</td>
+          <td>${Number(score).toFixed(1)}/5</td>
+          <td>${percentile}%</td>
+          <td>${ci.lower ? Number(ci.lower).toFixed(1) : 'N/A'} - ${ci.upper ? Number(ci.upper).toFixed(1) : 'N/A'}</td>
+        </tr>
+      `;
+    }
+    
+    // Populate narrative
+    const narrativeDiv = document.querySelector('.narrative-content');
+    narrativeDiv.innerHTML = `<p>${results.narrative}</p>`;
+    
+    // Populate metadata
+    document.querySelector('.assessment-id').textContent = results.assessment_id;
+    document.querySelector('.completion-time').textContent = 
+      new Date(results.completed_at).toLocaleString();
+    document.querySelector('.novelty-score').textContent = 
+      (results.novelty_score || 0).toFixed(2);
+    
+  } catch (error) {
+    console.error('Error loading results:', error);
+    
+    // Show error message
+    loadingDiv.style.display = 'none';
+    resultsDiv.innerHTML = `
+      <div class="error-container">
+        <h2>Unable to Load Results</h2>
+        <p>${error.message}</p>
+        <button onclick="window.location.href='index.html'" class="btn btn-primary">
+          Start New Assessment
+        </button>
+      </div>
+    `;
+  }
+});
+</script>
     <!-- JavaScript -->
     <script src="results.js" defer></script>
 </body>
