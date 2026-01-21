@@ -585,53 +585,6 @@
   <script src="api-client.js" defer></script>
   <script src="form-logic.js" defer></script>
   
-  <!-- CRITICAL FIX: Override form submit -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const registrationForm = document.getElementById('registrationForm');
-      if (!registrationForm) return;
-      
-      registrationForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('email')?.value;
-        const age = document.getElementById('age')?.value;
-        const country = document.getElementById('country')?.value;
-        const sex = document.getElementById('sex')?.value;
-        const consent = document.getElementById('consent')?.checked;
-        
-        if (!email || !age || !country || !sex || !consent) {
-          alert('❌ Please fill all fields');
-          return;
-        }
-        
-        const submitBtn = document.getElementById('submitBtn');
-        if (submitBtn) submitBtn.disabled = true;
-        
-        try {
-          console.log('🚀 Submitting to backend...');
-          
-          const response = await window.apiClient.submitDemographics({
-            email: email,
-            age: parseInt(age),
-            country: country,
-            sex: sex,
-            consent: consent
-          });
-          
-          console.log('✅ Success! Response:', response);
-          
-          localStorage.setItem('sessionId', response.sessionId);
-          localStorage.setItem('assessmentId', response.assessmentId);
-          
-          window.location.href = 'questionnaire.html';
-        } catch (error) {
-          console.error('❌ Error:', error.message);
-          alert('Error: ' + error.message);
-          if (submitBtn) submitBtn.disabled = false;
-        }
-      });
-    });
   </script>
 
 </body>
