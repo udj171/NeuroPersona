@@ -110,7 +110,7 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = DEBUG
 # ⭐ ENABLE CORS
 CORS(
     app,
-    resources={r"/api/*": {"origins": ["https://predictmypersonality.com"]}},
+    CORS(app, resources={r"/api*": {"origins": ["https://predictmypersonality.com", "http://localhost:3000"], "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization"], "supports_credentials": True}}),
     allow_headers=["Content-Type", "Authorization", "X-Request-ID", "X-Client-Version", "X-CSRF-Token"],
     methods=["GET", "POST", "OPTIONS"],
     supports_credentials=True,
