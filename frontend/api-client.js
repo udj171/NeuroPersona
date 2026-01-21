@@ -976,7 +976,7 @@ class RateLimitError extends APIError {
 }
 
 // Export for use
-window.apiClient = new APIClient({ baseUrl: 'https://neuropersona.onrender.com' });
+window.apiClient = APIClient;
 window.APIError = APIError;
 window.ClientError = ClientError;
 window.AuthenticationError = AuthenticationError;
