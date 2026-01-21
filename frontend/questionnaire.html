@@ -563,6 +563,53 @@
     </script>
 
     <!-- JavaScript -->
-    <script src="questionnaire.js" defer></script>
+    <script src="form-logic.js"></script>
+    <script src="api-client.js"></script>
+
+    <script>
+        // Load questions from API on page load
+        async function loadQuestions() {
+            try {
+                console.log('Loading questions from /api/questions...');
+                
+                const response = await fetch('/api/questions');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to load questions');
+                }
+                
+                const questions = data.data;
+                console.log(`Loaded ${questions.length} questions`);
+                
+                // Store in window for form logic
+                window.QUESTIONS = questions;
+                
+                // Initialize questionnaire with loaded questions
+                if (window.EFOPAFormLogic && window.EFOPAFormLogic.Questionnaire) {
+                    window.EFOPAFormLogic.Questionnaire.init(questions);
+                }
+                
+                return questions;
+                
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                document.body.innerHTML = `
+                    <div style="padding: 40px; text-align: center;">
+                        <h2>Error Loading Questions</h2>
+                        <p>${error.message}</p>
+                        <button onclick="location.reload()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', loadQuestions);
+    </script>
+
+
+    
+        
 </body>
 </html>
