@@ -146,16 +146,23 @@ class DatabasePool:
         logger.info(f"Database pool initialized: {min_connections}-{max_connections} connections")
 
     def get_db_connection():
-      if 'db' not in g:
-        g.db = db_pool.get_connection()
-      return g.db
+    """Get database connection from pool."""
+        if 'db' not in g:
+            g.db = db_pool.get_connection()
+        return g.db
+
 
     def close_db_connection(e=None):
+    """Close database connection."""
         db = g.pop('db', None)
-      if db is not None:
-        db_pool.put_connection(db)
+        if db is not None:
+            db_pool.put_connection(db)
+
 
     app.teardown_appcontext(close_db_connection)
+
+
+
 
 
 # Initialize database pool
