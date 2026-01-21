@@ -157,28 +157,6 @@ class DatabasePool:
 
     app.teardown_appcontext(close_db_connection)
 
-    
-    def get_connection(self):
-        """Get connection from pool."""
-        try:
-            conn = self.pool.getconn()
-            conn.autocommit = False
-            return conn
-        except Exception as e:
-            logger.error(f"Failed to get database connection: {e}")
-            raise
-    
-    def put_connection(self, conn):
-        """Return connection to pool."""
-        try:
-            self.pool.putconn(conn)
-        except Exception as e:
-            logger.error(f"Failed to return connection to pool: {e}")
-    
-    def close_all(self):
-        """Close all connections in pool."""
-        self.pool.closeall()
-
 
 # Initialize database pool
 try:
