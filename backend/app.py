@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any
 from functools import wraps
 from io import BytesIO
-
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 # Flask and extensions
 from flask import (
     Flask, request, jsonify, send_file, current_app, 
@@ -31,13 +32,7 @@ from psycopg2.extras import RealDictCursor
 # Data validation
 from marshmallow import Schema, fields, ValidationError, pre_load
 
-# Logging and monitoring
-try:
-    import sentry_sdk
-    from sentry_sdk.integrations.flask import FlaskIntegration
-    SENTRY_ENABLED = True
-except ImportError:
-    SENTRY_ENABLED = False
+
 
 # PDF export
 from reportlab.lib.pagesizes import letter, A4
@@ -60,12 +55,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG = FLASK_ENV == 'development'
 
 # Initialize Sentry error tracking
-if SENTRY_ENABLED and SENTRY_DSN:
+if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[FlaskIntegration()],
         traces_sample_rate=0.1,
-        debug=DEBUG,
+        environment=os.getenv('FLASK_ENV', 'production'),
         attach_stacktrace=True
     )
 
@@ -294,8 +289,8 @@ class ScoringResultsSchema(Schema):
 # ERROR HANDLERS & MIDDLEWARE
 # ==============================================================================
 
-@app.before_request
-def before_request():
+@app.before_first_request
+def before_first_request():
     """Pre-request processing."""
     g.request_id = generate_session_id()
     g.start_time = datetime.utcnow()
