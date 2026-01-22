@@ -159,40 +159,9 @@ class DatabasePool:
             db_pool.put_connection(db)
 
 
-    app.teardown_appcontext(close_db_connection)
-
-
-
-
-
-# Initialize database pool
-try:
-    db_pool = DatabasePool(DATABASE_URL, min_connections=2, max_connections=20)
-    logger.info("Database pool created successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize database pool: {e}")
-    raise
-
 # ==============================================================================
 # UTILITY FUNCTIONS
 # ==============================================================================
-
-def get_db_connection():
-    """Get database connection from pool."""
-    if 'db' not in g:
-        g.db = db_pool.get_connection()
-    return g.db
-
-
-def close_db_connection(e=None):
-    """Close database connection."""
-    db = g.pop('db', None)
-    if db is not None:
-        db_pool.put_connection(db)
-
-
-app.teardown_appcontext(close_db_connection)
-
 
 def generate_session_id() -> str:
     """Generate unique session ID."""
