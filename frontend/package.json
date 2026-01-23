@@ -1,0 +1,19 @@
+{
+  "name": "neuropersona-frontend",
+  "version": "1.0.0",
+  "description": "Personality Assessment Frontend - NeuroPersona AI",
+  "private": true,
+  "scripts": {
+    "dev": "serve .",
+    "build": "echo 'No build step needed for static frontend'",
+    "start": "serve .",
+    "preview": "serve ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "serve": "^14.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
