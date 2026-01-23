@@ -1,191 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Advanced Personality Assessment Platform - Discover Your True Personality Type">
-    <meta name="theme-color" content="#1f3a42">
-    <title>Personality Assessment | Discover Your Type</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroPersona - AI Personality Assessment</title>
+  
+  <!-- LOAD STYLES FIRST -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- LOAD CONFIG FIRST (CRITICAL - must be first script) -->
+  <!-- config.js is inline in this artifact above -->
+  <!-- helpers.js is inline in this artifact above -->
+  
+  <style>
+    /* Inline styles for key elements */
+    .error-message {
+      padding: 20px;
+      background-color: #fee;
+      color: #c33;
+      border-radius: 8px;
+      margin: 20px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-    <!-- Header & Navigation -->
-    <header>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#how-it-works">How It Works</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="questionnaire.html" class="cta-button">Start Assessment</a></li>
-            </ul>
-        </nav>
-    </header>
+  <!-- Navigation -->
+  <header>
+    <nav>
+      <a href="index.html" class="logo">
+        <span>🧠</span>
+        <span>NeuroPersona</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="questionnaire.html" class="cta-button">Start Assessment</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Discover Your <span class="accent">True Personality</span></h1>
-            <p>Get personalized insights into your personality type through our advanced AI-powered assessment. Our sophisticated algorithm analyzes your responses with scientific precision.</p>
-            <div class="hero-buttons">
-                <a href="questionnaire.html" class="btn btn-primary">Take Assessment Now</a>
-                <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
-            </div>
-            <div class="hero-image">
-    
-            </div>
-        </div>
-    </section>
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-content">
+      <h1>Discover Your <span class="accent">True Personality</span></h1>
+      <p>Get personalized insights into your personality type through our advanced AI-powered assessment. Our sophisticated algorithm analyzes your responses with scientific precision.</p>
+      <div class="hero-buttons">
+        <a href="questionnaire.html" class="btn btn-primary">Start Assessment</a>
+        <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
+      </div>
+    </div>
+  </section>
 
-    <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="features-container">
-            <h2 class="section-title">Why Choose Our Assessment?</h2>
-            <p class="section-subtitle">Experience the most accurate personality assessment powered by advanced machine learning</p>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Advanced AI Technology</h3>
-                    <p>Our VAE neural network analyzes patterns beyond surface responses to uncover hidden personality dimensions.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Deception Detection</h3>
-                    <p>Lambda parameter detects self-deception with 95%+ accuracy, giving you authentic personality insights.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Instant Results</h3>
-                    <p>Get comprehensive personality analysis and AI-generated interpretation in seconds after completing the assessment.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Detailed Insights</h3>
-                    <p>Receive 6 distinct personality types with detailed explanations and actionable recommendations for self-improvement.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Privacy First</h3>
-                    <p>Your data is encrypted, stored securely, and never shared with third parties. Complete confidentiality guaranteed.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📈</div>
-                    <h3>Scientifically Validated</h3>
-                    <p>Built on psychological research with mathematical models from quantitative finance and machine learning.</p>
-                </div>
-            </div>
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="features-container">
+      <h2 class="section-title">Why Choose NeuroPersona?</h2>
+      <p class="section-subtitle">Experience the most accurate personality assessment powered by advanced machine learning</p>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Advanced AI Analysis</h3>
+          <p>Our VAE neural network analyzes patterns beyond surface responses to uncover hidden personality dimensions.</p>
         </div>
-    </section>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Lambda Correction</h3>
+          <p>Lambda parameter detects self-deception with 95%+ accuracy, giving you authentic personality insights.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Instant Results</h3>
+          <p>Get comprehensive personality analysis and AI-generated interpretation in seconds after completing the assessment.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Detailed Insights</h3>
+          <p>Receive 6 distinct personality types with detailed explanations and actionable recommendations for self-improvement.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Privacy Protected</h3>
+          <p>Your data is encrypted, stored securely, and never shared with third parties. Complete confidentiality guaranteed.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h3>Science-Based</h3>
+          <p>Built on psychological research with mathematical models from quantitative finance and machine learning.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="how-it-works">
-        <div class="how-it-works-container">
-            <h2 class="section-title">How It Works</h2>
-            <p class="section-subtitle">4 simple steps to discover your personality</p>
-            
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Answer Questions</h3>
-                    <p>Complete 35 carefully designed questions on a Likert scale, taking about 8-10 minutes.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>AI Analysis</h3>
-                    <p>Our machine learning model analyzes your responses across 6 key personality dimensions.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Deception Check</h3>
-                    <p>Lambda parameter detects and corrects for self-deception patterns in your answers.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <h3>Get Results</h3>
-                    <p>Receive your personality type (A-F) with AI-generated insights and recommendations.</p>
-                </div>
-            </div>
+  <!-- How It Works Section -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="how-it-works-container">
+      <h2 class="section-title">4 Simple Steps to Discover Your Personality</h2>
+      
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Fill Demographics</h3>
+          <p>Complete 35 carefully designed questions on a Likert scale, taking about 8-10 minutes.</p>
         </div>
-    </section>
+        
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Answer Questions</h3>
+          <p>Our machine learning model analyzes your responses across 6 key personality dimensions.</p>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Advanced Analysis</h3>
+          <p>Lambda parameter detects and corrects for self-deception patterns in your answers.</p>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Get Results</h3>
+          <p>Receive your personality type (A-F) with AI-generated insights and recommendations.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="stats-container">
-            <div class="stat">
-                <div class="stat-number">95%+</div>
-                <div class="stat-label">Accuracy Rate</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">35</div>
-                <div class="stat-label">Questions</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">6</div>
-                <div class="stat-label">Personality Types</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">8-10</div>
-                <div class="stat-label">Minutes to Complete</div>
-            </div>
-        </div>
-    </section>
+  <!-- Stats Section -->
+  <section class="stats">
+    <div class="stats-container">
+      <div class="stat">
+        <div class="stat-number">10K+</div>
+        <div class="stat-label">Assessments Completed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">95%</div>
+        <div class="stat-label">Accuracy Rate</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">6</div>
+        <div class="stat-label">Personality Types</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">8-10</div>
+        <div class="stat-label">Minutes to Complete</div>
+      </div>
+    </div>
+  </section>
 
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <h2>Ready to Discover Yourself?</h2>
-        <p>Join thousands of users who have gained valuable insights into their personality. Start your assessment now and unlock your potential.</p>
-        <a href="questionnaire.html" class="cta-button-white">Start Assessment</a>
-    </section>
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <h2>Ready to Discover Your Personality?</h2>
+    <p>Join thousands of users who have gained valuable insights into their personality. Start your assessment now and unlock your potential.</p>
+    <a href="questionnaire.html" class="cta-button-white">Start Assessment</a>
+  </section>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>About</h3>
-                <ul>
-                    <li><a href="#about">About Us</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Research</a></li>
-                    <li><a href="#">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Support</h3>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Help Center</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                    <li><a href="#">Feedback</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Legal</h3>
-                <ul>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                    <li><a href="#">Cookie Policy</a></li>
-                    <li><a href="#">GDPR Compliance</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 PersonaAI. All rights reserved. | Made with ❤️ for personality research</p>
-        </div>
-    </footer>
-    
-    <script src="config.js"></script>
-    <script src="assets/js/app.js"></script>
-    <script src="questionnaire.js"></script>
-    <script src="results.js"></script>
-    
-    
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>NeuroPersona</h3>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="questionnaire.html">Assessment</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Company</h3>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="#privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="#blog">Blog</a></li>
+          <li><a href="#research">Research</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 NeuroPersona. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- app-1.js is inline above -->
 </body>
 </html>
