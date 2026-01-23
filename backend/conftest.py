@@ -2,7 +2,7 @@
 # SCRIPT 19: conftest.py - Pytest Configuration & Fixtures
 # ============================================================================
 
-conftest_code = '''
+
 import pytest
 import sys
 import os
@@ -77,4 +77,4 @@ def sample_scoring_result(sample_responses):
         },
         'vae_input': [4.9, 5.0, 5.1, 4.8, 5.2, 5.0, 0.5, 1.5, 0.2],
     }
-'''
+
