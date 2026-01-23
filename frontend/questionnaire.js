@@ -58,7 +58,7 @@ const QUESTIONS = [
  * @param {object} options - fetch options
  */
 async function makeApiRequest(endpoint, options = {}) {
-    const baseUrl = window.API_CONFIG?.BASE_URL || 'https://neuropersona.onrender.com';
+    const baseUrl = window.API_CONFIG.BASE_URL || 'https://neuropersona.onrender.com';
     const url = `${baseUrl}${endpoint}`;
     
     console.log(`[API] ${options.method || 'GET'} ${url}`);
