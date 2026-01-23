@@ -9,7 +9,7 @@ from pathlib import Path
 
 class Config:
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'atharvajagtap0107080133446677cybeydbs')
     DEBUG = os.getenv('DEBUG', 'False') == 'True'
     TESTING = False
     
