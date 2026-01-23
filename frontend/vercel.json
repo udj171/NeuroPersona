@@ -1,8 +1,0 @@
-{
-  "buildCommand": "echo 'Static site - no build needed'",
-  "outputDirectory": ".",
-  "installCommand": "npm install",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@neuropersona-api-url"
-  }
-}
