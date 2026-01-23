@@ -2,7 +2,7 @@
 // CONFIGURATION & CONSTANTS
 // ============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://personality-assessment-api.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 const CONFIG = {
     API_URL: API_BASE_URL,
