@@ -1,0 +1,13 @@
+{
+  "buildCommand": "echo 'Frontend ready'",
+  "outputDirectory": "public",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@api_url"
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
