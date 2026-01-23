@@ -12,6 +12,8 @@ import logging.config
 from datetime import datetime, timezone
 import traceback
 import os
+from api_routes import api_bp
+
 cache = Cache()
 limiter = Limiter(key_func=get_remote_address)
 from models import db, migrate, User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation
