@@ -2,7 +2,7 @@
   "buildCommand": "echo 'Frontend ready'",
   "outputDirectory": "public",
   "env": {
-    "https://neuropersona.onrender.com": "@api_url"
+    "": "@api_url"
   },
   "rewrites": [
     {
