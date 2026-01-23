@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Personality Results</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <span>🧠</span> PredictMyPersonality
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#features">Features</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero" style="min-height: auto; padding: 40px 20px;">
+        <div class="hero-content" style="max-width: 900px;">
+            <!-- Loading State -->
+            <div id="loading-state" style="text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+                <h2 style="color: #208099; margin-bottom: 10px;">Loading Your Results...</h2>
+                <p style="color: #5a6c6d;">Analyzing your assessment responses...</p>
+                <div class="spinner" style="margin: 20px auto; display: inline-block; width: 40px; height: 40px; border: 3px solid #e0e0e0; border-top-color: #208099; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="hidden" style="display: none; text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                <h2 style="color: #e74c3c; margin-bottom: 10px;">Error Loading Results</h2>
+                <p id="error-message" data-element="error-message" style="color: #5a6c6d; margin-bottom: 20px;">An error occurred while loading your results.</p>
+                <a href="questionnaire.html" class="btn btn-primary">Start New Assessment</a>
+            </div>
+
+            <!-- Results State -->
+            <div id="results-state" class="hidden" style="display: none;">
+                <!-- Personality Type Card -->
+                <div style="background: linear-gradient(135deg, #208099, #1a6a7f); color: white; padding: 40px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
+                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">YOUR PERSONALITY TYPE</p>
+                    <h1 id="type-letter" style="font-size: 72px; font-weight: 800; margin: 10px 0;">A</h1>
+                    <h2 id="type-description" style="font-size: 24px; margin: 10px 0; font-weight: 600;">The Analytical</h2>
+                </div>
+
+                <!-- Confidence Score -->
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #1f3a42; margin-bottom: 15px; font-size: 16px;">Assessment Confidence</h3>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="flex: 1; height: 24px; background-color: #e0e0e0; border-radius: 12px; overflow: hidden;">
+                            <div 
+                                id="confidence-fill"
+                                style="height: 100%; width: 85%; background-color: #208099; transition: width 0.3s ease;"
+                            ></div>
+                        </div>
+                        <span id="confidence-value" style="font-size: 18px; font-weight: 700; color: #208099; min-width: 50px; text-align: right;">85%</span>
+                    </div>
+                </div>
+
+                <!-- Interpretation -->
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #1f3a42; margin-bottom: 12px;">Your Interpretation</h3>
+                    <p id="interpretation-text" style="color: #5a6c6d; line-height: 1.6;">
+                        Your assessment is being processed...
+                    </p>
+                </div>
+
+                <!-- Domain Scores -->
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #1f3a42; margin-bottom: 15px;">Personality Dimensions</h3>
+                    <div id="domain-scores">
+                        <!-- Scores will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button 
+                        onclick="retakeAssessment()"
+                        class="btn btn-secondary"
+                        style="flex: 1; min-width: 150px;"
+                    >
+                        Retake Assessment
+                    </button>
+                    <button 
+                        onclick="shareResults()"
+                        class="btn btn-primary"
+                        style="flex: 1; min-width: 150px;"
+                    >
+                        Share Results
+                    </button>
+                </div>
+
+                <!-- Back to Home -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="index.html" style="color: #208099; text-decoration: none; font-weight: 500;">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top: 60px;">
+        <div style="text-align: center; padding: 20px;">
+            <p style="color: #5a6c6d; font-size: 14px;">
+                &copy; 2024 PredictMyPersonality. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts - LOAD IN ORDER -->
+    <!-- 1. Configuration MUST load first -->
+    <script src="config.js"></script>
+    <!-- 2. Common utilities -->
+    <script src="app.js"></script>
+    <!-- 3. Results page specific -->
+    <script src="results.js"></script>
+
+    <!-- Spinner animation -->
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</body>
+</html>
