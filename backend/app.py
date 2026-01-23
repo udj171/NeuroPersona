@@ -134,6 +134,8 @@ def create_app(config_name=None):
     logger.info(f'Flask app created with config: {config_name}')
     
     return app
+    
+app = create_app(os.getenv('FLASK_ENV', 'production'))
 
 if __name__ == '__main__':
     app = create_app('production')
