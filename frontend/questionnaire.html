@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personality Assessment</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <span>🧠</span> PredictMyPersonality
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#features">Features</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero" style="min-height: auto; padding: 40px 20px;">
+        <div class="hero-content" style="max-width: 800px;">
+            <h1 style="margin-bottom: 20px;">Personality Assessment</h1>
+            
+            <!-- Demographics Section -->
+            <div id="demographics-section" style="margin-bottom: 40px;">
+                <h2 style="color: #208099; margin-bottom: 20px;">Let's Get Started</h2>
+                <p style="color: #5a6c6d; margin-bottom: 20px;">First, tell us a bit about yourself:</p>
+
+                <form id="demographics-form" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <!-- Age -->
+                    <div style="margin-bottom: 20px;">
+                        <label for="age" style="display: block; margin-bottom: 8px; font-weight: 500; color: #1f3a42;">
+                            Age
+                        </label>
+                        <input 
+                            type="number" 
+                            id="age" 
+                            name="age" 
+                            min="13" 
+                            max="120"
+                            placeholder="Enter your age"
+                            style="width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 16px;"
+                        />
+                        <div id="age-error" style="color: #e74c3c; font-size: 14px; margin-top: 4px;"></div>
+                    </div>
+
+                    <!-- Gender -->
+                    <div style="margin-bottom: 20px;">
+                        <label for="sex" style="display: block; margin-bottom: 8px; font-weight: 500; color: #1f3a42;">
+                            Gender
+                        </label>
+                        <select 
+                            id="sex" 
+                            name="sex"
+                            style="width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 16px; background-color: white; cursor: pointer;"
+                        >
+                            <option value="">Select your gender</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
+                        </select>
+                        <div id="sex-error" style="color: #e74c3c; font-size: 14px; margin-top: 4px;"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button 
+                        type="submit"
+                        style="width: 100%; padding: 12px; background-color: #208099; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.3s;"
+                        onmouseover="this.style.backgroundColor='#1a6a7f'"
+                        onmouseout="this.style.backgroundColor='#208099'"
+                    >
+                        Start Assessment
+                    </button>
+                </form>
+            </div>
+
+            <!-- Questions Section (Hidden by default) -->
+            <div id="questions-section" class="hidden" style="display: none;">
+                <h2 style="color: #208099; margin-bottom: 20px;">Answer These Questions</h2>
+
+                <!-- Progress Bar -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: 500; color: #1f3a42;">Progress</span>
+                        <span id="progress-text" data-element="progress-text" style="color: #208099; font-weight: 600;">0 / 35 answered</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background-color: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                        <div 
+                            id="progress-bar" 
+                            data-element="progress-bar"
+                            style="height: 100%; width: 0%; background-color: #208099; transition: width 0.3s ease;"
+                        ></div>
+                    </div>
+                </div>
+
+                <!-- Assessment Form -->
+                <form 
+                    id="assessment-form" 
+                    style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                >
+                    <!-- Questions will be generated here by questionnaire.js -->
+                </form>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: space-between;">
+                    <button 
+                        type="button"
+                        data-action="back"
+                        style="padding: 12px 24px; background-color: #f0f0f0; color: #1f3a42; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 16px; font-weight: 600; cursor: pointer;"
+                        onmouseover="this.style.backgroundColor='#e0e0e0'"
+                        onmouseout="this.style.backgroundColor='#f0f0f0'"
+                    >
+                        Back
+                    </button>
+                    <button 
+                        type="button"
+                        data-action="submit"
+                        style="padding: 12px 24px; background-color: #208099; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 600; cursor: pointer;"
+                        onmouseover="this.style.backgroundColor='#1a6a7f'"
+                        onmouseout="this.style.backgroundColor='#208099'"
+                    >
+                        Submit Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top: 60px;">
+        <div style="text-align: center; padding: 20px;">
+            <p style="color: #5a6c6d; font-size: 14px;">
+                &copy; 2024 PredictMyPersonality. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts - LOAD IN ORDER -->
+    <!-- 1. Configuration MUST load first -->
+    <script src="config.js"></script>
+    <!-- 2. Common utilities -->
+    <script src="app.js"></script>
+    <!-- 3. Questionnaire page specific -->
+    <script src="questionnaire.js"></script>
+</body>
+</html>
