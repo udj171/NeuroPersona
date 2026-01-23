@@ -1,0 +1,26 @@
+{
+  "name": "personality-assessment-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for AI-powered personality assessment using VAE neural networks",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "start": "python -m http.server 3000",
+    "build": "echo 'Static site'",
+    "preview": "python -m http.server 3000"
+  },
+  "keywords": [
+    "personality",
+    "assessment",
+    "ai",
+    "machine-learning",
+    "vae",
+    "neural-network"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {}
+}
