@@ -22,7 +22,7 @@ function getAPIURL() {
     }
 
     // Default to Render backend
-    const defaultURL = 'https://personality-assessment-api.onrender.com';
+    const defaultURL = 'https://neuropersona.onrender.com';
     console.log('[CONFIG] Using default API URL:', defaultURL);
     return defaultURL;
 }
@@ -63,7 +63,7 @@ window.setAPIURL = function(url) {
  */
 window.resetAPIURL = function() {
     localStorage.removeItem('API_URL');
-    window.API_CONFIG.BASE_URL = 'https://personality-assessment-api.onrender.com';
+    window.API_CONFIG.BASE_URL = 'https://neuropersona.onrender.com';
     console.log('[CONFIG] API URL reset to default');
     alert('API URL reset to default.\nReload the page to apply changes.');
 };
