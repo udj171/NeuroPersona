@@ -16,10 +16,10 @@ limiter = Limiter(key_func=get_remote_address)
 
 def create_app(config_name=None):
     if config_name is None:
-        config_name = os.getenv('FLASK_ENV', 'development')
+        config_name = os.getenv('FLASK_ENV', 'production')
     
     from config import config_by_name
-    config = config_by_name.get(config_name, config_by_name['development'])
+    config = config_by_name.get(config_name, config_by_name['production'])
     
     app = Flask(__name__)
     app.config.from_object(config)
