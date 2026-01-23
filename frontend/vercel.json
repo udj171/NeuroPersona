@@ -1,0 +1,11 @@
+{
+  "buildCommand": "echo 'Static site, no build needed'",
+  "outputDirectory": ".",
+  "framework": "static",
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "description": "Backend API URL",
+      "default": "https://neuropersona.onrender.com"
+    }
+  }
+}
