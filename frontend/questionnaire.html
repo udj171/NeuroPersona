@@ -1,329 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-      const API_BASE_URL = 'https://neuropersona.onrender.com';
-    </script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personality Assessment | Questionnaire</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
-    <style>
-        .questionnaire-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(31, 58, 66, 0.15);
-        }
-
-        .header-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header-section h1 {
-            color: #208099;
-            margin-bottom: 10px;
-        }
-
-        .progress-container {
-            margin-bottom: 30px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: #208099;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-text {
-            text-align: center;
-            font-size: 14px;
-            color: #5a6c6d;
-        }
-
-        .form-section {
-            margin-bottom: 40px;
-        }
-
-        .form-section h2 {
-            font-size: 20px;
-            color: #1f3a42;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #208099;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #1f3a42;
-        }
-
-        .form-group input[type="number"],
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-
-        .form-group input[type="number"]:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #208099;
-            box-shadow: 0 0 0 3px rgba(32, 128, 153, 0.1);
-        }
-
-        .slider-container {
-            margin-bottom: 30px;
-        }
-
-        .question-text {
-            font-weight: 500;
-            margin-bottom: 15px;
-            color: #1f3a42;
-        }
-
-        .slider-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #5a6c6d;
-            margin-bottom: 8px;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: #e0e0e0;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #208099;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(31, 58, 66, 0.2);
-            transition: all 0.2s ease;
-        }
-
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 4px 8px rgba(31, 58, 66, 0.3);
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #208099;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 4px rgba(31, 58, 66, 0.2);
-            transition: all 0.2s ease;
-        }
-
-        input[type="range"]::-moz-range-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 4px 8px rgba(31, 58, 66, 0.3);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 40px;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background-color: #208099;
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background-color: #1a6a7f;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(32, 128, 153, 0.3);
-        }
-
-        .btn-primary:disabled {
-            background-color: #c0c0c0;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: #208099;
-            border: 2px solid #208099;
-        }
-
-        .btn-secondary:hover {
-            background-color: #208099;
-            color: white;
-        }
-
-        .demographics-section {
-            background: #f8f8f6;
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-
-        .demographics-section h2 {
-            color: #208099;
-            margin-bottom: 20px;
-        }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .success-message {
-            color: #27ae60;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 768px) {
-            .questionnaire-container {
-                margin: 10px;
-                padding: 15px;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personality Assessment - NeuroPersona</title>
+  
+  <link rel="stylesheet" href="styles.css">
+  
+  <style>
+    .hidden { display: none; }
+    .question-item {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+    }
+    .question-item label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #1f3a42;
+    }
+    .question-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e0e0e0;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .question-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #208099;
+      cursor: pointer;
+    }
+    .question-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #208099;
+      cursor: pointer;
+      border: none;
+    }
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+    .progress-container {
+      margin: 30px 0;
+      padding: 20px;
+      background: #f8f8f6;
+      border-radius: 8px;
+    }
+    [data-element="progress-bar"] {
+      display: block;
+      height: 8px;
+      background: #208099;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      margin-bottom: 10px;
+    }
+    [data-element="progress-text"] {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+    .button-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+    #age-error, #sex-error {
+      color: #e74c3c;
+      font-size: 12px;
+      margin-top: 5px;
+      display: block;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="index.html" class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="6"></circle>
-                    <circle cx="12" cy="12" r="2"></circle>
-                </svg>
-                PersonaAI
-            </a>
-            <ul class="nav-links">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="index.html#how-it-works">How It Works</a></li>
-                <li><a href="index.html#features">Features</a></li>
-            </ul>
-        </nav>
-    </header>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">
+        <span>🧠</span>
+        <span>NeuroPersona</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#features">Features</a></li>
+        <li><a href="index.html#how-it-works">How It Works</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <main style="background: #f8f8f6; min-height: 100vh; padding: 40px 20px;">
-        <div class="questionnaire-container">
-            <div class="header-section">
-                <h1>Personality Assessment</h1>
-                <p>35 Questions to understand your personality profile</p>
-            </div>
-
-            <!-- Demographics Form -->
-            <div class="demographics-section" id="demographics-section">
-                <h2>Section 1 of 2: Your Information</h2>
-                <form id="demographics-form" style="margin-bottom: 0;">
-                    <div class="form-group">
-                        <label for="age">Age *</label>
-                        <input type="number" id="age" name="age" min="13" max="120" placeholder="Enter your age" required>
-                        <div class="error-message" id="age-error"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="sex">Sex/Gender *</label>
-                        <select id="sex" name="sex" required>
-                            <option value="">Select an option...</option>
-                            <option value="M">Male</option>
-                            <option value="F">Female</option>
-                            <option value="O">Other</option>
-                        </select>
-                        <div class="error-message" id="sex-error"></div>
-                    </div>
-
-                    <div class="button-group">
-                        <button type="submit" class="btn btn-primary">Next: Start Assessment</button>
-                        <a href="index.html" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Questions Section -->
-            <div id="questions-section" class="hidden">
-                <h2 style="text-align: center; margin-bottom: 30px;">Section 2 of 2: Answer the Questions</h2>
-
-                <div class="progress-container">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill"></div>
-                    </div>
-                    <div class="progress-text" id="progress-text">0 / 35 answered</div>
-                </div>
-
-                <form id="assessment-form">
-                    <!-- Questions will be inserted here by JavaScript -->
-                </form>
-
-                <div class="button-group" style="margin-top: 50px;">
-                    <button type="button" id="submit-btn" class="btn btn-primary" disabled>Submit Assessment</button>
-                    <button type="button" id="back-btn" class="btn btn-secondary">Back to Demographics</button>
-                </div>
-            </div>
+  <main class="container" style="padding: 40px 20px; max-width: 800px; margin: 0 auto;">
+    
+    <!-- Demographics Section -->
+    <section id="demographics-section">
+      <h1>Personality Assessment</h1>
+      <p style="color: #666; margin-bottom: 30px;">Please provide your demographics to begin the assessment.</p>
+      
+      <form id="demographics-form">
+        <div class="form-group">
+          <label for="age">Age:</label>
+          <input 
+            type="number" 
+            id="age" 
+            name="age" 
+            placeholder="Enter your age (13-120)" 
+            required
+            style="width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 14px;"
+          >
+          <span id="age-error"></span>
         </div>
-    </main>
+        
+        <div class="form-group" style="margin-top: 20px;">
+          <label for="sex">Gender:</label>
+          <select 
+            id="sex" 
+            name="sex" 
+            required
+            style="width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 14px;"
+          >
+            <option value="">Select Gender</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+            <option value="O">Other</option>
+          </select>
+          <span id="sex-error"></span>
+        </div>
+        
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          style="width: 100%; margin-top: 30px; padding: 12px;"
+        >
+          Start Assessment
+        </button>
+      </form>
+    </section>
 
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/questionnaire.js"></script>
+    <!-- Questions Section -->
+    <section id="questions-section" class="hidden">
+      <h1>Personality Assessment - Questions</h1>
+      
+      <div class="progress-container">
+        <div data-element="progress-bar" style="width: 0%"></div>
+        <div data-element="progress-text">0 / 35 answered</div>
+      </div>
+      
+      <form id="assessment-form">
+        <div id="questions-container"></div>
+        
+        <div class="button-group">
+          <button type="button" id="back-btn" class="btn btn-secondary">Back</button>
+          <button type="button" id="submit-btn" class="btn btn-primary">Submit Assessment</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- questionnaire.js is inline above -->
 </body>
 </html>
