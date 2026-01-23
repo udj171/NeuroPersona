@@ -1,570 +1,325 @@
-# ============================================================================
-# SCRIPT 15: questionnaire.html - Main Questionnaire Interface (2500+ lines)
-# ============================================================================
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personality Assessment Questionnaire</title>
+    <title>Personality Assessment | Questionnaire</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        .questionnaire-container {
             max-width: 800px;
-            width: 100%;
-            padding: 40px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(31, 58, 66, 0.15);
         }
-        
-        .header {
+
+        .header-section {
             text-align: center;
             margin-bottom: 30px;
         }
-        
-        .header h1 {
-            color: #333;
-            font-size: 28px;
+
+        .header-section h1 {
+            color: #208099;
             margin-bottom: 10px;
         }
-        
-        .header p {
-            color: #666;
-            font-size: 14px;
+
+        .progress-container {
+            margin-bottom: 30px;
         }
-        
+
         .progress-bar {
             width: 100%;
             height: 8px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            margin: 20px 0;
+            background-color: #e0e0e0;
+            border-radius: 4px;
             overflow: hidden;
+            margin-bottom: 10px;
         }
-        
+
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background-color: #208099;
             width: 0%;
             transition: width 0.3s ease;
         }
-        
+
         .progress-text {
             text-align: center;
-            color: #666;
-            font-size: 12px;
-            margin-top: 5px;
+            font-size: 14px;
+            color: #5a6c6d;
         }
-        
-        .demographics-section {
-            display: none;
-            margin-bottom: 30px;
+
+        .form-section {
+            margin-bottom: 40px;
         }
-        
-        .demographics-section.active {
-            display: block;
-        }
-        
-        .form-group {
+
+        .form-section h2 {
+            font-size: 20px;
+            color: #1f3a42;
             margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #208099;
         }
-        
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
             font-weight: 500;
-            font-size: 14px;
+            margin-bottom: 8px;
+            color: #1f3a42;
         }
-        
-        .form-group input,
+
+        .form-group input[type="number"],
         .form-group select {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid #e0e0e0;
             border-radius: 6px;
             font-size: 14px;
-            transition: border-color 0.3s ease;
+            font-family: inherit;
         }
-        
-        .form-group input:focus,
+
+        .form-group input[type="number"]:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #208099;
+            box-shadow: 0 0 0 3px rgba(32, 128, 153, 0.1);
         }
-        
-        .question-section {
-            display: none;
-        }
-        
-        .question-section.active {
-            display: block;
-        }
-        
-        .question {
+
+        .slider-container {
             margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #f0f0f0;
         }
-        
-        .question:last-child {
-            border-bottom: none;
-        }
-        
-        .question-number {
-            font-size: 12px;
-            color: #999;
-            margin-bottom: 5px;
-        }
-        
+
         .question-text {
-            color: #333;
-            font-size: 16px;
-            margin-bottom: 12px;
             font-weight: 500;
+            margin-bottom: 15px;
+            color: #1f3a42;
         }
-        
-        .likert-scale {
+
+        .slider-labels {
             display: flex;
             justify-content: space-between;
-            gap: 5px;
+            font-size: 12px;
+            color: #5a6c6d;
+            margin-bottom: 8px;
         }
-        
-        .likert-option {
-            flex: 1;
-            text-align: center;
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
         }
-        
-        .likert-option input[type="radio"] {
-            display: none;
-        }
-        
-        .likert-option label {
-            display: block;
-            padding: 8px 4px;
-            background: #f5f5f5;
-            border: 2px solid transparent;
-            border-radius: 6px;
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #208099;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0;
+            box-shadow: 0 2px 4px rgba(31, 58, 66, 0.2);
+            transition: all 0.2s ease;
         }
-        
-        .likert-option input[type="radio"]:checked + label {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 8px rgba(31, 58, 66, 0.3);
         }
-        
-        .likert-option label:hover {
-            background: #e8e8e8;
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #208099;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(31, 58, 66, 0.2);
+            transition: all 0.2s ease;
         }
-        
-        .likert-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            font-size: 11px;
-            color: #999;
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 8px rgba(31, 58, 66, 0.3);
         }
-        
+
         .button-group {
             display: flex;
-            gap: 10px;
-            margin-top: 30px;
-            justify-content: space-between;
+            gap: 15px;
+            margin-top: 40px;
+            justify-content: center;
         }
-        
+
         .btn {
-            padding: 12px 24px;
-            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
             border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
+            border: none;
             cursor: pointer;
+            font-weight: 600;
             transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
         }
-        
+
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #208099;
             color: white;
-            flex-grow: 1;
         }
-        
-        .btn-primary:hover {
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #1a6a7f;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(32, 128, 153, 0.3);
         }
-        
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-        
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-        
-        .btn:disabled {
-            opacity: 0.5;
+
+        .btn-primary:disabled {
+            background-color: #c0c0c0;
             cursor: not-allowed;
+            opacity: 0.6;
         }
-        
+
+        .btn-secondary {
+            background-color: transparent;
+            color: #208099;
+            border: 2px solid #208099;
+        }
+
+        .btn-secondary:hover {
+            background-color: #208099;
+            color: white;
+        }
+
+        .demographics-section {
+            background: #f8f8f6;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .demographics-section h2 {
+            color: #208099;
+            margin-bottom: 20px;
+        }
+
         .error-message {
             color: #e74c3c;
-            font-size: 12px;
-            margin-top: 8px;
-            display: none;
+            font-size: 14px;
+            margin-top: 5px;
         }
-        
-        .error-message.show {
-            display: block;
-        }
-        
+
         .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
+            color: #27ae60;
+            font-size: 14px;
+            margin-top: 5px;
         }
-        
-        .success-message.show {
-            display: block;
+
+        .hidden {
+            display: none !important;
         }
-        
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .loading-spinner.show {
-            display: block;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .section-indicator {
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 12px;
-            color: #666;
+
+        @media (max-width: 768px) {
+            .questionnaire-container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Personality Assessment</h1>
-            <p>35 Questions to understand your personality profile</p>
-        </div>
-        
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <div class="progress-text" id="progressText">0% Complete</div>
-        
-        <div class="success-message" id="successMessage">
-            Form submitted successfully! Redirecting...
-        </div>
-        
-        <form id="assessmentForm">
-            <div class="demographics-section active" id="demographicsSection">
-                <div class="section-indicator">Section 1 of 2: Your Information</div>
-                
-                <div class="form-group">
-                    <label for="age">Age *</label>
-                    <input type="number" id="age" name="age" min="13" max="120" required>
-                    <div class="error-message" id="ageError"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="sex">Sex *</label>
-                    <select id="sex" name="sex" required>
-                        <option value="">Select an option</option>
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
-                        <option value="O">Other</option>
-                    </select>
-                    <div class="error-message" id="sexError"></div>
-                </div>
-                
-                <div class="button-group">
-                    <button type="button" class="btn btn-primary" onclick="proceedToQuestions()">
-                        Next
-                    </button>
-                </div>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="6"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+                PersonaAI
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#how-it-works">How It Works</a></li>
+                <li><a href="index.html#features">Features</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main style="background: #f8f8f6; min-height: 100vh; padding: 40px 20px;">
+        <div class="questionnaire-container">
+            <div class="header-section">
+                <h1>Personality Assessment</h1>
+                <p>35 Questions to understand your personality profile</p>
             </div>
-            
-            <div class="question-section" id="questionSection">
-                <div class="section-indicator">Section 2 of 2: Assessment Questions</div>
-                <div id="questionContainer"></div>
-            </div>
-            
-            <div class="button-group" style="display: none;" id="navigationButtons">
-                <button type="button" class="btn btn-secondary" onclick="goToPreviousQuestion()">
-                    Previous
-                </button>
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    Submit Assessment
-                </button>
-            </div>
-        </form>
-        
-        <div class="loading-spinner" id="loadingSpinner">
-            <div class="spinner"></div>
-            <p>Processing your assessment...</p>
-        </div>
-    </div>
-    
-    <script>
-        const TOTAL_QUESTIONS = 35;
-        const QUESTIONS_PER_PAGE = 5;
-        let currentPage = 0;
-        let assessmentId = null;
-        let responses = new Array(TOTAL_QUESTIONS).fill(null);
-        
-        const questions = [
-            "I easily recover from emotional setbacks",
-            "I handle stress well",
-            "I remain calm under pressure",
-            "I bounce back quickly from failures",
-            "I manage my emotions effectively",
-            "I understand others' perspectives",
-            "I read social cues easily",
-            "I empathize with others' feelings",
-            "I navigate social situations skillfully",
-            "I build strong relationships",
-            "I pay attention to details",
-            "I organize my work effectively",
-            "I follow through on commitments",
-            "I maintain high standards",
-            "I plan ahead carefully",
-            "I adapt to new situations",
-            "I embrace change",
-            "I think on my feet",
-            "I adjust my approach when needed",
-            "I handle unexpected situations well",
-            "I explore new ideas",
-            "I think creatively",
-            "I appreciate art and culture",
-            "I am open to different viewpoints",
-            "I seek new experiences",
-            "I enjoy social interaction",
-            "I am outgoing",
-            "I speak up in groups",
-            "I take charge when needed",
-            "I am energetic and enthusiastic"
-        ];
-        
-        async function startAssessment() {
-            const age = document.getElementById('age').value;
-            const sex = document.getElementById('sex').value;
-            
-            let isValid = true;
-            
-            if (!age || age < 13 || age > 120) {
-                document.getElementById('ageError').textContent = 'Please enter a valid age (13-120)';
-                document.getElementById('ageError').classList.add('show');
-                isValid = false;
-            } else {
-                document.getElementById('ageError').classList.remove('show');
-            }
-            
-            if (!sex) {
-                document.getElementById('sexError').textContent = 'Please select your sex';
-                document.getElementById('sexError').classList.add('show');
-                isValid = false;
-            } else {
-                document.getElementById('sexError').classList.remove('show');
-            }
-            
-            if (!isValid) return;
-            
-            try {
-                const response = await fetch('/api/start-assessment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ age: parseInt(age), sex: sex })
-                });
-                
-                if (!response.ok) throw new Error('Failed to start assessment');
-                
-                const data = await response.json();
-                assessmentId = data.assessment_id;
-            } catch (error) {
-                console.error('Error starting assessment:', error);
-                alert('Failed to start assessment. Please try again.');
-            }
-        }
-        
-        function proceedToQuestions() {
-            startAssessment().then(() => {
-                if (assessmentId) {
-                    document.getElementById('demographicsSection').classList.remove('active');
-                    document.getElementById('questionSection').classList.add('active');
-                    document.getElementById('navigationButtons').style.display = 'flex';
-                    loadQuestionsPage();
-                }
-            });
-        }
-        
-        function loadQuestionsPage() {
-            const container = document.getElementById('questionContainer');
-            container.innerHTML = '';
-            
-            const startIdx = currentPage * QUESTIONS_PER_PAGE;
-            const endIdx = Math.min(startIdx + QUESTIONS_PER_PAGE, TOTAL_QUESTIONS);
-            
-            for (let i = startIdx; i < endIdx; i++) {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'question';
-                
-                questionDiv.innerHTML = `
-                    <div class="question-number">Question ${i + 1} of ${TOTAL_QUESTIONS}</div>
-                    <div class="question-text">${questions[i] || 'Statement ' + (i + 1)}</div>
-                    <div class="likert-scale">
-                        ${Array.from({length: 11}, (_, j) => `
-                            <div class="likert-option">
-                                <input 
-                                    type="radio" 
-                                    id="q${i}_${j}" 
-                                    name="q${i}" 
-                                    value="${j}"
-                                    ${responses[i] === j ? 'checked' : ''}
-                                    onchange="recordResponse(${i}, ${j})"
-                                >
-                                <label for="q${i}_${j}">${j}</label>
-                            </div>
-                        `).join('')}
+
+            <!-- Demographics Form -->
+            <div class="demographics-section" id="demographics-section">
+                <h2>Section 1 of 2: Your Information</h2>
+                <form id="demographics-form" style="margin-bottom: 0;">
+                    <div class="form-group">
+                        <label for="age">Age *</label>
+                        <input type="number" id="age" name="age" min="13" max="120" placeholder="Enter your age" required>
+                        <div class="error-message" id="age-error"></div>
                     </div>
-                    <div class="likert-labels">
-                        <span>Strongly Disagree</span>
-                        <span>Strongly Agree</span>
+
+                    <div class="form-group">
+                        <label for="sex">Sex/Gender *</label>
+                        <select id="sex" name="sex" required>
+                            <option value="">Select an option...</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
+                        </select>
+                        <div class="error-message" id="sex-error"></div>
                     </div>
-                `;
-                
-                container.appendChild(questionDiv);
-            }
-            
-            updateProgress();
-        }
-        
-        function recordResponse(questionIdx, value) {
-            responses[questionIdx] = parseInt(value);
-            updateProgress();
-        }
-        
-        function updateProgress() {
-            const answered = responses.filter(r => r !== null).length;
-            const percentage = Math.round((answered / TOTAL_QUESTIONS) * 100);
-            
-            document.getElementById('progressFill').style.width = percentage + '%';
-            document.getElementById('progressText').textContent = percentage + '% Complete';
-        }
-        
-        function goToPreviousQuestion() {
-            if (currentPage > 0) {
-                currentPage--;
-                loadQuestionsPage();
-                window.scrollTo(0, 0);
-            }
-        }
-        
-        function goToNextQuestion() {
-            const startIdx = currentPage * QUESTIONS_PER_PAGE;
-            const endIdx = Math.min(startIdx + QUESTIONS_PER_PAGE, TOTAL_QUESTIONS);
-            
-            let allAnswered = true;
-            for (let i = startIdx; i < endIdx; i++) {
-                if (responses[i] === null) {
-                    allAnswered = false;
-                    break;
-                }
-            }
-            
-            if (!allAnswered) {
-                alert('Please answer all questions on this page before proceeding.');
-                return;
-            }
-            
-            const totalPages = Math.ceil(TOTAL_QUESTIONS / QUESTIONS_PER_PAGE);
-            if (currentPage < totalPages - 1) {
-                currentPage++;
-                loadQuestionsPage();
-                window.scrollTo(0, 0);
-            }
-        }
-        
-        document.getElementById('assessmentForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            if (responses.filter(r => r !== null).length < TOTAL_QUESTIONS) {
-                alert('Please answer all questions before submitting.');
-                return;
-            }
-            
-            document.getElementById('loadingSpinner').classList.add('show');
-            document.getElementById('navigationButtons').style.display = 'none';
-            
-            try {
-                const response = await fetch('/api/submit-assessment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        assessment_id: assessmentId,
-                        responses: responses
-                    })
-                });
-                
-                if (!response.ok) throw new Error('Failed to submit assessment');
-                
-                document.getElementById('successMessage').classList.add('show');
-                setTimeout(() => {
-                    window.location.href = '/results?id=' + assessmentId;
-                }, 2000);
-            } catch (error) {
-                console.error('Error submitting assessment:', error);
-                alert('Failed to submit assessment. Please try again.');
-                document.getElementById('loadingSpinner').classList.remove('show');
-                document.getElementById('navigationButtons').style.display = 'flex';
-            }
-        });
-        
-        window.addEventListener('load', () => {
-            loadQuestionsPage();
-        });
-    </script>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">Next: Start Assessment</button>
+                        <a href="index.html" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Questions Section -->
+            <div id="questions-section" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 30px;">Section 2 of 2: Answer the Questions</h2>
+
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">0 / 35 answered</div>
+                </div>
+
+                <form id="assessment-form">
+                    <!-- Questions will be inserted here by JavaScript -->
+                </form>
+
+                <div class="button-group" style="margin-top: 50px;">
+                    <button type="button" id="submit-btn" class="btn btn-primary" disabled>Submit Assessment</button>
+                    <button type="button" id="back-btn" class="btn btn-secondary">Back to Demographics</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/questionnaire.js"></script>
 </body>
 </html>
