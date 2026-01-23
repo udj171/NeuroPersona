@@ -134,20 +134,19 @@ def create_app(config_name=None):
   
     
     @app.route('/')
-    def index():
-        return render_template('index.html')
-    
-    @app.route('/questionnaire')
-    def questionnaire():
-        return render_template('questionnaire.html')
-    
-    @app.route('/results')
-    def results():
-        return render_template('results.html')
-    
-    @app.route('/static/<path:filename>')
-    def serve_static(filename):
-        return send_from_directory('static', filename)
+    @app.route('/<path:path>')
+    def frontend_redirect(path=None):
+        return jsonify({
+            'error': 'Frontend not served from backend',
+            'message': 'Visit: https://www.predictmypersonality.com',
+            'api_endpoints': [
+                'GET /api/health',
+                'POST /api/start-assessment',
+                'POST /api/submit-assessment',
+                'GET /api/results/<assessment_id>'
+        ]
+    }), 404
+
     
     logger.info(f'Flask app created with config: {config_name}')
     
