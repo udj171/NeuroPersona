@@ -1,37 +1,16 @@
-# Python
 __pycache__/
-*.py[cod]
-*.so
-.Python
+*.pyc
+*.pyo
+.env
+.venv
 venv/
-env/
-
-# Models (critical for VAE projects)
-*.pt
-*.pth
-models/*.pt
-checkpoints/
-
-# Data
-data/
-*.csv
-*.json
-
-# Logs
+*.db
+.pytest_cache/
+.coverage
+htmlcov/
 *.log
-vae_model.log
-
-# IDE
-.vscode/
-.idea/
-*.swp
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Outputs
-output/
-results/
-plots/
+/uploads/
+/temp/
+/models/
 
