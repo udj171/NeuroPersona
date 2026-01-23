@@ -13,8 +13,6 @@ from datetime import datetime, timezone
 import traceback
 import os
 from api_routes import api_bp
-from api_routes import health_bp
-from api_routes import admin_bp
 
 cache = Cache()
 limiter = Limiter(key_func=get_remote_address)
@@ -120,8 +118,7 @@ def create_app(config_name=None):
     
     
     app.register_blueprint(api_bp, url_prefix='/api')
-    app.register_blueprint(health_bp, url_prefix='/health')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
+  
     
     @app.route('/')
     def index():
