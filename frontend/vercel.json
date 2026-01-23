@@ -2,7 +2,7 @@
   "buildCommand": "echo 'Frontend ready'",
   "outputDirectory": "public",
   "env": {
-    "": "@api_url"
+    "NEXT_PUBLIC_API_URL": "@api_url"
   },
   "rewrites": [
     {
@@ -11,3 +11,4 @@
     }
   ]
 }
+
