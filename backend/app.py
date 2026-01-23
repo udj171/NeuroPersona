@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 import traceback
 import os
 from api_routes import api_bp
+from api_routes import health_bp
+from api_routes import admin_bp
 
 cache = Cache()
 limiter = Limiter(key_func=get_remote_address)
@@ -114,9 +116,8 @@ def create_app(config_name=None):
     with app.app_context():
         db.create_all()
     
-    from blueprints.api import api_bp
-    from blueprints.health import health_bp
-    from blueprints.admin import admin_bp
+    
+    
     
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(health_bp, url_prefix='/health')
