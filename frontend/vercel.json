@@ -1,6 +1,6 @@
 {
   "buildCommand": "echo 'Frontend ready'",
-  "outputDirectory": "public",
+  "outputDirectory": ".",
   "env": {
     "NEXT_PUBLIC_API_URL": ""
   },
