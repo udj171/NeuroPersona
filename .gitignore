@@ -1,9 +1,0 @@
-.env
-__pycache__/
-*.pyc
-*.pyo
-node_modules/
-.DS_Store
-*.log
-vae_model.pt
-.venv/
