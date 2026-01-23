@@ -1,6 +1,9 @@
 # ============================================================================
 # SCRIPT 3: app.py - Flask Application Factory
 # ============================================================================
+cache = Cache()
+limiter = Limiter(key_func=get_remote_address)
+
 
 from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_cors import CORS
@@ -11,9 +14,8 @@ import logging.config
 from datetime import datetime, timezone
 import traceback
 import os
+from models import db, migrate, User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation
 
-cache = Cache()
-limiter = Limiter(key_func=get_remote_address)
 
 def create_app(config_name=None):
     if config_name is None:
