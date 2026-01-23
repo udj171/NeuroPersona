@@ -13,6 +13,12 @@ from datetime import datetime, timezone
 import traceback
 import os
 from api_routes import api_bp
+from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
+
+load_dotenv()
+db = SQLAlchemy()
+
 
 cache = Cache()
 limiter = Limiter(key_func=get_remote_address)
@@ -34,19 +40,26 @@ def create_app(config_name=None):
     if isinstance(config.LOGGING_CONFIG, dict):
         logging.config.dictConfig(config.LOGGING_CONFIG)
     logger = logging.getLogger(__name__)
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+        'DATABASE_URL', 
+        'sqlite:///assessment.db'
+    )
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JSON_SORT_KEYS'] = False
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
     
     db.init_app(app)
     migrate.init_app(app, db)
     cache.init_app(app)
     limiter.init_app(app)
     
-    CORS(app, resources={
-        r'/api/*': {
-            'origins': config.CORS_CONFIG['origins'],
-            'methods': config.CORS_CONFIG['methods'],
-            'allow_headers': config.CORS_CONFIG['allow_headers'],
-        }
-    })
+    CORS(app, 
+     resources={r"/api/*": {"origins": "*"}},
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization'],
+     supports_credentials=True)
+    
     
     @app.before_request
     def before_request():
