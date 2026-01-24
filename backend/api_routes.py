@@ -7,6 +7,11 @@ from sqlalchemy import desc
 import logging
 from datetime import datetime, timezone
 import uuid
+from models import db, User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation
+from scoring_engine import ScoringEngine
+from vae_inference import VAEInference
+from gemini_client import GeminiClient
+
 
 api_bp = Blueprint('api', __name__)
 logger = logging.getLogger(__name__)
