@@ -3,7 +3,7 @@
 # ============================================================================
 
 from flask import Blueprint, request, jsonify, current_app
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 import logging
 from datetime import datetime, timezone
 import uuid
