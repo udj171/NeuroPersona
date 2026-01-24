@@ -8,19 +8,27 @@ from sqlalchemy.dialects.postgresql import JSON, UUID, JSONB
 from sqlalchemy.types import TypeDecorator
 import json
 import uuid
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 class GUID(TypeDecorator):
-    impl = str
+    """Platform-independent GUID type that uses CHAR(36) on backends that don't support UUID."""
+    impl = CHAR
     cache_ok = True
-    
+
+    def load_dialect_impl(self, dialect):
+        return dialect.type_descriptor(CHAR(36))
+
     def process_bind_param(self, value, dialect):
         if value is None:
-            return None
+            return value
+        if not isinstance(value, uuid.UUID):
+            value = uuid.UUID(str(value))
         return str(value)
-    
+
     def process_result_value(self, value, dialect):
         if value is None:
-            return None
+            return value
         return uuid.UUID(value)
 
 class JSONType(TypeDecorator):
@@ -37,8 +45,7 @@ class JSONType(TypeDecorator):
             return None
         return json.loads(value)
 
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -46,8 +53,7 @@ migrate = Migrate()
 class User(db.Model):
     __tablename__ = 'users'
     
-    id = db.Column(db.Integer, primary_key=True)
-    external_id = db.Column(GUID, default=uuid.uuid4, unique=True, nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     age = db.Column(db.Integer, nullable=False)
     sex = db.Column(db.String(1), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
