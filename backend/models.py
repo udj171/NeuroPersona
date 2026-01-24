@@ -92,7 +92,7 @@ class Assessment(db.Model):
     __tablename__ = 'assessments'
     
     id = db.Column(db.Integer, primary_key=True)
-    external_id = db.Column(GUID, default=uuid.uuid4, unique=True, nullable=False)
+    external_id = db.Column(GUID(), default=uuid.uuid4, unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     responses_json = db.Column(JSONType, nullable=False)
     ip_address = db.Column(db.String(45), nullable=True)
