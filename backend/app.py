@@ -10,7 +10,8 @@ import logging
 from datetime import datetime, timezone
 import traceback
 import uuid
-
+from models import User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation, AuditLog
+from data_handler import DataHandler
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -45,10 +46,17 @@ app = Flask(__name__)
 # CONFIGURATION
 # ============================================================================
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL', 
-    'sqlite:///assessment.db'
-)
+# Get database URL from environment
+database_url = os.getenv('DATABASE_URL')
+
+# Handle PostgreSQL URL format (Supabase)
+if database_url and database_url.startswith('postgresql://'):
+    database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///assessment.db'
+
+logger.info(f"[DATABASE] Using: {database_url[:30] + '...' if database_url else 'SQLite (local)'}")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -263,6 +271,23 @@ def submit_assessment():
             return jsonify({
                 'error': f'Invalid responses. Expected 35, got {response_count}'
             }), 400
+        # Find the user based on age and sex from the submission
+        user = User.query.filter_by(age=int(age), sex=sex).first()
+        if not user:
+            user = User(age=int(age), sex=sex)
+            db.session.add(user)
+            db.session.flush()
+
+        assessment = Assessment(
+            id=assessment_id,
+            user_id=user.id,
+            responses_json=json.dumps(responses),
+            created_at=datetime.now(timezone.utc),
+            is_valid=True
+        )   
+
+        db.session.add(assessment)
+        db.session.commit()
         
         # ============================================================================
         # ROBUST RESPONSE VALIDATION - Handles None, empty strings, etc.
@@ -426,32 +451,51 @@ def submit_assessment():
 def get_results(assessment_id):
     """Retrieve assessment results"""
     
-    # Handle CORS preflight
     if request.method == 'OPTIONS':
         return '', 204
     
     try:
+        from models import Assessment, PersonalityClassification
+        
         if not assessment_id:
             return jsonify({'error': 'Missing assessment_id'}), 400
         
-        logger.info(f"[GET RESULTS] Assessment ID: {assessment_id}")
+        logger.info(f"[GET RESULTS] Retrieving assessment {assessment_id}")
+        
+        # Fetch from database
+        assessment = Assessment.query.filter_by(id=assessment_id).first()
+        
+        if not assessment:
+            logger.warning(f"[GET RESULTS] Assessment {assessment_id} not found")
+            return jsonify({'error': 'Assessment not found'}), 404
+        
+        # Get personality classification if exists
+        personality = PersonalityClassification.query.filter_by(
+            assessment_id=assessment_id
+        ).first()
+        
+        if not personality:
+            logger.warning(f"[GET RESULTS] Personality classification not found for {assessment_id}")
+            # Return placeholder if not yet scored
+            return jsonify({
+                'success': False,
+                'assessment_id': assessment_id,
+                'message': 'Assessment is still being processed. Please try again in a moment.',
+                'status': 'processing'
+            }), 202  # 202 Accepted (still processing)
+        
+        logger.info(f"[GET RESULTS] ✓ Found results for {assessment_id}")
         
         return jsonify({
             'success': True,
             'assessment_id': assessment_id,
-            'personality_type': 'A',
-            'type_name': 'The Analytical',
-            'type_description': 'Detail-oriented, logical, and systematic',
-            'confidence_score': 0.85,
+            'personality_type': personality.personality_type,
+            'type_name': personality.type_description,
+            'type_description': personality.type_description,
+            'confidence_score': float(personality.confidence_score) if personality.confidence_score else 0.0,
             'interpretation': 'Your assessment has been processed successfully.',
-            'domain_scores': {
-                'resilience': 7.5,
-                'stability': 6.8,
-                'creativity': 8.2,
-                'ambition': 7.1,
-                'openness': 8.5,
-                'empathy': 7.3
-            }
+            'domain_scores': personality.personality_details or {},
+            'key_traits': personality.key_traits or []
         }), 200
     
     except Exception as e:
@@ -460,6 +504,7 @@ def get_results(assessment_id):
             'error': 'Server error',
             'details': str(e)
         }), 500
+
 
 
 # ============================================================================
