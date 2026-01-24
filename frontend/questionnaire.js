@@ -6,7 +6,7 @@
 let globalState = {
   demographics: null,
   responses: {},
-  currentPage: 'demographics', // 'demographics' or 'questions'
+  currentPage: 'demographics',
   assessmentId: null,
 };
 
@@ -53,7 +53,6 @@ const QUESTIONS = [
 // UTILITY FUNCTIONS
 // ============================================================================
 
-// Make API request with retry logic
 async function apiRequest(endpoint, options = {}) {
   const baseURL = window.APICONFIG?.BASEURL || 'https://neuropersona.onrender.com';
   const url = `${baseURL}${endpoint}`;
@@ -108,7 +107,6 @@ async function apiRequest(endpoint, options = {}) {
   throw new Error(`API request failed after 3 attempts: ${lastError.message}`);
 }
 
-// Show toast notification
 function showToast(message, type = 'success', duration = 3000) {
   const toast = document.createElement('div');
   toast.className = `toast toast--${type}`;
@@ -121,7 +119,6 @@ function showToast(message, type = 'success', duration = 3000) {
   }, duration);
 }
 
-// Validate age
 function validateAge(age) {
   if (!age) return 'Age is required';
   const ageNum = parseInt(age, 10);
@@ -131,7 +128,6 @@ function validateAge(age) {
   return '';
 }
 
-// Validate sex
 function validateSex(sex) {
   if (!sex) return 'Gender is required';
   if (!['M', 'F', 'O'].includes(sex)) {
@@ -140,7 +136,6 @@ function validateSex(sex) {
   return '';
 }
 
-// Helper validation functions (used by validateAge/validateSex)
 function isValidAge(age) {
   const ageNum = parseInt(age, 10);
   return ageNum >= 13 && ageNum <= 120;
@@ -157,7 +152,6 @@ function isValidSex(sex) {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('[QUESTIONNAIRE] Initializing...');
   
-  // Read assessment ID from URL if present
   const urlParams = new URLSearchParams(window.location.search);
   const assessmentIdFromUrl = urlParams.get('id');
   
@@ -189,7 +183,6 @@ async function handleDemographicsSubmit(e) {
   const age = document.getElementById('age').value;
   const sex = document.getElementById('sex').value;
 
-  // Validation
   const ageError = validateAge(age);
   if (ageError) {
     document.getElementById('age-error').textContent = ageError;
@@ -202,11 +195,9 @@ async function handleDemographicsSubmit(e) {
     return;
   }
 
-  // Clear errors
   document.getElementById('age-error').textContent = '';
   document.getElementById('sex-error').textContent = '';
 
-  // Save demographics locally
   globalState.demographics = {
     age: parseInt(age),
     sex: sex,
@@ -215,11 +206,9 @@ async function handleDemographicsSubmit(e) {
 
   console.log('[QUESTIONNAIRE] Demographics saved:', globalState.demographics);
 
-  // Show loading
   showToast('Starting assessment...', 'success');
 
   try {
-    // Call backend to initialize assessment
     const response = await apiRequest('/api/start-assessment', {
       method: 'POST',
       headers: {
@@ -234,12 +223,9 @@ async function handleDemographicsSubmit(e) {
     console.log('[QUESTIONNAIRE] Start assessment response:', response);
 
     if (response && response.assessment_id) {
-      // Store assessment ID for later
       globalState.assessmentId = response.assessment_id;
       sessionStorage.setItem('assessment_id', response.assessment_id);
 
-      // Show questions section
-            
       const demoSection = document.getElementById('demographics-section');
       const questionsSection = document.getElementById('questions-section');
       
@@ -249,11 +235,9 @@ async function handleDemographicsSubmit(e) {
       if (questionsSection) {
         questionsSection.style.display = 'block';
       }
-
-
-      // Scroll to top
+      
+      globalState.currentPage = 'questions';
       window.scrollTo(0, 0);
-
       showToast('Assessment started! Answer the questions below.', 'success');
       console.log('[QUESTIONNAIRE] Questions section shown');
     } else {
@@ -277,7 +261,6 @@ function initializeQuestionnaireForm() {
 
   console.log('[QUESTIONNAIRE] Generating questions...');
 
-  // Generate question HTML
   const html = QUESTIONS.map((q, index) => `
     <div class="question-item" style="margin-bottom: 24px;">
       <label style="display: block; margin-bottom: 8px; font-weight: 500;">
@@ -305,7 +288,6 @@ function initializeQuestionnaireForm() {
   form.innerHTML = html;
   console.log('[QUESTIONNAIRE] Generated 35 questions in form');
 
-  // Add event listeners to range inputs
   form.querySelectorAll('input[type="range"]').forEach(input => {
     input.addEventListener('change', (e) => {
       updateQuestionValue(e.target);
@@ -368,7 +350,6 @@ function updateSubmitButton() {
 }
 
 function initializeButtons() {
-  // Back button
   const backBtn = document.querySelector('button[data-action="back"]');
   if (backBtn) {
     backBtn.addEventListener('click', () => {
@@ -381,10 +362,13 @@ function initializeButtons() {
       if (demoSection) {
         demoSection.style.display = 'block';
       }
+      
+      globalState.currentPage = 'demographics';
+      window.scrollTo(0, 0);
+      console.log('[QUESTIONNAIRE] Returned to demographics');
+    });
+  }
 
-
-
-  // Submit button
   const submitBtn = document.querySelector('button[data-action="submit"]');
   if (submitBtn) {
     submitBtn.addEventListener('click', submitAssessment);
@@ -398,7 +382,6 @@ function initializeButtons() {
 async function submitAssessment() {
   console.log('[QUESTIONNAIRE] Submit button clicked');
   
-  // Check prerequisites
   if (!globalState.assessmentId) {
     showToast('Error: No assessment ID. Please start over.', 'error');
     return;
@@ -422,14 +405,12 @@ async function submitAssessment() {
     showToast('Submitting assessment...', 'success');
     console.log('[QUESTIONNAIRE] Starting submission...');
 
-    // Disable submit button
     const submitBtn = document.querySelector('button[data-action="submit"]');
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Processing...';
     }
 
-    // Gather responses
     const responses = gatherResponses();
 
     console.log('[QUESTIONNAIRE] Submission payload:', {
@@ -439,7 +420,6 @@ async function submitAssessment() {
       responses: responses,
     });
 
-    // Submit to backend
     const result = await apiRequest('/api/submit-assessment', {
       method: 'POST',
       headers: {
@@ -458,7 +438,6 @@ async function submitAssessment() {
     if (result && result.success) {
       showToast('Assessment submitted! Redirecting to results...', 'success');
 
-      // Redirect to results page after short delay
       setTimeout(() => {
         window.location.href = `results.html?id=${globalState.assessmentId}`;
       }, 1500);
@@ -470,7 +449,6 @@ async function submitAssessment() {
     console.error('[QUESTIONNAIRE] Error submitting assessment:', error);
     showToast(`Error: ${error.message}`, 'error');
 
-    // Re-enable submit button
     const submitBtn = document.querySelector('button[data-action="submit"]');
     if (submitBtn) {
       submitBtn.disabled = false;
