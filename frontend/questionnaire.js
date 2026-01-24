@@ -53,9 +53,10 @@ const QUESTIONS = [
 // UTILITY FUNCTIONS
 // ============================================================================
 
-async function apiRequest(endpoint, options = {}) {
-  const baseURL = window.APICONFIG?.BASEURL || 'https://neuropersona.onrender.com';
-  const url = `${baseURL}${endpoint}`;
+  async function apiRequest(endpoint, options = {}) {
+    // Use correct API config from config.js
+    const baseURL = window.API_CONFIG?.BASE_URL || 'https://neuropersona.onrender.com';
+
   
   const defaultOptions = {
     method: 'GET',
