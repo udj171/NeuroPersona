@@ -1,11 +1,3 @@
-# COMPLETE CORRECTED BACKEND & FRONTEND SCRIPTS
-# January 24, 2026 - All errors fixed
-# Response range: 1-10
-
-## ============================================================================
-## SCRIPT 1: backend/app.py - COMPLETE CORRECTED VERSION
-## ============================================================================
-
 """
 Flask Application - Personality Assessment Backend (API Only)
 FIXED: All errors resolved - User import, database save, response range 1-10
@@ -22,9 +14,6 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
-from api_routes import api_bp, init_engines
-
-app.register_blueprint(api_bp, url_prefix='/api')
 
 # Load environment variables
 load_dotenv()
@@ -84,6 +73,15 @@ CORS(app,
      max_age=3600)
 
 logger.info("[CORS] ✓ CORS enabled for all /api/* routes")
+
+# ============================================================================
+# IMPORT AND REGISTER BLUEPRINT (MUST BE AFTER app CREATION)
+# ============================================================================
+
+from api_routes import api_bp, init_engines
+
+app.register_blueprint(api_bp, url_prefix='/api')
+logger.info("[BLUEPRINT] ✓ API blueprint registered")
 
 # ============================================================================
 # REQUEST/RESPONSE MIDDLEWARE
