@@ -93,8 +93,8 @@ class Assessment(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     external_id = db.Column(GUID(), default=uuid.uuid4, unique=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    responses_json = db.Column(JSONType, nullable=False)
+    user_id = db.Column(GUID(), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    responses_json = db.Column(JSONType, nullable=True)
     ip_address = db.Column(db.String(45), nullable=True)
     user_agent = db.Column(db.String(500), nullable=True)
     duration_seconds = db.Column(db.Integer, nullable=True)
