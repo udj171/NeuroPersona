@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import uuid
 from models import db, User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation
 from scoring_engine import ScoringEngine
-from vae_inference import VAEInference
+from vae_inference import VAEInferenceEngine
 from gemini_client import GeminiClient
 
 
