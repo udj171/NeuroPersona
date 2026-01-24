@@ -2,6 +2,29 @@
 // API CONFIGURATION & ENVIRONMENT SETUP
 // ============================================================================
 
+// Add after line 7, before getAPIURL function
+
+// Determine environment
+const getBackendURL = () => {
+  // Production: Use environment variable
+  if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // Staging/Testing: Allow manual override
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return localStorage.getItem('API_URL') || 'http://localhost:5000';
+  }
+
+  // Production: Use your actual deployed backend URL
+  // CHANGE THIS TO YOUR ACTUAL BACKEND URL
+  const productionBackendURL = 'https://your-backend-url.onrender.com'; // ← UPDATE THIS
+  return productionBackendURL;
+};
+
+
+
 // Determine API URL based on environment
 function getAPIURL() {
   // Check for Vercel environment variable first (production)
@@ -22,9 +45,10 @@ function getAPIURL() {
   }
 
   // Default to Render backend
-  const defaultURL = 'https://neuropersona.onrender.com';
-  console.log('[CONFIG] Using default API URL:', defaultURL);
-  return defaultURL;
+  // Replace line 62-63
+  const defaultURL = getBackendURL();
+  console.log('[CONFIG] Using API URL:', defaultURL);
+
 }
 
 // Global API configuration
