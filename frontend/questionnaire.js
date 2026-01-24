@@ -272,8 +272,8 @@ function initializeQuestionnaireForm() {
           type="range" 
           id="${q.id}" 
           name="${q.id}" 
-          min="1" 
-          max="5" 
+          min="0" 
+          max="10" 
           value="0"
           style="flex: 1; cursor: pointer;"
           data-category="${q.category}"
@@ -281,7 +281,7 @@ function initializeQuestionnaireForm() {
         <span id="${q.id}-value" style="width: 30px; text-align: center; font-weight: 600; color: #208099;">-</span>
       </div>
       <div style="font-size: 12px; color: #5a6c6d; margin-top: 4px;">
-        Strongly Disagree (1) ← → Strongly Agree (5)
+        Strongly Disagree (0) ← → Strongly Agree (10)
       </div>
     </div>
   `).join('');
