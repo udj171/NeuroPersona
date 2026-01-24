@@ -11,7 +11,7 @@ from models import db, User, Assessment, Result, VAEOutput, PersonalityClassific
 from scoring_engine import ScoringEngine
 from vae_inference import VAEInference
 from gemini_client import GeminiClient
-
+from utils import utils
 
 api_bp = Blueprint('api', __name__)
 logger = logging.getLogger(__name__)
