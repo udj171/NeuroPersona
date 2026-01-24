@@ -10,6 +10,12 @@ import json
 import uuid
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from sqlalchemy import Column, String, Integer, create_engine
+from sqlalchemy.types import CHAR
+from sqlalchemy.orm import declarative_base
+import uuid
+
+Base = declarative_base()
 
 class GUID(TypeDecorator):
     """Platform-independent GUID type that uses CHAR(36) on backends that don't support UUID."""
