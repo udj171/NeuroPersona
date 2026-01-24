@@ -53,10 +53,11 @@ const QUESTIONS = [
 // UTILITY FUNCTIONS
 // ============================================================================
 
-  async function apiRequest(endpoint, options = {}) {
-    // Use correct API config from config.js
-    const baseURL = window.API_CONFIG?.BASE_URL || 'https://neuropersona.onrender.com';
-
+async function apiRequest(endpoint, options = {}) {
+  const baseURL = window.API_CONFIG?.BASE_URL || 'https://neuropersona.onrender.com';
+  const url = `${baseURL}${endpoint}`;
+  
+  console.log(`[API] ${options.method || 'GET'} ${url}`);
   
   const defaultOptions = {
     method: 'GET',
@@ -89,24 +90,44 @@ const QUESTIONS = [
 
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Log response status
+      console.log(`[API] Response ${response.status} from ${endpoint}`);
+
+      // Always try to parse JSON for error details
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch {
+        responseData = { error: response.statusText };
       }
 
-      return await response.json();
+      if (!response.ok) {
+        const errorMessage = responseData?.message || 
+                           responseData?.error || 
+                           `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+
+      console.log(`[API] ✓ Success:`, responseData);
+      return responseData;
+
     } catch (error) {
       lastError = error;
       console.error(`[API] Attempt ${attempt + 1} failed:`, error.message);
 
       if (attempt < 2) {
         const delay = 1000 * Math.pow(2, attempt);
+        console.log(`[API] Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
 
-  throw new Error(`API request failed after 3 attempts: ${lastError.message}`);
+  const errorMsg = `API request failed after 3 attempts: ${lastError.message}`;
+  console.error(`[API] ✗ Final error:`, errorMsg);
+  throw new Error(errorMsg);
 }
+
 
 function showToast(message, type = 'success', duration = 3000) {
   const toast = document.createElement('div');
@@ -384,12 +405,12 @@ async function submitAssessment() {
   console.log('[QUESTIONNAIRE] Submit button clicked');
   
   if (!globalState.assessmentId) {
-    showToast('Error: No assessment ID. Please start over.', 'error');
+    showToast('Error: No assessment ID. Please start over.', 'error', 5000);
     return;
   }
 
   if (!globalState.demographics) {
-    showToast('Please fill in demographics first', 'error');
+    showToast('Please fill in demographics first', 'error', 5000);
     return;
   }
 
@@ -398,7 +419,7 @@ async function submitAssessment() {
   
   if (unanswered.length > 0) {
     const answeredCount = inputs.length - unanswered.length;
-    showToast(`Please answer all questions (${answeredCount}/${inputs.length})`, 'error');
+    showToast(`Please answer all questions (${answeredCount}/${inputs.length})`, 'error', 5000);
     return;
   }
 
@@ -436,19 +457,19 @@ async function submitAssessment() {
 
     console.log('[QUESTIONNAIRE] Submit response:', result);
 
-    if (result && result.success) {
-      showToast('Assessment submitted! Redirecting to results...', 'success');
+    if (result && (result.success || result.assessment_id)) {
+      showToast('✓ Assessment submitted! Redirecting to results...', 'success', 2000);
 
       setTimeout(() => {
         window.location.href = `results.html?id=${globalState.assessmentId}`;
-      }, 1500);
+      }, 2000);
     } else {
-      throw new Error('Submit failed: ' + (result?.error || 'Unknown error'));
+      throw new Error(result?.message || result?.error || 'Submit failed: Unknown error');
     }
 
   } catch (error) {
     console.error('[QUESTIONNAIRE] Error submitting assessment:', error);
-    showToast(`Error: ${error.message}`, 'error');
+    showToast(`✗ Error: ${error.message}`, 'error', 5000);
 
     const submitBtn = document.querySelector('button[data-action="submit"]');
     if (submitBtn) {
@@ -457,6 +478,7 @@ async function submitAssessment() {
     }
   }
 }
+
 
 function gatherResponses() {
   const responses = {};
