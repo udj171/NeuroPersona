@@ -1,6 +1,6 @@
 """
 Flask Application - Personality Assessment Backend (API Only)
-FIXED: Routes served only via blueprint, no duplicates
+FIXED: Proper engine initialization and error handling
 """
 
 import os
@@ -155,6 +155,54 @@ with app.app_context():
         logger.info("[DATABASE] ✓ Database tables created/verified")
     except Exception as e:
         logger.error(f"[DATABASE] ✗ Error creating tables: {e}")
+
+# ============================================================================
+# INITIALIZE ENGINES (FIX: Critical for API functionality)
+# ============================================================================
+
+logger.info("[ENGINES] Initializing scoring, VAE, and Gemini engines...")
+
+scoring_engine = None
+vae_engine = None
+gemini_client = None
+
+with app.app_context():
+    try:
+        logger.debug("[ENGINES] Attempting to import and initialize ScoringEngine")
+        from scoring_engine import ScoringEngine
+        scoring_engine = ScoringEngine()
+        logger.info("[ENGINES] ✓ ScoringEngine initialized")
+    except Exception as e:
+        logger.error(f"[ENGINES] ✗ Failed to initialize ScoringEngine: {str(e)}")
+        logger.error(traceback.format_exc())
+    
+    try:
+        logger.debug("[ENGINES] Attempting to import and initialize VAEInferenceEngine")
+        from vae_inference import VAEInferenceEngine
+        vae_engine = VAEInferenceEngine()
+        logger.info("[ENGINES] ✓ VAEInferenceEngine initialized")
+    except Exception as e:
+        logger.error(f"[ENGINES] ✗ Failed to initialize VAEInferenceEngine: {str(e)}")
+        logger.error(traceback.format_exc())
+    
+    try:
+        logger.debug("[ENGINES] Attempting to import and initialize GeminiClient")
+        from gemini_client import GeminiClient
+        gemini_client = GeminiClient()
+        logger.info("[ENGINES] ✓ GeminiClient initialized")
+    except Exception as e:
+        logger.error(f"[ENGINES] ✗ Failed to initialize GeminiClient: {str(e)}")
+        logger.error(traceback.format_exc())
+        logger.warning("[ENGINES] Warning: Gemini interpretation will be unavailable")
+
+# Pass initialized engines to API routes
+logger.info("[ENGINES] Passing initialized engines to API routes")
+init_engines(scoring_engine, vae_engine, gemini_client)
+
+logger.info(f"[ENGINES] ✓ Engine initialization complete:")
+logger.info(f"     - ScoringEngine: {'YES' if scoring_engine else 'NO'}")
+logger.info(f"     - VAEInferenceEngine: {'YES' if vae_engine else 'NO'}")
+logger.info(f"     - GeminiClient: {'YES' if gemini_client else 'NO'}")
 
 # ============================================================================
 # CATCH-ALL FOR NON-API ROUTES
