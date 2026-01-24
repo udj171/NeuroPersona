@@ -7,6 +7,7 @@ let globalState = {
   demographics: null,
   responses: {},
   currentPage: 'demographics', // 'demographics' or 'questions'
+  assessmentId: null,
 };
 
 // Questions data
@@ -49,11 +50,122 @@ const QUESTIONS = [
 ];
 
 // ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+// Make API request with retry logic
+async function apiRequest(endpoint, options = {}) {
+  const baseURL = window.APICONFIG?.BASEURL || 'https://neuropersona.onrender.com';
+  const url = `${baseURL}${endpoint}`;
+  
+  const defaultOptions = {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Origin': window.location.origin,
+    },
+    timeout: 30000,
+  };
+
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options,
+    headers: {
+      ...defaultOptions.headers,
+      ...(options.headers || {}),
+    },
+  };
+
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), mergedOptions.timeout);
+
+      const response = await fetch(url, {
+        ...mergedOptions,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+      console.error(`[API] Attempt ${attempt + 1} failed:`, error.message);
+
+      if (attempt < 2) {
+        const delay = 1000 * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw new Error(`API request failed after 3 attempts: ${lastError.message}`);
+}
+
+// Show toast notification
+function showToast(message, type = 'success', duration = 3000) {
+  const toast = document.createElement('div');
+  toast.className = `toast toast--${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// Validate age
+function validateAge(age) {
+  if (!age) return 'Age is required';
+  const ageNum = parseInt(age, 10);
+  if (isNaN(ageNum)) return 'Age must be a number';
+  if (ageNum < 13) return 'Must be at least 13 years old';
+  if (ageNum > 120) return 'Please enter a valid age';
+  return '';
+}
+
+// Validate sex
+function validateSex(sex) {
+  if (!sex) return 'Gender is required';
+  if (!['M', 'F', 'O'].includes(sex)) {
+    return 'Please select a valid option';
+  }
+  return '';
+}
+
+// Helper validation functions (used by validateAge/validateSex)
+function isValidAge(age) {
+  const ageNum = parseInt(age, 10);
+  return ageNum >= 13 && ageNum <= 120;
+}
+
+function isValidSex(sex) {
+  return ['M', 'F', 'O'].includes(sex);
+}
+
+// ============================================================================
 // INITIALIZE PAGE
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
   console.log('[QUESTIONNAIRE] Initializing...');
+  
+  // Read assessment ID from URL if present
+  const urlParams = new URLSearchParams(window.location.search);
+  const assessmentIdFromUrl = urlParams.get('id');
+  
+  if (assessmentIdFromUrl) {
+    globalState.assessmentId = assessmentIdFromUrl;
+    console.log('[QUESTIONNAIRE] Assessment ID from URL:', assessmentIdFromUrl);
+  }
+  
   initializeDemographicsForm();
   initializeQuestionnaireForm();
   initializeButtons();
@@ -123,41 +235,32 @@ async function handleDemographicsSubmit(e) {
 
     if (response && response.assessment_id) {
       // Store assessment ID for later
+      globalState.assessmentId = response.assessment_id;
       sessionStorage.setItem('assessment_id', response.assessment_id);
 
       // Show questions section
-      document.getElementById('demographics-section').classList.add('hidden');
-      document.getElementById('questions-section').classList.remove('hidden');
+      const demoSection = document.getElementById('demographics-section');
+      const questionsSection = document.getElementById('questions-section');
+      
+      if (demoSection) demoSection.classList.add('hidden');
+      if (questionsSection) questionsSection.classList.remove('hidden');
+      
       globalState.currentPage = 'questions';
 
       // Scroll to top
       window.scrollTo(0, 0);
 
       showToast('Assessment started! Answer the questions below.', 'success');
+      console.log('[QUESTIONNAIRE] Questions section shown');
     } else {
       showToast('Error: No assessment ID returned', 'error');
+      console.error('[QUESTIONNAIRE] No assessment_id in response:', response);
     }
 
   } catch (error) {
     console.error('[QUESTIONNAIRE] Error starting assessment:', error);
     showToast(`Error: ${error.message}`, 'error');
   }
-}
-
-function validateAge(age) {
-  if (!age) return 'Age is required';
-  if (!isValidAge(age)) {
-    return 'Please enter a valid age between 13 and 120';
-  }
-  return '';
-}
-
-function validateSex(sex) {
-  if (!sex) return 'Gender is required';
-  if (!isValidSex(sex)) {
-    return 'Please select a valid option';
-  }
-  return '';
 }
 
 // ============================================================================
@@ -167,6 +270,8 @@ function validateSex(sex) {
 function initializeQuestionnaireForm() {
   const form = document.getElementById('assessment-form');
   if (!form) return;
+
+  console.log('[QUESTIONNAIRE] Generating questions...');
 
   // Generate question HTML
   const html = QUESTIONS.map((q, index) => `
@@ -194,35 +299,41 @@ function initializeQuestionnaireForm() {
   `).join('');
 
   form.innerHTML = html;
+  console.log('[QUESTIONNAIRE] Generated 35 questions in form');
 
   // Add event listeners to range inputs
   form.querySelectorAll('input[type="range"]').forEach(input => {
     input.addEventListener('change', (e) => {
-      const value = e.target.value;
-      const valueSpan = document.getElementById(`${e.target.id}-value`);
-      if (value === '0') {
-        valueSpan.textContent = '-';
-        valueSpan.style.color = '#999';
-      } else {
-        valueSpan.textContent = value;
-        valueSpan.style.color = '#208099';
-      }
+      updateQuestionValue(e.target);
+      globalState.responses[e.target.name] = parseInt(e.target.value, 10);
       updateProgressBar();
+      updateSubmitButton();
+      console.log('[QUESTIONNAIRE] Response updated:', e.target.name, '=', e.target.value);
     });
 
     input.addEventListener('input', (e) => {
-      const value = e.target.value;
-      const valueSpan = document.getElementById(`${e.target.id}-value`);
-      if (value === '0') {
-        valueSpan.textContent = '-';
-        valueSpan.style.color = '#999';
-      } else {
-        valueSpan.textContent = value;
-        valueSpan.style.color = '#208099';
-      }
+      updateQuestionValue(e.target);
+      globalState.responses[e.target.name] = parseInt(e.target.value, 10);
       updateProgressBar();
+      updateSubmitButton();
     });
   });
+
+  console.log('[QUESTIONNAIRE] Event listeners attached to', form.querySelectorAll('input[type="range"]').length, 'inputs');
+}
+
+function updateQuestionValue(input) {
+  const valueSpan = document.getElementById(`${input.id}-value`);
+  if (!valueSpan) return;
+
+  const value = input.value;
+  if (value === '0') {
+    valueSpan.textContent = '-';
+    valueSpan.style.color = '#999';
+  } else {
+    valueSpan.textContent = value;
+    valueSpan.style.color = '#208099';
+  }
 }
 
 function updateProgressBar() {
@@ -241,15 +352,31 @@ function updateProgressBar() {
   }
 }
 
+function updateSubmitButton() {
+  const inputs = document.querySelectorAll('input[type="range"][name^="q"]');
+  const allAnswered = Array.from(inputs).every(i => i.value !== '0');
+  
+  const submitBtn = document.querySelector('button[data-action="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = !allAnswered;
+    console.log('[QUESTIONNAIRE] Submit button:', allAnswered ? 'ENABLED' : 'DISABLED');
+  }
+}
+
 function initializeButtons() {
   // Back button
   const backBtn = document.querySelector('button[data-action="back"]');
   if (backBtn) {
     backBtn.addEventListener('click', () => {
-      document.getElementById('questions-section').classList.add('hidden');
-      document.getElementById('demographics-section').classList.remove('hidden');
+      const questionsSection = document.getElementById('questions-section');
+      const demoSection = document.getElementById('demographics-section');
+      
+      if (questionsSection) questionsSection.classList.add('hidden');
+      if (demoSection) demoSection.classList.remove('hidden');
+      
       globalState.currentPage = 'demographics';
       window.scrollTo(0, 0);
+      console.log('[QUESTIONNAIRE] Returned to demographics');
     });
   }
 
@@ -265,26 +392,31 @@ function initializeButtons() {
 // ============================================================================
 
 async function submitAssessment() {
-  const demographicsStr = sessionStorage.getItem('demographics');
-  const assessmentId = sessionStorage.getItem('assessment_id');
-
-  if (!demographicsStr || !assessmentId) {
-    showToast('Please complete demographics first', 'error');
+  console.log('[QUESTIONNAIRE] Submit button clicked');
+  
+  // Check prerequisites
+  if (!globalState.assessmentId) {
+    showToast('Error: No assessment ID. Please start over.', 'error');
     return;
   }
 
-  const demographics = JSON.parse(demographicsStr);
-  const responses = gatherResponses();
+  if (!globalState.demographics) {
+    showToast('Please fill in demographics first', 'error');
+    return;
+  }
 
-  // Check if all questions answered
-  if (Object.keys(responses).length !== QUESTIONS.length) {
-    const answeredCount = Object.keys(responses).length;
-    showToast(`Please answer all questions (${answeredCount}/${QUESTIONS.length})`, 'error');
+  const inputs = document.querySelectorAll('input[type="range"][name^="q"]');
+  const unanswered = Array.from(inputs).filter(i => i.value === '0');
+  
+  if (unanswered.length > 0) {
+    const answeredCount = inputs.length - unanswered.length;
+    showToast(`Please answer all questions (${answeredCount}/${inputs.length})`, 'error');
     return;
   }
 
   try {
     showToast('Submitting assessment...', 'success');
+    console.log('[QUESTIONNAIRE] Starting submission...');
 
     // Disable submit button
     const submitBtn = document.querySelector('button[data-action="submit"]');
@@ -293,10 +425,14 @@ async function submitAssessment() {
       submitBtn.textContent = 'Processing...';
     }
 
-    console.log('[QUESTIONNAIRE] Submitting assessment:', {
-      assessmentId,
-      demographics,
-      responses,
+    // Gather responses
+    const responses = gatherResponses();
+
+    console.log('[QUESTIONNAIRE] Submission payload:', {
+      assessment_id: globalState.assessmentId,
+      age: globalState.demographics.age,
+      sex: globalState.demographics.sex,
+      responses: responses,
     });
 
     // Submit to backend
@@ -306,21 +442,25 @@ async function submitAssessment() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        assessment_id: assessmentId,
-        age: demographics.age,
-        sex: demographics.sex,
+        assessment_id: globalState.assessmentId,
+        age: globalState.demographics.age,
+        sex: globalState.demographics.sex,
         responses: responses,
       }),
     });
 
     console.log('[QUESTIONNAIRE] Submit response:', result);
 
-    showToast('Assessment submitted! Redirecting to results...', 'success');
+    if (result && result.success) {
+      showToast('Assessment submitted! Redirecting to results...', 'success');
 
-    // Redirect to results page after short delay
-    setTimeout(() => {
-      window.location.href = `results.html?id=${assessmentId}`;
-    }, 1500);
+      // Redirect to results page after short delay
+      setTimeout(() => {
+        window.location.href = `results.html?id=${globalState.assessmentId}`;
+      }, 1500);
+    } else {
+      throw new Error('Submit failed: ' + (result?.error || 'Unknown error'));
+    }
 
   } catch (error) {
     console.error('[QUESTIONNAIRE] Error submitting assessment:', error);
@@ -346,5 +486,6 @@ function gatherResponses() {
     }
   });
 
+  console.log('[QUESTIONNAIRE] Gathered responses:', responses);
   return responses;
 }
