@@ -11,10 +11,23 @@ from models import db, User, Assessment, Result, VAEOutput, PersonalityClassific
 from scoring_engine import ScoringEngine
 from vae_inference import VAEInference
 from gemini_client import GeminiClient
-from utils import utils
 
+
+# These will be injected by app.py
 api_bp = Blueprint('api', __name__)
 logger = logging.getLogger(__name__)
+
+scoring_engine = None
+vae_engine = None
+gemini_client = None
+
+def init_engines(scoring, vae, gemini):
+    """Initialize engine references from app.py"""
+    global scoring_engine, vae_engine, gemini_client
+    scoring_engine = scoring
+    vae_engine = vae
+    gemini_client = gemini
+
 
 @api_bp.before_request
 def log_request():
