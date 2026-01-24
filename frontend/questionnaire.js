@@ -9,45 +9,6 @@ let globalState = {
   currentPage: 'demographics', // 'demographics' or 'questions'
 };
 
-// Add this at the very top of questionnaire.js (before QUESTIONS array)
-async function apiRequest(endpoint, options = {}) {
-  const baseUrl = window.APICONFIG?.BASE_URL || 
-                  (window.location.hostname === 'localhost' 
-                    ? 'http://localhost:8000' 
-                    : 'https://neuropersona.onrender.com');
-
-  const url = baseUrl + endpoint;
-  const defaultOptions = {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-    timeout: 30000,
-  };
-
-  const mergedOptions = { ...defaultOptions, ...options };
-  
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), mergedOptions.timeout);
-
-    const response = await fetch(url, {
-      ...mergedOptions,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('[API] Request failed:', error);
-    throw error;
-  }
-}
-
-
 // Questions data
 const QUESTIONS = [
   { id: 'q1', text: 'I am analytical and detail-oriented', category: 'R' },
