@@ -53,7 +53,7 @@ migrate = Migrate()
 class User(db.Model):
     __tablename__ = 'users'
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     age = db.Column(db.Integer, nullable=False)
     sex = db.Column(db.String(1), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
