@@ -370,24 +370,18 @@ function updateSubmitButton() {
 function initializeButtons() {
   // Back button
   const backBtn = document.querySelector('button[data-action="back"]');
-
   if (backBtn) {
     backBtn.addEventListener('click', () => {
       const questionsSection = document.getElementById('questions-section');
       const demoSection = document.getElementById('demographics-section');
-
+      
       if (questionsSection) {
         questionsSection.style.display = 'none';
       }
-
       if (demoSection) {
         demoSection.style.display = 'block';
       }
 
-      window.scrollTo(0, 0);
-    });
-  }
-}
 
 
   // Submit button
