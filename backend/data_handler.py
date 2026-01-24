@@ -9,6 +9,11 @@ from datetime import datetime, timezone
 from sqlalchemy import and_, or_, func, desc
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import numpy as np
+from models import (
+    db, User, Assessment, Result, VAEOutput,
+    PersonalityClassification, GeminiInterpretation, AuditLog,
+)
+
 
 logger = logging.getLogger(__name__)
 
