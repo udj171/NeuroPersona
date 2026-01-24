@@ -282,6 +282,101 @@ def submit_assessment():
             except (ValueError, TypeError) as e:
                 logger.warning(f"[SUBMIT ASSESSMENT] Response {key} invalid: {value} (type: {type(value).__name__})")
                 return jsonify({
+                    'error': f'Response {key} must be a number between 1 and 5'
+                }), 400
+            
+            # Check range (1-5 to match frontend slider)
+            if val < 1 or val > 5:
+                logger.warning(f"[SUBMIT ASSESSMENT] Response {key} out of range: {val}")
+                return jsonify({
+                    'error': f'Response {key} must be between 1 and 5 (got {val})'
+                }), 400
+        
+        logger.info("[SUBMIT ASSESSMENT] ✓ All responses validated successfully")
+        
+        # Generate unique assessment ID
+        assessment_id = str(uuid.uuid4())
+        logger.info(f"[SUBMIT ASSESSMENT] Generated assessment_id: {assessment_id}")
+        
+        # ============================================================================
+        # SAVE TO DATABASE (NEW)
+        # ============================================================================
+        try:
+            from models import User, Assessment  # Import models
+            
+            logger.info("[SUBMIT ASSESSMENT] Saving to database...")
+            
+            # Find or create user
+            user = User.query.filter_by(age=int(age), sex=sex).first()
+            if not user:
+                user = User(age=int(age), sex=sex)
+                db.session.add(user)
+                db.session.flush()
+                logger.info(f"[SUBMIT ASSESSMENT] Created new user: {user.id}")
+            else:
+                logger.info(f"[SUBMIT ASSESSMENT] Found existing user: {user.id}")
+            
+            # Create assessment record
+            assessment = Assessment(
+                id=assessment_id,
+                user_id=user.id,
+                responses_json=json.dumps(responses),
+                created_at=datetime.now(timezone.utc),
+                is_valid=True
+            )
+            db.session.add(assessment)
+            db.session.commit()
+            
+            logger.info(f"[SUBMIT ASSESSMENT] ✓ Assessment {assessment_id} saved to database")
+        
+        except Exception as db_error:
+            db.session.rollback()
+            logger.error(f"[SUBMIT ASSESSMENT] Database error: {str(db_error)}")
+            logger.error(f"[SUBMIT ASSESSMENT] Traceback: {traceback.format_exc()}")
+            # Log but continue - in case DB connection is temporary
+            return jsonify({
+                'error': 'Database save failed',
+                'message': str(db_error),
+                'status': 'error'
+            }), 500
+        
+        logger.info(f"[SUBMIT ASSESSMENT] ✓ Success! Assessment {assessment_id} submitted with {response_count} responses")
+        
+        return jsonify({
+            'success': True,
+            'assessment_id': assessment_id,
+            'status': 'success',
+            'message': f'Assessment submitted successfully with {response_count} responses'
+        }), 201
+    
+    except Exception as e:
+        logger.error(f"[SUBMIT ASSESSMENT] ✗ Error: {str(e)}")
+        logger.error(f"[SUBMIT ASSESSMENT] Traceback: {traceback.format_exc()}")
+        return jsonify({
+            'error': 'Server error',
+            'message': str(e),
+            'status': 'error'
+        }), 500
+
+        
+        # ============================================================================
+        # ROBUST RESPONSE VALIDATION - Handles None, empty strings, etc.
+        # ============================================================================
+        logger.info("[SUBMIT ASSESSMENT] Validating response values...")
+        for key, value in responses.items():
+            # Check if value is None or empty string
+            if value is None or value == '':
+                logger.warning(f"[SUBMIT ASSESSMENT] Response {key} is None or empty")
+                return jsonify({
+                    'error': f'Response {key} cannot be empty'
+                }), 400
+            
+            # Try to convert to int (handles string numbers like "5")
+            try:
+                val = int(value) if not isinstance(value, int) else value
+            except (ValueError, TypeError) as e:
+                logger.warning(f"[SUBMIT ASSESSMENT] Response {key} invalid: {value} (type: {type(value).__name__})")
+                return jsonify({
                     'error': f'Response {key} must be a number between 0 and 10'
                 }), 400
             
