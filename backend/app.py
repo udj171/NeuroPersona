@@ -1,6 +1,6 @@
 """
 Flask Application - Personality Assessment Backend (API Only)
-FIXED: All errors resolved - User import, database save, response range 1-10
+FIXED: All errors resolved - Blueprint registration order, engine initialization
 """
 
 import os
