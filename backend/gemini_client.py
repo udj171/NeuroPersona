@@ -102,7 +102,8 @@ Keep the tone professional, encouraging, and constructive. Avoid clinical jargon
                 try:
                     start_time = datetime.now(timezone.utc)
                     
-                    model = genai.GenerativeModel('gemini-pro')
+                    # FIXED: Updated from deprecated 'gemini-pro' to 'gemini-1.5-pro'
+                    model = genai.GenerativeModel('gemini-1.5-pro')
                     response = model.generate_content(
                         prompt,
                         generation_config=genai.types.GenerationConfig(
