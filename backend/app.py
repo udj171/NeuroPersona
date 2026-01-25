@@ -98,8 +98,14 @@ def initialize_engines():
     try:
         logger.info("[ENGINES] Initializing Gemini client...")
         from gemini_client import GeminiClient
-        gemini_client = GeminiClient()
-        logger.info("[ENGINES] ✓ Gemini client initialized")
+        gemini_api_key = os.getenv('GEMINI_API_KEY')
+        if gemini_api_key:
+            gemini_client = GeminiClient(api_key=gemini_api_key)
+            logger.info("[ENGINES] ✓ Gemini client initialized with API key")
+        else:
+            logger.warning("[ENGINES] ⚠ No GEMINI_API_KEY environment variable found. Gemini will use fallback mode.")
+            gemini_client = GeminiClient(api_key=None)
+            logger.info("[ENGINES] ✓ Gemini client initialized in fallback mode")
     except Exception as e:
         logger.error(f"[ENGINES] ✗ Failed to initialize Gemini client: {str(e)}")
         gemini_client = None
