@@ -1,5 +1,5 @@
 # ============================================================================
-# SCRIPT 7: api_routes.py - REST API Endpoints (3000+ lines)
+# SCRIPT 7: api_routes.py - REST API Endpoints
 # ============================================================================
 
 from flask import Blueprint, request, jsonify, current_app
@@ -7,10 +7,8 @@ from sqlalchemy import desc, func
 import logging
 from datetime import datetime, timezone
 import uuid
+import traceback
 from models import db, User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation
-from scoring_engine import ScoringEngine
-from vae_inference import VAEInferenceEngine
-from gemini_client import GeminiClient
 
 
 # These will be injected by app.py
@@ -21,17 +19,22 @@ scoring_engine = None
 vae_engine = None
 gemini_client = None
 
-def init_engines(scoring, vae, gemini):
-    """Initialize engine references from app.py"""
+def set_engines(scoring, vae, gemini):
+    """Set engine references from app.py"""
     global scoring_engine, vae_engine, gemini_client
     scoring_engine = scoring
     vae_engine = vae
     gemini_client = gemini
+    logger.info("[API_ROUTES] Engines configured:")
+    logger.info(f"  - ScoringEngine: {'Ready' if scoring else 'None'}")
+    logger.info(f"  - VAEInferenceEngine: {'Ready' if vae else 'None'}")
+    logger.info(f"  - GeminiClient: {'Ready' if gemini else 'None'}")
 
 
 @api_bp.before_request
 def log_request():
     logger.info(f'{request.method} {request.path} from {request.remote_addr}')
+
 
 @api_bp.route('/health', methods=['GET'])
 def health_check():
@@ -42,6 +45,11 @@ def health_check():
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'service': 'personality-assessment-api',
             'version': '1.0.0',
+            'engines': {
+                'scoring': bool(scoring_engine),
+                'vae': bool(vae_engine),
+                'gemini': bool(gemini_client),
+            }
         }), 200
     except Exception as e:
         logger.error(f'Health check failed: {str(e)}')
@@ -51,76 +59,142 @@ def health_check():
             'timestamp': datetime.now(timezone.utc).isoformat(),
         }), 503
 
+
 @api_bp.route('/start-assessment', methods=['POST'])
 def start_assessment():
+    """Start a new assessment session"""
     try:
-        data = request.get_json()
+        # Parse JSON request
+        data = request.get_json(force=True, silent=True)
         
-        if not data:
+        if data is None:
+            logger.warning('[START_ASSESSMENT] No JSON body received')
             return jsonify({
                 'status': 'error',
-                'message': 'Request body must be JSON',
+                'message': 'Request body must be valid JSON',
+                'code': 'INVALID_JSON'
             }), 400
         
+        # Extract and validate fields
         age = data.get('age')
         sex = data.get('sex')
         
-        if not age or not sex:
+        logger.info(f'[START_ASSESSMENT] Received: age={age}, sex={sex}')
+        
+        # Validate age
+        if age is None:
+            logger.warning('[START_ASSESSMENT] Missing age field')
             return jsonify({
                 'status': 'error',
-                'message': 'Missing required fields: age, sex',
+                'message': 'Missing required field: age',
+                'code': 'MISSING_AGE'
             }), 400
         
-        if not isinstance(age, int) or age < 13 or age > 120:
+        if not isinstance(age, (int, float)):
+            logger.warning(f'[START_ASSESSMENT] Invalid age type: {type(age)}')
+            return jsonify({
+                'status': 'error',
+                'message': 'Age must be a number',
+                'code': 'INVALID_AGE_TYPE'
+            }), 400
+        
+        age = int(age)
+        if age < 13 or age > 120:
+            logger.warning(f'[START_ASSESSMENT] Age out of range: {age}')
             return jsonify({
                 'status': 'error',
                 'message': 'Age must be between 13 and 120',
+                'code': 'AGE_OUT_OF_RANGE'
+            }), 400
+        
+        # Validate sex
+        if sex is None:
+            logger.warning('[START_ASSESSMENT] Missing sex field')
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing required field: sex',
+                'code': 'MISSING_SEX'
             }), 400
         
         if sex not in ['M', 'F', 'O']:
+            logger.warning(f'[START_ASSESSMENT] Invalid sex value: {sex}')
             return jsonify({
                 'status': 'error',
                 'message': 'Sex must be M, F, or O',
+                'code': 'INVALID_SEX'
             }), 400
         
-        user = User(age=age, sex=sex)
-        db.session.add(user)
-        db.session.commit()
+        # Create user
+        try:
+            user = User(age=age, sex=sex)
+            db.session.add(user)
+            db.session.flush()  # Get the ID without committing
+            logger.info(f'[START_ASSESSMENT] Created user {user.id}')
+        except Exception as e:
+            logger.error(f'[START_ASSESSMENT] Error creating user: {str(e)}')
+            db.session.rollback()
+            return jsonify({
+                'status': 'error',
+                'message': 'Error creating user record',
+                'code': 'USER_CREATE_ERROR',
+                'details': str(e) if current_app.debug else None
+            }), 500
         
-        assessment = Assessment(
-            user_id=user.id,
-            ip_address=request.remote_addr,
-            user_agent=request.headers.get('User-Agent', ''),
-        )
-        db.session.add(assessment)
-        db.session.commit()
+        # Create assessment
+        try:
+            assessment = Assessment(
+                user_id=user.id,
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent', '')[:500],
+            )
+            db.session.add(assessment)
+            db.session.commit()
+            logger.info(f'[START_ASSESSMENT] Created assessment {assessment.id} for user {user.id}')
+        except Exception as e:
+            logger.error(f'[START_ASSESSMENT] Error creating assessment: {str(e)}')
+            db.session.rollback()
+            return jsonify({
+                'status': 'error',
+                'message': 'Error creating assessment record',
+                'code': 'ASSESSMENT_CREATE_ERROR',
+                'details': str(e) if current_app.debug else None
+            }), 500
         
-        logger.info(f'Started assessment {assessment.id} for user {user.id}')
-        
+        # Success response
         return jsonify({
             'status': 'success',
-            'user_id': user.id,
+            'user_id': str(user.id),
             'assessment_id': assessment.id,
             'external_id': str(assessment.external_id),
         }), 201
     
     except Exception as e:
-        logger.error(f'Error in start_assessment: {str(e)}', exc_info=True)
+        logger.error(f'[START_ASSESSMENT] Unexpected error: {str(e)}')
+        logger.error(traceback.format_exc())
+        try:
+            db.session.rollback()
+        except:
+            pass
+        
         return jsonify({
             'status': 'error',
             'message': 'Internal server error',
+            'code': 'INTERNAL_ERROR',
             'error': str(e) if current_app.debug else None,
         }), 500
 
+
 @api_bp.route('/submit-assessment', methods=['POST'])
 def submit_assessment():
+    """Submit assessment responses"""
     try:
-        data = request.get_json()
+        data = request.get_json(force=True, silent=True)
         
-        if not data:
+        if data is None:
             return jsonify({
                 'status': 'error',
                 'message': 'Request body must be JSON',
+                'code': 'INVALID_JSON'
             }), 400
         
         assessment_id = data.get('assessment_id')
@@ -130,34 +204,70 @@ def submit_assessment():
             return jsonify({
                 'status': 'error',
                 'message': 'Missing required fields: assessment_id, responses',
+                'code': 'MISSING_FIELDS'
+            }), 400
+        
+        if not isinstance(responses, dict):
+            return jsonify({
+                'status': 'error',
+                'message': 'Responses must be an object/dict',
+                'code': 'INVALID_RESPONSES_FORMAT'
             }), 400
         
         if len(responses) < 30:
             return jsonify({
                 'status': 'error',
                 'message': 'Must provide at least 30 responses',
+                'code': 'INSUFFICIENT_RESPONSES'
             }), 400
         
-        for i, response in enumerate(responses[:35]):
-            if not isinstance(response, (int, float)) or response < 0 or response > 10:
+        # Validate response values
+        response_list = []
+        for key in sorted(responses.keys()):
+            val = responses[key]
+            if not isinstance(val, (int, float)):
                 return jsonify({
                     'status': 'error',
-                    'message': f'Response {i} must be a number between 0 and 10',
+                    'message': f'Response {key} must be a number',
+                    'code': 'INVALID_RESPONSE_TYPE'
                 }), 400
+            
+            val = int(val)
+            if val < 1 or val > 10:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Response {key} must be between 1 and 10',
+                    'code': 'RESPONSE_OUT_OF_RANGE'
+                }), 400
+            response_list.append(val)
         
+        # Get assessment
         assessment = Assessment.query.get(assessment_id)
         if not assessment:
             return jsonify({
                 'status': 'error',
                 'message': 'Assessment not found',
+                'code': 'ASSESSMENT_NOT_FOUND'
             }), 404
         
-        assessment.responses_json = responses[:35]
+        # Save responses
+        assessment.responses_json = responses
         assessment.completed_at = datetime.now(timezone.utc)
         db.session.commit()
         
+        logger.info(f'[SUBMIT_ASSESSMENT] Assessment {assessment_id} responses saved')
+        
         try:
-            result_data = scoring_engine.process_assessment(responses, assessment.user.age)
+            # Process with scoring engine
+            if not scoring_engine:
+                logger.error('[SUBMIT_ASSESSMENT] Scoring engine not initialized')
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Scoring engine not available',
+                    'code': 'ENGINE_NOT_READY'
+                }), 503
+            
+            result_data = scoring_engine.process_assessment(response_list, assessment.user.age)
             
             result = Result(
                 assessment_id=assessment.id,
@@ -171,50 +281,58 @@ def submit_assessment():
             db.session.add(result)
             db.session.commit()
             
-            vae_result = vae_engine.process_assessment(result_data['vae_input'])
+            logger.info(f'[SUBMIT_ASSESSMENT] Scoring completed for assessment {assessment_id}')
             
-            vae_output = VAEOutput(
-                assessment_id=assessment.id,
-                latent_representation=vae_result['latent_representation'],
-                reconstruction_error=vae_result['reconstruction_error'],
-                latent_distance_from_mean=vae_result['latent_distance_from_mean'],
-                local_density=vae_result['local_density'],
-                novelty_score=vae_result['novelty_score'],
-            )
-            db.session.add(vae_output)
-            
-            personality_classification = PersonalityClassification(
-                assessment_id=assessment.id,
-                personality_type=vae_result['personality_type'],
-                confidence_score=vae_result['personality_details']['confidence'],
-                personality_details=vae_result['personality_details'],
-                type_description=vae_result['type_description']['description'],
-                key_traits=vae_result['type_description']['traits'],
-            )
-            db.session.add(personality_classification)
-            db.session.commit()
-            
-            assessment_context = {
-                'assessment_id': assessment.id,
-                'personality_type': vae_result['personality_type'],
-                'confidence_score': vae_result['personality_details']['confidence'],
-                'deception_susceptibility': result_data['deception_susceptibility'],
-                'corrected_domain_scores': result_data['corrected_domain_scores'],
-                'novelty_score': vae_result['novelty_score'],
-            }
-            
-            interpretation_result = gemini_client.process_assessment_with_interpretation(assessment_context)
-            
-            gemini_interpretation = GeminiInterpretation(
-                assessment_id=assessment.id,
-                prompt_text='Assessment interpretation request',
-                interpretation_text=interpretation_result['interpretation'],
-                api_status='success' if interpretation_result['api_success'] else 'fallback',
-            )
-            db.session.add(gemini_interpretation)
-            db.session.commit()
-            
-            logger.info(f'Successfully processed assessment {assessment.id}')
+            # Process with VAE engine
+            if vae_engine:
+                vae_result = vae_engine.process_assessment(result_data['vae_input'])
+                
+                vae_output = VAEOutput(
+                    assessment_id=assessment.id,
+                    latent_representation=vae_result['latent_representation'],
+                    reconstruction_error=vae_result['reconstruction_error'],
+                    latent_distance_from_mean=vae_result['latent_distance_from_mean'],
+                    local_density=vae_result['local_density'],
+                    novelty_score=vae_result['novelty_score'],
+                )
+                db.session.add(vae_output)
+                
+                personality_classification = PersonalityClassification(
+                    assessment_id=assessment.id,
+                    personality_type=vae_result['personality_type'],
+                    confidence_score=vae_result['personality_details']['confidence'],
+                    personality_details=vae_result['personality_details'],
+                    type_description=vae_result['type_description']['description'],
+                    key_traits=vae_result['type_description']['traits'],
+                )
+                db.session.add(personality_classification)
+                db.session.commit()
+                
+                logger.info(f'[SUBMIT_ASSESSMENT] VAE processing completed for assessment {assessment_id}')
+                
+                # Process with Gemini if available
+                if gemini_client:
+                    assessment_context = {
+                        'assessment_id': assessment.id,
+                        'personality_type': vae_result['personality_type'],
+                        'confidence_score': vae_result['personality_details']['confidence'],
+                        'deception_susceptibility': result_data['deception_susceptibility'],
+                        'corrected_domain_scores': result_data['corrected_domain_scores'],
+                        'novelty_score': vae_result['novelty_score'],
+                    }
+                    
+                    interpretation_result = gemini_client.process_assessment_with_interpretation(assessment_context)
+                    
+                    gemini_interpretation = GeminiInterpretation(
+                        assessment_id=assessment.id,
+                        prompt_text='Assessment interpretation request',
+                        interpretation_text=interpretation_result['interpretation'],
+                        api_status='success' if interpretation_result['api_success'] else 'fallback',
+                    )
+                    db.session.add(gemini_interpretation)
+                    db.session.commit()
+                    
+                    logger.info(f'[SUBMIT_ASSESSMENT] Gemini interpretation completed for assessment {assessment_id}')
             
             return jsonify({
                 'status': 'success',
@@ -223,21 +341,31 @@ def submit_assessment():
             }), 202
         
         except Exception as e:
-            logger.error(f'Error processing assessment data: {str(e)}', exc_info=True)
+            logger.error(f'[SUBMIT_ASSESSMENT] Error processing assessment data: {str(e)}')
+            logger.error(traceback.format_exc())
             db.session.rollback()
             return jsonify({
                 'status': 'error',
                 'message': 'Error processing assessment',
+                'code': 'PROCESSING_ERROR',
                 'error': str(e) if current_app.debug else None,
             }), 500
     
     except Exception as e:
-        logger.error(f'Error in submit_assessment: {str(e)}', exc_info=True)
+        logger.error(f'[SUBMIT_ASSESSMENT] Unexpected error: {str(e)}')
+        logger.error(traceback.format_exc())
+        try:
+            db.session.rollback()
+        except:
+            pass
+        
         return jsonify({
             'status': 'error',
             'message': 'Internal server error',
+            'code': 'INTERNAL_ERROR',
             'error': str(e) if current_app.debug else None,
         }), 500
+
 
 @api_bp.route('/results/<int:assessment_id>', methods=['GET'])
 def get_results(assessment_id):
@@ -247,6 +375,7 @@ def get_results(assessment_id):
             return jsonify({
                 'status': 'error',
                 'message': 'Assessment not found',
+                'code': 'ASSESSMENT_NOT_FOUND'
             }), 404
         
         result = assessment.results
@@ -254,6 +383,7 @@ def get_results(assessment_id):
             return jsonify({
                 'status': 'error',
                 'message': 'Results not yet available',
+                'code': 'RESULTS_NOT_AVAILABLE'
             }), 404
         
         vae_output = assessment.vae_outputs
@@ -276,12 +406,15 @@ def get_results(assessment_id):
         return jsonify(response_data), 200
     
     except Exception as e:
-        logger.error(f'Error in get_results: {str(e)}', exc_info=True)
+        logger.error(f'[GET_RESULTS] Error: {str(e)}')
+        logger.error(traceback.format_exc())
         return jsonify({
             'status': 'error',
             'message': 'Internal server error',
+            'code': 'INTERNAL_ERROR',
             'error': str(e) if current_app.debug else None,
         }), 500
+
 
 @api_bp.route('/assessments', methods=['GET'])
 def list_assessments():
@@ -308,13 +441,15 @@ def list_assessments():
         }), 200
     
     except Exception as e:
-        logger.error(f'Error in list_assessments: {str(e)}', exc_info=True)
+        logger.error(f'[LIST_ASSESSMENTS] Error: {str(e)}')
         return jsonify({
             'status': 'error',
             'message': 'Internal server error',
+            'code': 'INTERNAL_ERROR'
         }), 500
 
-@api_bp.route('/users/<int:user_id>/assessments', methods=['GET'])
+
+@api_bp.route('/users/<user_id>/assessments', methods=['GET'])
 def get_user_assessments(user_id):
     try:
         user = User.query.get(user_id)
@@ -322,23 +457,26 @@ def get_user_assessments(user_id):
             return jsonify({
                 'status': 'error',
                 'message': 'User not found',
+                'code': 'USER_NOT_FOUND'
             }), 404
         
         assessments = Assessment.query.filter_by(user_id=user_id).order_by(desc(Assessment.created_at)).all()
         
         return jsonify({
             'status': 'success',
-            'user_id': user_id,
+            'user_id': str(user_id),
             'assessments': [a.to_dict() for a in assessments],
             'count': len(assessments),
         }), 200
     
     except Exception as e:
-        logger.error(f'Error in get_user_assessments: {str(e)}', exc_info=True)
+        logger.error(f'[GET_USER_ASSESSMENTS] Error: {str(e)}')
         return jsonify({
             'status': 'error',
             'message': 'Internal server error',
+            'code': 'INTERNAL_ERROR'
         }), 500
+
 
 @api_bp.route('/stats', methods=['GET'])
 def get_statistics():
@@ -371,8 +509,9 @@ def get_statistics():
         }), 200
     
     except Exception as e:
-        logger.error(f'Error in get_statistics: {str(e)}', exc_info=True)
+        logger.error(f'[GET_STATISTICS] Error: {str(e)}')
         return jsonify({
             'status': 'error',
             'message': 'Internal server error',
+            'code': 'INTERNAL_ERROR'
         }), 500
