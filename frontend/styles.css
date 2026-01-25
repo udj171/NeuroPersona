@@ -131,6 +131,38 @@ nav {
     box-shadow: var(--shadow-md);
 }
 
+/* Philosophy Introduction Section */
+.philosophy-intro {
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    background: linear-gradient(135deg, #f8f8f6 0%, #f0f0ed 100%);
+    text-align: center;
+}
+
+.philosophy-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.philosophy-intro h2 {
+    font-size: clamp(24px, 5vw, 36px);
+    font-weight: 700;
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.3;
+    color: var(--color-text);
+}
+
+.philosophy-intro h2 .accent {
+    color: var(--color-accent);
+}
+
+.philosophy-intro p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--color-text-light);
+    text-align: justify;
+    margin-bottom: 0;
+}
+
 /* Hero Section */
 .hero {
     padding: var(--spacing-2xl) var(--spacing-xl);
@@ -375,46 +407,6 @@ nav {
     }
 }
 
-/* CTA Section */
-.cta-section {
-    padding: var(--spacing-2xl) var(--spacing-xl);
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-    color: var(--color-white);
-    text-align: center;
-}
-
-.cta-section > * {
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.cta-section h2 {
-    font-size: clamp(28px, 6vw, 40px);
-    font-weight: 700;
-    margin-bottom: var(--spacing-lg);
-    line-height: 1.3;
-}
-
-.cta-section h2 .accent {
-    color: var(--color-accent);
-}
-
-.cta-section p {
-    font-size: 16px;
-    margin-bottom: var(--spacing-xl);
-    opacity: 0.95;
-    line-height: 1.8;
-    text-align: justify;
-}
-
-/* Footer */
-footer {
-    background-color: #1a2f37;
-    padding: var(--spacing-xl) var(--spacing-xl);
-    min-height: 60px;
-}
-
 /* Loading spinner */
 .spinner {
     display: inline-block;
@@ -505,6 +497,20 @@ footer {
         order: -1;
     }
 
+    .philosophy-intro {
+        padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    .philosophy-intro h2 {
+        font-size: 20px;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .philosophy-intro p {
+        font-size: 14px;
+        text-align: left;
+    }
+
     .hero {
         padding: var(--spacing-xl) var(--spacing-md);
         min-height: auto;
@@ -548,26 +554,25 @@ footer {
         height: 45px;
         font-size: 20px;
     }
-
-    .cta-section {
-        padding: var(--spacing-xl) var(--spacing-md);
-    }
-
-    .cta-section h2 {
-        font-size: clamp(24px, 5vw, 32px);
-    }
-
-    .cta-section p {
-        font-size: 15px;
-        margin-bottom: var(--spacing-lg);
-        text-align: left;
-    }
 }
 
 /* Small devices (below 480px) */
 @media (max-width: 480px) {
     .nav-links {
         gap: var(--spacing-md);
+    }
+
+    .philosophy-intro {
+        padding: var(--spacing-lg) var(--spacing-sm);
+    }
+
+    .philosophy-intro h2 {
+        font-size: 18px;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .philosophy-intro p {
+        font-size: 13px;
     }
 
     .hero {
@@ -587,14 +592,5 @@ footer {
     .section-title {
         font-size: 24px;
         margin-bottom: var(--spacing-lg);
-    }
-
-    .cta-section h2 {
-        font-size: 20px;
-    }
-
-    .cta-section p {
-        font-size: 14px;
-        text-align: left;
     }
 }
