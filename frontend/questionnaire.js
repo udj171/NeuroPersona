@@ -50,7 +50,7 @@ const QUESTIONS = [
 ];
 
 // ============================================================================
-// UTILITY: API REQUEST (FIXED CONFIG + LOGGING)
+// UTILITY: API REQUEST (FIXED CONFIG + LOGGING + COLD START HANDLING)
 // ============================================================================
 
 async function apiRequest(endpoint, options = {}) {
@@ -65,7 +65,7 @@ async function apiRequest(endpoint, options = {}) {
       'Content-Type': 'application/json',
       'Origin': window.location.origin,
     },
-    timeout: 30000,
+    timeout: 60000,
   };
 
   const mergedOptions = {
