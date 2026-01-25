@@ -1,6 +1,6 @@
 """
 Flask Application - Personality Assessment Backend (API Only)
-FIXED: Routes served only via blueprint, no duplicates
+FIXED: Engines properly initialized, error handling improved
 """
 
 import os
@@ -73,10 +73,49 @@ CORS(app,
 logger.info("[CORS] ✓ CORS enabled for all /api/* routes")
 
 # ============================================================================
+# INITIALIZE ENGINE INSTANCES
+# ============================================================================
+
+scoring_engine = None
+vae_engine = None
+gemini_client = None
+
+def initialize_engines():
+    """Initialize AI engines at startup"""
+    global scoring_engine, vae_engine, gemini_client
+    
+    try:
+        logger.info("[ENGINES] Initializing scoring engine...")
+        from scoring_engine import ScoringEngine
+        scoring_engine = ScoringEngine()
+        logger.info("[ENGINES] ✓ Scoring engine initialized")
+    except Exception as e:
+        logger.error(f"[ENGINES] ✗ Failed to initialize scoring engine: {str(e)}")
+        scoring_engine = None
+    
+    try:
+        logger.info("[ENGINES] Initializing VAE inference engine...")
+        from vae_inference import VAEInferenceEngine
+        vae_engine = VAEInferenceEngine()
+        logger.info("[ENGINES] ✓ VAE engine initialized")
+    except Exception as e:
+        logger.error(f"[ENGINES] ✗ Failed to initialize VAE engine: {str(e)}")
+        vae_engine = None
+    
+    try:
+        logger.info("[ENGINES] Initializing Gemini client...")
+        from gemini_client import GeminiClient
+        gemini_client = GeminiClient()
+        logger.info("[ENGINES] ✓ Gemini client initialized")
+    except Exception as e:
+        logger.error(f"[ENGINES] ✗ Failed to initialize Gemini client: {str(e)}")
+        gemini_client = None
+
+# ============================================================================
 # IMPORT AND REGISTER BLUEPRINT (MUST BE AFTER app CREATION)
 # ============================================================================
 
-from api_routes import api_bp, init_engines
+from api_routes import api_bp, set_engines
 
 app.register_blueprint(api_bp, url_prefix='/api')
 logger.info("[BLUEPRINT] ✓ API blueprint registered")
@@ -89,7 +128,7 @@ logger.info("[BLUEPRINT] ✓ API blueprint registered")
 def before_request():
     """Track request start time"""
     request.start_time = datetime.now(timezone.utc)
-    logger.info(f"[REQUEST] {request.method} {request.path}")
+    logger.info(f"[REQUEST] {request.method} {request.path} from {request.remote_addr}")
 
 @app.after_request
 def after_request(response):
@@ -137,7 +176,10 @@ def not_found(error):
 def internal_error(error):
     """Handle 500 Internal Server Error"""
     logger.error(f"[ERROR 500] {traceback.format_exc()}")
-    db.session.rollback()
+    try:
+        db.session.rollback()
+    except:
+        pass
     return jsonify({
         'status': 'error',
         'code': 500,
@@ -151,10 +193,21 @@ def internal_error(error):
 
 with app.app_context():
     try:
+        logger.info("[DATABASE] Creating tables...")
         db.create_all()
         logger.info("[DATABASE] ✓ Database tables created/verified")
     except Exception as e:
         logger.error(f"[DATABASE] ✗ Error creating tables: {e}")
+        logger.error(traceback.format_exc())
+
+# ============================================================================
+# INITIALIZE ENGINES AFTER APP CONTEXT
+# ============================================================================
+
+with app.app_context():
+    initialize_engines()
+    set_engines(scoring_engine, vae_engine, gemini_client)
+    logger.info("[ENGINES] ✓ All engines passed to API routes")
 
 # ============================================================================
 # CATCH-ALL FOR NON-API ROUTES
@@ -184,6 +237,10 @@ logger.info(f"[APP] ✓ Database: {app.config['SQLALCHEMY_DATABASE_URI'][:50]}..
 logger.info("[APP] ✓ CORS enabled: Yes")
 logger.info("[APP] ✓ All routes served via blueprint")
 logger.info("[APP] ✓ Frontend: Served from Vercel (https://www.predictmypersonality.com)")
+logger.info("[APP] ✓ Engine Status:")
+logger.info(f"     - Scoring Engine: {'✓ Ready' if scoring_engine else '✗ Failed'}")
+logger.info(f"     - VAE Engine: {'✓ Ready' if vae_engine else '✗ Failed'}")
+logger.info(f"     - Gemini Client: {'✓ Ready' if gemini_client else '✗ Failed'}")
 logger.info("[APP] ✓ API endpoints ready:")
 logger.info("     - GET /api/health")
 logger.info("     - POST /api/start-assessment")
