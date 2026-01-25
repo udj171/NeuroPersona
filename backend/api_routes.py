@@ -128,12 +128,18 @@ def start_assessment():
         try:
             logger.info(f'[START_ASSESSMENT] Creating user with age={age}, sex={sex}')
             user = User(age=age, sex=sex)
+            logger.info(f'[START_ASSESSMENT] User instance created: {user}')
+            
             db.session.add(user)
+            logger.info(f'[START_ASSESSMENT] User added to session')
+            
             db.session.flush()  # Get the ID without committing
-            logger.info(f'[START_ASSESSMENT] Created user {user.id}')
+            logger.info(f'[START_ASSESSMENT] User flushed, ID: {user.id}')
+            
         except Exception as e:
             logger.error(f'[START_ASSESSMENT] Error creating user: {str(e)}')
-            logger.error(f'[START_ASSESSMENT] User creation traceback: {traceback.format_exc()}')
+            logger.error(f'[START_ASSESSMENT] Full traceback: {traceback.format_exc()}')
+            logger.error(f'[START_ASSESSMENT] Exception type: {type(e).__name__}')
             db.session.rollback()
             return jsonify({
                 'status': 'error',
@@ -150,12 +156,19 @@ def start_assessment():
                 ip_address=request.remote_addr,
                 user_agent=request.headers.get('User-Agent', '')[:500],
             )
+            logger.info(f'[START_ASSESSMENT] Assessment instance created')
+            
             db.session.add(assessment)
+            logger.info(f'[START_ASSESSMENT] Assessment added to session')
+            
             db.session.commit()
+            logger.info(f'[START_ASSESSMENT] Session committed')
             logger.info(f'[START_ASSESSMENT] Created assessment {assessment.id} (external_id: {assessment.external_id}) for user {user.id}')
+            
         except Exception as e:
             logger.error(f'[START_ASSESSMENT] Error creating assessment: {str(e)}')
-            logger.error(f'[START_ASSESSMENT] Assessment creation traceback: {traceback.format_exc()}')
+            logger.error(f'[START_ASSESSMENT] Full traceback: {traceback.format_exc()}')
+            logger.error(f'[START_ASSESSMENT] Exception type: {type(e).__name__}')
             db.session.rollback()
             return jsonify({
                 'status': 'error',
@@ -175,7 +188,8 @@ def start_assessment():
     
     except Exception as e:
         logger.error(f'[START_ASSESSMENT] Unexpected error: {str(e)}')
-        logger.error(traceback.format_exc())
+        logger.error(f'[START_ASSESSMENT] Traceback: {traceback.format_exc()}')
+        logger.error(f'[START_ASSESSMENT] Exception type: {type(e).__name__}')
         try:
             db.session.rollback()
         except:
