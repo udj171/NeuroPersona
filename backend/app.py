@@ -1,6 +1,6 @@
 """
 Flask Application - Personality Assessment Backend (API Only)
-FIXED: Engines properly initialized, error handling improved
+FIXED: Proper db initialization from models
 """
 
 import os
@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -27,19 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# INITIALIZE DATABASE
-# ============================================================================
-
-db = SQLAlchemy()
-
-# ============================================================================
-# IMPORT MODELS (CRITICAL - MUST BE AFTER db INITIALIZATION)
-# ============================================================================
-
-from models import User, Assessment
-
-# ============================================================================
-# CREATE APP
+# CREATE APP FIRST
 # ============================================================================
 
 app = Flask(__name__)
@@ -56,7 +43,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
-# Initialize database
+# ============================================================================
+# IMPORT MODELS (MUST BE AFTER app IS CREATED)
+# ============================================================================
+
+from models import db, User, Assessment
+
+# Initialize database with app
 db.init_app(app)
 
 # ============================================================================
