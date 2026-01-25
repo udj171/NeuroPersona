@@ -1,16 +1,15 @@
 # ============================================================================
-# SCRIPT 2: models.py - Database Schema & ORM Models (FIXED)
+# SCRIPT 2: models.py - Database Schema & ORM Models (FIXED - GUID & UUID)
 # ============================================================================
 
 from datetime import datetime, timezone
-from sqlalchemy import func, Index, CheckConstraint, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSON, UUID, JSONB
+from sqlalchemy import func, Index, CheckConstraint, UniqueConstraint, String
 from sqlalchemy.types import TypeDecorator
 import json
 import uuid
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from sqlalchemy import Column, String, Integer, create_engine
+from sqlalchemy import Column, Integer, create_engine
 from sqlalchemy.types import CHAR
 from sqlalchemy.orm import declarative_base
 import uuid
@@ -18,39 +17,54 @@ import uuid
 Base = declarative_base()
 
 class GUID(TypeDecorator):
-    """Platform-independent GUID type that uses CHAR(36) on backends that don't support UUID."""
-    impl = CHAR
+    """Platform-independent GUID type - stores as string, compatible with SQLite and PostgreSQL"""
+    impl = String(36)
     cache_ok = True
-
-    def load_dialect_impl(self, dialect):
-        return dialect.type_descriptor(CHAR(36))
 
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
         if not isinstance(value, uuid.UUID):
-            value = uuid.UUID(str(value))
+            try:
+                value = uuid.UUID(str(value))
+            except (ValueError, TypeError):
+                return str(value)
         return str(value)
 
     def process_result_value(self, value, dialect):
         if value is None:
             return value
-        return uuid.UUID(value)
+        try:
+            if isinstance(value, uuid.UUID):
+                return value
+            return uuid.UUID(str(value))
+        except (ValueError, TypeError):
+            return value
 
 class JSONType(TypeDecorator):
-    impl = str
+    """JSON type - stores as string, compatible with SQLite and PostgreSQL"""
+    impl = String
     cache_ok = True
     
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
-        return json.dumps(value)
+        try:
+            return json.dumps(value)
+        except (TypeError, ValueError) as e:
+            print(f"[JSONType] Error encoding to JSON: {e}, value: {value}")
+            return None
     
     def process_result_value(self, value, dialect):
         if value is None:
             return None
-        return json.loads(value)
-
+        if isinstance(value, dict):
+            return value
+        try:
+            return json.loads(value)
+        except (TypeError, ValueError) as e:
+            print(f"[JSONType] Error decoding from JSON: {e}, value: {value}")
+            return None
 
 
 db = SQLAlchemy()
@@ -59,7 +73,7 @@ migrate = Migrate()
 class User(db.Model):
     __tablename__ = 'users'
     
-    id = Column(GUID(), primary_key=True, default=lambda: uuid.uuid4())
+    id = Column(GUID(), primary_key=True, default=lambda: str(uuid.uuid4()))
     external_id = Column(String(255), unique=True, nullable=True)
     age = db.Column(db.Integer, nullable=False)
     sex = db.Column(db.String(1), nullable=False)
@@ -92,7 +106,7 @@ class Assessment(db.Model):
     __tablename__ = 'assessments'
     
     id = db.Column(db.Integer, primary_key=True)
-    external_id = db.Column(GUID(), default=lambda: uuid.uuid4(), unique=True, nullable=False)
+    external_id = db.Column(GUID(), default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
     user_id = db.Column(GUID(), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     responses_json = db.Column(JSONType, nullable=True)
     ip_address = db.Column(db.String(45), nullable=True)
