@@ -20,13 +20,47 @@ class GeminiClient:
         self.retry_delay = retry_delay
         self.logger = logging.getLogger(self.__class__.__name__)
         
+        # Available model fallback chain
+        self.model_chain = [
+            'gemini-2.0-flash',        # Latest stable model
+            'gemini-1.5-flash',        # Faster alternative
+            'gemini-pro',              # Older fallback
+        ]
+        self.current_model = None
+        
         if api_key:
             genai.configure(api_key=api_key)
             self.logger.info('Configured Gemini API')
+            self.current_model = self._find_available_model()
         else:
             self.logger.warning('No Gemini API key provided, using fallback templates')
         
         self.fallback_templates = self._initialize_fallback_templates()
+    
+    def _find_available_model(self) -> Optional[str]:
+        """
+        Attempt to find an available model from the fallback chain
+        """
+        for model_name in self.model_chain:
+            try:
+                self.logger.info(f'Testing model availability: {model_name}')
+                model = genai.GenerativeModel(model_name)
+                # Quick test to verify model works
+                response = model.generate_content(
+                    'test',
+                    generation_config=genai.types.GenerationConfig(
+                        max_output_tokens=10,
+                    )
+                )
+                if response:
+                    self.logger.info(f'Successfully initialized model: {model_name}')
+                    return model_name
+            except Exception as e:
+                self.logger.warning(f'Model {model_name} not available: {str(e)}')
+                continue
+        
+        self.logger.warning('No Gemini models available, will use fallback templates only')
+        return None
     
     def _initialize_fallback_templates(self) -> Dict[str, str]:
         return {
@@ -91,7 +125,8 @@ Keep the tone professional, encouraging, and constructive. Avoid clinical jargon
         try:
             personality_type = assessment_data.get('personality_type', 'Unknown')
             
-            if use_fallback or not self.api_key:
+            # If no model available or fallback forced, use templates
+            if use_fallback or not self.current_model:
                 self.logger.info(f'Using fallback interpretation for type {personality_type}')
                 interpretation = self.fallback_templates.get(personality_type, self.fallback_templates['A'])
                 return interpretation, False
@@ -102,8 +137,8 @@ Keep the tone professional, encouraging, and constructive. Avoid clinical jargon
                 try:
                     start_time = datetime.now(timezone.utc)
                     
-                    # FIXED: Updated from deprecated 'gemini-pro' to 'gemini-1.5-pro'
-                    model = genai.GenerativeModel('gemini-1.5-pro')
+                    # Use the currently available model
+                    model = genai.GenerativeModel(self.current_model)
                     response = model.generate_content(
                         prompt,
                         generation_config=genai.types.GenerationConfig(
@@ -123,13 +158,23 @@ Keep the tone professional, encouraging, and constructive. Avoid clinical jargon
                     response_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
                     
                     if response and response.text:
-                        self.logger.info(f'Generated interpretation successfully in {response_time:.2f}ms')
+                        self.logger.info(f'Generated interpretation successfully using {self.current_model} in {response_time:.2f}ms')
                         return response.text, True
                     else:
                         self.logger.warning(f'Empty response from Gemini API, attempt {attempt + 1}/{self.max_retries}')
                 
                 except Exception as e:
-                    self.logger.warning(f'Attempt {attempt + 1} failed: {str(e)}')
+                    error_msg = str(e)
+                    self.logger.warning(f'Attempt {attempt + 1}/{self.max_retries} failed: {error_msg}')
+                    
+                    # If 404 model not found, try next model in chain
+                    if '404' in error_msg or 'not found' in error_msg.lower():
+                        self.logger.info(f'Model {self.current_model} not available, trying next in chain')
+                        self.current_model = self._find_available_model()
+                        if not self.current_model:
+                            self.logger.error('No available models in chain')
+                            break
+                    
                     if attempt < self.max_retries - 1:
                         time.sleep(self.retry_delay)
                     else:
@@ -151,10 +196,11 @@ Keep the tone professional, encouraging, and constructive. Avoid clinical jargon
                 'personality_type': assessment_data.get('personality_type'),
                 'interpretation': interpretation,
                 'api_success': api_success,
+                'model_used': self.current_model,
                 'timestamp': datetime.now(timezone.utc).isoformat(),
             }
             
-            self.logger.info(f'Assessment interpretation processing completed')
+            self.logger.info(f'Assessment interpretation processing completed (API: {api_success})')
             return result
         
         except Exception as e:
