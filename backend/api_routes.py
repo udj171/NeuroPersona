@@ -124,7 +124,7 @@ def start_assessment():
                 'code': 'INVALID_SEX'
             }), 400
         
-        # Create user
+        # Create user and assessment in single transaction
         try:
             logger.info(f'[START_ASSESSMENT] Creating user with age={age}, sex={sex}')
             user = User(age=age, sex=sex)
@@ -133,8 +133,8 @@ def start_assessment():
             db.session.add(user)
             logger.info(f'[START_ASSESSMENT] User added to session')
             
-            db.session.flush()  # Get the ID without committing
-            logger.info(f'[START_ASSESSMENT] User flushed, ID: {user.id}')
+            db.session.commit()  # ✅ CRITICAL FIX: Commit user to database
+            logger.info(f'[START_ASSESSMENT] User committed to database, ID: {user.id}')
             
         except Exception as e:
             logger.error(f'[START_ASSESSMENT] Error creating user: {str(e)}')
@@ -152,7 +152,7 @@ def start_assessment():
         try:
             logger.info(f'[START_ASSESSMENT] Creating assessment for user {user.id}')
             assessment = Assessment(
-                user_id=user.id,
+                user_id=user.id,  # User now exists in database
                 ip_address=request.remote_addr,
                 user_agent=request.headers.get('User-Agent', '')[:500],
             )
@@ -162,7 +162,7 @@ def start_assessment():
             logger.info(f'[START_ASSESSMENT] Assessment added to session')
             
             db.session.commit()
-            logger.info(f'[START_ASSESSMENT] Session committed')
+            logger.info(f'[START_ASSESSMENT] Assessment committed to database')
             logger.info(f'[START_ASSESSMENT] Created assessment {assessment.id} (external_id: {assessment.external_id}) for user {user.id}')
             
         except Exception as e:
