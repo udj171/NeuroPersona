@@ -22,9 +22,9 @@ class GeminiClient:
         
         # Available model fallback chain
         self.model_chain = [
-            'gemini-2.0-flash',        # Latest stable model
-            'gemini-1.5-flash',        # Faster alternative
-            'gemini-pro',              # Older fallback
+            'gemini-2.5-flash-lite',        # Latest stable model
+            'gemini-2.5-flash',        # Faster alternative
+            'gemini-3-flash-preview',              # Older fallback
         ]
         self.current_model = None
         
