@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from sqlalchemy import text
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -204,7 +205,7 @@ def verify_database_connection():
         
         # Try to execute a simple query
         with app.app_context():
-            result = db.session.execute('SELECT 1')
+            result = db.session.execute(text('SELECT 1'))
             logger.info("[DB] ✓ Database connection verified")
             return True
     except Exception as e:
