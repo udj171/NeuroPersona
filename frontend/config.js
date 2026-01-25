@@ -18,12 +18,10 @@ const getBackendURL = () => {
   }
 
   // Production: Use your actual deployed backend URL
-  // CHANGE THIS TO YOUR ACTUAL BACKEND URL
-  const productionBackendURL = 'https://your-backend-url.onrender.com'; // ← UPDATE THIS
+  // REPLACE THIS WITH YOUR RENDER SERVICE URL
+  const productionBackendURL = 'https://neuropersona.onrender.com'; // ← REPLACE WITH YOUR URL
   return productionBackendURL;
 };
-
-
 
 // Determine API URL based on environment
 function getAPIURL() {
