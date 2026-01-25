@@ -1,5 +1,5 @@
 // ============================================================================
-// RESULTS PAGE MANAGEMENT - ENHANCED WITH EFOPA
+// RESULTS PAGE MANAGEMENT - Enhanced with Advanced Personality Analysis
 // ============================================================================
 
 const PERSONALITY_TYPES = {
@@ -35,23 +35,12 @@ const PERSONALITY_TYPES = {
   },
 };
 
-// Global state for EFOPA data
-let efopaCacheState = {
-  lambdaAnalysis: null,
-  domainCosts: null,
-  elephantModule: null,
-  validityMetrics: null,
-  authenticityMetrics: null,
-  assessmentMetadata: null,
-  isLoaded: false,
-};
-
 // ============================================================================
 // INITIALIZE RESULTS PAGE
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', async function() {
-  console.log('[RESULTS] Initializing...');
+  console.log('[RESULTS] Initializing results page...');
 
   const assessmentId = getAssessmentIdFromURL();
   console.log('[RESULTS] Assessment ID:', assessmentId);
@@ -64,12 +53,14 @@ document.addEventListener('DOMContentLoaded', async function() {
   try {
     console.log('[RESULTS] Fetching results for assessment:', assessmentId);
     const results = await fetchResults(assessmentId);
-    console.log('[RESULTS] Received results:', results);
+    console.log('[RESULTS] Results received:', results);
+    
+    // Display main results
     displayResults(results);
     
-    // Load EFOPA enhancements after main results are displayed
-    console.log('[RESULTS] Loading EFOPA enhancements...');
-    await loadEFOPAEnhancements(assessmentId);
+    // Load advanced analysis
+    console.log('[RESULTS] Loading advanced personality analysis...');
+    await loadAdvancedAnalysis(assessmentId);
     
   } catch (error) {
     console.error('[RESULTS] Error:', error);
@@ -108,117 +99,13 @@ async function fetchResults(assessmentId) {
 }
 
 // ============================================================================
-// LOAD EFOPA ENHANCEMENTS
-// ============================================================================
-
-async function loadEFOPAEnhancements(assessmentId) {
-  try {
-    console.log('[EFOPA] Loading EFOPA enhancements for:', assessmentId);
-    
-    // Try to load complete analysis first (if endpoint exists)
-    // Falls back to individual endpoints if complete-analysis not available
-    try {
-      const completeAnalysis = await EFOPAService.getCompleteAnalysis(assessmentId);
-      console.log('[EFOPA] Complete analysis loaded:', completeAnalysis);
-      
-      // Extract and display components
-      if (completeAnalysis.lambda_analysis) displayEFOPALambda(completeAnalysis.lambda_analysis);
-      if (completeAnalysis.domain_costs) displayEFOPADomainCosts(completeAnalysis.domain_costs);
-      if (completeAnalysis.elephant_module) displayEFOPAElephant(completeAnalysis.elephant_module);
-      if (completeAnalysis.validity_metrics) displayEFOPAValidity(completeAnalysis.validity_metrics);
-      if (completeAnalysis.authenticity_metrics) displayEFOPAAuthenticity(completeAnalysis.authenticity_metrics);
-      
-      efopaCacheState.isLoaded = true;
-      return;
-    } catch (completeError) {
-      console.log('[EFOPA] Complete analysis not available, loading individual components...');
-    }
-    
-    // Fallback: Load individual endpoints in parallel
-    const promises = [
-      EFOPAService.getLambdaAnalysis(assessmentId)
-        .then(data => { efopaCacheState.lambdaAnalysis = data; displayEFOPALambda(data); })
-        .catch(err => console.warn('[EFOPA] Lambda load failed:', err.message)),
-      
-      EFOPAService.getDomainCosts(assessmentId)
-        .then(data => { efopaCacheState.domainCosts = data; displayEFOPADomainCosts(data); })
-        .catch(err => console.warn('[EFOPA] Domain costs load failed:', err.message)),
-      
-      EFOPAService.getElephantModule(assessmentId)
-        .then(data => { efopaCacheState.elephantModule = data; displayEFOPAElephant(data); })
-        .catch(err => console.warn('[EFOPA] Elephant module load failed:', err.message)),
-      
-      EFOPAService.getValidityMetrics(assessmentId)
-        .then(data => { efopaCacheState.validityMetrics = data; displayEFOPAValidity(data); })
-        .catch(err => console.warn('[EFOPA] Validity metrics load failed:', err.message)),
-      
-      EFOPAService.getAuthenticityMetrics(assessmentId)
-        .then(data => { efopaCacheState.authenticityMetrics = data; displayEFOPAAuthenticity(data); })
-        .catch(err => console.warn('[EFOPA] Authenticity metrics load failed:', err.message)),
-    ];
-    
-    await Promise.all(promises);
-    efopaCacheState.isLoaded = true;
-    console.log('[EFOPA] All enhancements loaded');
-    
-  } catch (error) {
-    console.error('[EFOPA] Error loading enhancements:', error);
-    // Don't throw - EFOPA is enhancement, not core functionality
-  }
-}
-
-// ============================================================================
-// DISPLAY EFOPA COMPONENTS
-// ============================================================================
-
-function displayEFOPALambda(data) {
-  if (!data || !data.lambda_score) return;
-  
-  console.log('[EFOPA] Displaying Lambda analysis...');
-  const formatted = EFOPAFormatter.formatLambda(data.lambda_score);
-  EFOPADisplay.displayLambda(formatted, 'efopa-lambda-section');
-}
-
-function displayEFOPADomainCosts(data) {
-  if (!data || !data.domain_costs) return;
-  
-  console.log('[EFOPA] Displaying domain costs...');
-  const formatted = EFOPAFormatter.formatDomainCosts(data.domain_costs);
-  EFOPADisplay.displayDomainCosts(formatted, 'efopa-costs-section');
-}
-
-function displayEFOPAElephant(data) {
-  if (!data) return;
-  
-  console.log('[EFOPA] Displaying elephant module...');
-  const formatted = EFOPAFormatter.formatElephant(data);
-  EFOPADisplay.displayElephant(formatted, 'efopa-elephant-section');
-}
-
-function displayEFOPAValidity(data) {
-  if (!data) return;
-  
-  console.log('[EFOPA] Displaying validity metrics...');
-  const formatted = EFOPAFormatter.formatValidity(data);
-  EFOPADisplay.displayValidity(formatted, 'efopa-validity-section');
-}
-
-function displayEFOPAAuthenticity(data) {
-  if (!data) return;
-  
-  console.log('[EFOPA] Displaying authenticity metrics...');
-  const formatted = EFOPAFormatter.formatAuthenticity(data);
-  EFOPADisplay.displayAuthenticity(formatted, 'efopa-authenticity-section');
-}
-
-// ============================================================================
 // DISPLAY RESULTS
 // ============================================================================
 
 function displayResults(results) {
   console.log('[RESULTS] Displaying results:', results);
 
-  // Hide loading, show results - USING STYLE DISPLAY NONE
+  // Hide loading, show results
   const loadingState = document.getElementById('loading-state');
   const resultsState = document.getElementById('results-state');
 
@@ -232,20 +119,19 @@ function displayResults(results) {
     console.log('[RESULTS] Showed results state');
   }
 
-  // FIXED: Extract personality from nested structure
+  // Extract personality data
   const personalityData = results.personality || {};
   const personalityType = personalityData.personality_type || 'Unknown';
   const confidence = personalityData.confidence_score || 0;
   const interpretation = results.interpretation || 'Your assessment has been processed.';
   
-  // FIXED: Extract corrected domain scores from results.results structure
+  // Extract corrected domain scores
   const resultsData = results.results || {};
   const domainScores = resultsData.corrected_domain_scores || {};
 
   console.log('[RESULTS] Personality Type:', personalityType);
   console.log('[RESULTS] Confidence:', confidence);
   console.log('[RESULTS] Domain Scores:', domainScores);
-  console.log('[RESULTS] Full personality object:', personalityData);
 
   // Update personality type letter
   const typeLetterEl = document.getElementById('type-letter');
@@ -312,18 +198,17 @@ function displayResults(results) {
 }
 
 function displayDomainScores(scores) {
-  console.log('[RESULTS] displayDomainScores called with:', scores);
+  console.log('[RESULTS] Displaying domain scores:', scores);
 
   const domains = [
-    { key: 'R', name: 'Resilience' },
-    { key: 'S', name: 'Stability' },
-    { key: 'C', name: 'Creativity' },
-    { key: 'A', name: 'Ambition' },
+    { key: 'R', name: 'Relationships' },
+    { key: 'S', name: 'Status' },
+    { key: 'C', name: 'Conscientiousness' },
+    { key: 'A', name: 'Agreeableness' },
     { key: 'O', name: 'Openness' },
-    { key: 'E', name: 'Empathy' },
+    { key: 'E', name: 'Emotional Stability' },
   ];
 
-  // Use correct element ID
   const scoresContainer = document.getElementById('domain-scores-grid');
   if (!scoresContainer) {
     console.warn('[RESULTS] Element domain-scores-grid not found');
