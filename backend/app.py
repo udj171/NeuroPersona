@@ -181,26 +181,73 @@ def internal_error(error):
     }), 500
 
 # ============================================================================
-# CREATE DATABASE TABLES
+# DATABASE INITIALIZATION & SCHEMA RESET
 # ============================================================================
 
-with app.app_context():
-    try:
-        logger.info("[DATABASE] Creating tables...")
-        db.create_all()
-        logger.info("[DATABASE] ✓ Database tables created/verified")
-    except Exception as e:
-        logger.error(f"[DATABASE] ✗ Error creating tables: {e}")
-        logger.error(traceback.format_exc())
-
-# ============================================================================
-# INITIALIZE ENGINES AFTER APP CONTEXT
-# ============================================================================
-
-with app.app_context():
-    initialize_engines()
-    set_engines(scoring_engine, vae_engine, gemini_client)
-    logger.info("[ENGINES] ✓ All engines passed to API routes")
+def check_and_migrate_schema():
+    """Check if database schema needs to be recreated for UUID migration"""
+    with app.app_context():
+        try:
+            # Check if users table exists and inspect its structure
+            inspector = db.inspect(db.engine)
+            tables = inspector.get_table_names()
+            
+            if 'users' not in tables:
+                logger.info("[SCHEMA] No users table found, creating fresh schema...")
+                db.create_all()
+                logger.info("[SCHEMA] ✓ Fresh schema created")
+                return True
+            
+            # Check if id column is String type (new schema) or GUID (old schema)
+            columns = inspector.get_columns('users')
+            id_column = next((c for c in columns if c['name'] == 'id'), None)
+            
+            if id_column:
+                col_type = str(id_column['type'])
+                logger.info(f"[SCHEMA] Users.id column type: {col_type}")
+                
+                # If it's still GUID or CHAR type from old schema, reset
+                if 'GUID' in col_type or (col_type == 'CHAR' and 'VARCHAR' not in col_type):
+                    logger.warning("[SCHEMA] Detected old GUID schema, resetting to new String(36) schema...")
+                    try:
+                        logger.info("[SCHEMA] Dropping all tables...")
+                        db.drop_all()
+                        logger.info("[SCHEMA] ✓ All tables dropped")
+                        
+                        logger.info("[SCHEMA] Creating new tables with String(36) UUID schema...")
+                        db.create_all()
+                        logger.info("[SCHEMA] ✓ New schema created")
+                        
+                        # Verify
+                        new_columns = inspector.get_columns('users')
+                        new_id_col = next((c for c in new_columns if c['name'] == 'id'), None)
+                        logger.info(f"[SCHEMA] ✓ Migration complete. New id column type: {new_id_col['type']}")
+                        return True
+                    except Exception as e:
+                        logger.error(f"[SCHEMA] ✗ Error during schema migration: {str(e)}")
+                        logger.error(traceback.format_exc())
+                        return False
+                else:
+                    logger.info("[SCHEMA] ✓ Schema is up-to-date (String/VARCHAR type)")
+                    return True
+            else:
+                logger.warning("[SCHEMA] Could not determine id column type, attempting fresh create...")
+                db.create_all()
+                return True
+                
+        except Exception as e:
+            logger.error(f"[SCHEMA] ✗ Error checking schema: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Attempt recovery by recreating
+            try:
+                logger.info("[SCHEMA] Attempting schema recovery...")
+                db.drop_all()
+                db.create_all()
+                logger.info("[SCHEMA] ✓ Schema recovered")
+                return True
+            except Exception as recovery_error:
+                logger.error(f"[SCHEMA] ✗ Schema recovery failed: {str(recovery_error)}")
+                return False
 
 # ============================================================================
 # CATCH-ALL FOR NON-API ROUTES
@@ -222,6 +269,35 @@ def frontend_redirect(path=None):
     }), 404
 
 # ============================================================================
+# STARTUP SEQUENCE
+# ============================================================================
+
+with app.app_context():
+    try:
+        logger.info("[STARTUP] ========================================")
+        logger.info("[STARTUP] NEUROPERSONA BACKEND INITIALIZATION")
+        logger.info("[STARTUP] ========================================")
+        
+        logger.info(f"[STARTUP] Database: {app.config['SQLALCHEMY_DATABASE_URI'][:60]}...")
+        
+        # Check and migrate schema if needed
+        schema_ok = check_and_migrate_schema()
+        if not schema_ok:
+            logger.error("[STARTUP] ✗ Schema check/migration failed, but continuing...")
+        else:
+            logger.info("[STARTUP] ✓ Schema check passed")
+        
+    except Exception as e:
+        logger.error(f"[STARTUP] ✗ Error during startup: {str(e)}")
+        logger.error(traceback.format_exc())
+
+# Initialize engines after app context
+with app.app_context():
+    initialize_engines()
+    set_engines(scoring_engine, vae_engine, gemini_client)
+    logger.info("[ENGINES] ✓ All engines passed to API routes")
+
+# ============================================================================
 # STARTUP MESSAGES
 # ============================================================================
 
@@ -239,6 +315,7 @@ logger.info("     - GET /api/health")
 logger.info("     - POST /api/start-assessment")
 logger.info("     - POST /api/submit-assessment")
 logger.info("     - GET /api/results/<assessment_id>")
+logger.info("[APP] ✓ Ready to accept requests")
 
 # ============================================================================
 # RUN APP
