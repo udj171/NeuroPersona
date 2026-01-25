@@ -36,28 +36,27 @@ def log_request():
     logger.info(f'{request.method} {request.path} from {request.remote_addr}')
 
 
-@api_bp.route('/health', methods=['GET'])
+@api_bp.route('/health', methods=['GET', 'HEAD'])
 def health_check():
+    """
+    SIMPLIFIED HEALTH CHECK
+    Returns 200 immediately without database queries.
+    Frontend wake-up call can use this to detect when backend is responsive.
+    """
     try:
-        db.session.execute('SELECT 1')
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'service': 'personality-assessment-api',
             'version': '1.0.0',
-            'engines': {
-                'scoring': bool(scoring_engine),
-                'vae': bool(vae_engine),
-                'gemini': bool(gemini_client),
-            }
         }), 200
     except Exception as e:
-        logger.error(f'Health check failed: {str(e)}')
+        logger.error(f'[HEALTH] Unexpected error: {str(e)}')
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
             'timestamp': datetime.now(timezone.utc).isoformat(),
-        }), 503
+        }), 500
 
 
 @api_bp.route('/start-assessment', methods=['POST'])
