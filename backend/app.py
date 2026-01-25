@@ -1,6 +1,5 @@
-"""
 Flask Application - Personality Assessment Backend (API Only)
-FIXED: Proper db initialization from models
+FIXED: Proper db initialization from models + better database connection handling
 """
 
 import os
@@ -181,13 +180,36 @@ def internal_error(error):
     }), 500
 
 # ============================================================================
-# DATABASE INITIALIZATION & SCHEMA RESET
+# DATABASE INITIALIZATION & CONNECTION VERIFICATION
 # ============================================================================
+
+def verify_database_connection():
+    """Verify database connection is working"""
+    try:
+        logger.info("[DB] Verifying database connection...")
+        db_url = app.config['SQLALCHEMY_DATABASE_URI']
+        if 'postgresql' in db_url:
+            logger.info(f"[DB] Using PostgreSQL (Render)")
+        elif 'sqlite' in db_url:
+            logger.info(f"[DB] Using SQLite (local/fallback)")
+        else:
+            logger.info(f"[DB] Using: {db_url[:50]}...")
+        
+        # Try to execute a simple query
+        with app.app_context():
+            result = db.session.execute('SELECT 1')
+            logger.info("[DB] ✓ Database connection verified")
+            return True
+    except Exception as e:
+        logger.error(f"[DB] ✗ Database connection failed: {str(e)}")
+        logger.error(f"[DB] Traceback: {traceback.format_exc()}")
+        return False
 
 def check_and_migrate_schema():
     """Check if database schema needs to be recreated for UUID migration"""
     with app.app_context():
         try:
+            logger.info("[SCHEMA] Checking database schema...")
             # Check if users table exists and inspect its structure
             inspector = db.inspect(db.engine)
             tables = inspector.get_table_names()
@@ -198,7 +220,7 @@ def check_and_migrate_schema():
                 logger.info("[SCHEMA] ✓ Fresh schema created")
                 return True
             
-            # Check if id column is String type (new schema) or GUID (old schema)
+            # Check if id column is String type (new schema)
             columns = inspector.get_columns('users')
             id_column = next((c for c in columns if c['name'] == 'id'), None)
             
@@ -279,6 +301,13 @@ with app.app_context():
         logger.info("[STARTUP] ========================================")
         
         logger.info(f"[STARTUP] Database: {app.config['SQLALCHEMY_DATABASE_URI'][:60]}...")
+        
+        # Verify database connection first
+        db_ok = verify_database_connection()
+        if not db_ok:
+            logger.error("[STARTUP] ✗ Database connection failed, but continuing...")
+        else:
+            logger.info("[STARTUP] ✓ Database connection verified")
         
         # Check and migrate schema if needed
         schema_ok = check_and_migrate_schema()
