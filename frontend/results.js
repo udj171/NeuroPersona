@@ -112,14 +112,20 @@ function displayResults(results) {
     console.log('[RESULTS] Showed results state');
   }
 
-  const personalityType = results.personality_type || 'Unknown';
-  const confidence = results.confidence_score || 0;
+  // FIXED: Extract personality from nested structure
+  const personalityData = results.personality || {};
+  const personalityType = personalityData.personality_type || 'Unknown';
+  const confidence = personalityData.confidence_score || 0;
   const interpretation = results.interpretation || 'Your assessment has been processed.';
-  const domainScores = results.domain_scores || {};
+  
+  // FIXED: Extract corrected domain scores from results.results structure
+  const resultsData = results.results || {};
+  const domainScores = resultsData.corrected_domain_scores || {};
 
   console.log('[RESULTS] Personality Type:', personalityType);
   console.log('[RESULTS] Confidence:', confidence);
   console.log('[RESULTS] Domain Scores:', domainScores);
+  console.log('[RESULTS] Full personality object:', personalityData);
 
   // Update personality type letter
   const typeLetterEl = document.getElementById('type-letter');
