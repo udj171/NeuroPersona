@@ -1,3 +1,4 @@
+"""
 Flask Application - Personality Assessment Backend (API Only)
 FIXED: Proper db initialization from models + better database connection handling
 """
@@ -278,7 +279,7 @@ def check_and_migrate_schema():
 @app.route('/')
 @app.route('/<path:path>')
 def frontend_redirect(path=None):
-    """Redirect all non-API requests"""
+    """Redirect all non-API requests to frontend info"""
     return jsonify({
         'error': 'Frontend not served from backend',
         'message': 'Visit: https://www.predictmypersonality.com',
