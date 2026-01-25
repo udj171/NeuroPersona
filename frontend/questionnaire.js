@@ -1,5 +1,6 @@
 // ============================================================================
-// FRONTEND: questionnaire.js - COMPLETE UPDATED SCRIPT (Range 1-10)
+// FRONTEND: questionnaire.js - EFOPA COMPACT PERSONALITY ASSESSMENT
+// 30-Item Questionnaire with 0-10 Scale + 5 Validity Check Items
 // ============================================================================
 
 // Global state
@@ -8,50 +9,62 @@ let globalState = {
   responses: {},
   currentPage: 'demographics',
   assessmentId: null,
-  backendReady: false,
 };
 
-// Questions data
+// Questions data - EFOPA Compact Personality Assessment (30 core + 5 validity items)
 const QUESTIONS = [
-  { id: 'q1', text: 'I am analytical and detail-oriented', category: 'R' },
-  { id: 'q2', text: 'I prefer stability and predictability', category: 'S' },
-  { id: 'q3', text: 'I enjoy creative and artistic pursuits', category: 'C' },
-  { id: 'q4', text: 'I am ambitious and goal-driven', category: 'A' },
-  { id: 'q5', text: 'I am open to new experiences and ideas', category: 'O' },
-  { id: 'q6', text: 'I am empathetic and compassionate', category: 'E' },
-  { id: 'q7', text: 'I can adapt to changing circumstances', category: 'R' },
-  { id: 'q8', text: 'I prefer routine and structure', category: 'S' },
-  { id: 'q9', text: 'I have a unique and original perspective', category: 'C' },
-  { id: 'q10', text: 'I work hard to achieve my goals', category: 'A' },
-  { id: 'q11', text: 'I enjoy learning new things', category: 'O' },
-  { id: 'q12', text: 'I care deeply about others\' feelings', category: 'E' },
-  { id: 'q13', text: 'I handle stress well', category: 'R' },
-  { id: 'q14', text: 'I like things to be organized', category: 'S' },
-  { id: 'q15', text: 'I express myself creatively', category: 'C' },
-  { id: 'q16', text: 'I am competitive', category: 'A' },
-  { id: 'q17', text: 'I explore unconventional ideas', category: 'O' },
-  { id: 'q18', text: 'I enjoy helping others', category: 'E' },
-  { id: 'q19', text: 'I recover quickly from setbacks', category: 'R' },
-  { id: 'q20', text: 'I prefer familiar environments', category: 'S' },
-  { id: 'q21', text: 'I have a vivid imagination', category: 'C' },
-  { id: 'q22', text: 'I take initiative in projects', category: 'A' },
-  { id: 'q23', text: 'I question traditional ways of doing things', category: 'O' },
-  { id: 'q24', text: 'I understand people\'s motivations', category: 'E' },
-  { id: 'q25', text: 'I remain calm under pressure', category: 'R' },
-  { id: 'q26', text: 'I prefer consistency in my life', category: 'S' },
-  { id: 'q27', text: 'I enjoy artistic or musical activities', category: 'C' },
-  { id: 'q28', text: 'I strive for excellence', category: 'A' },
-  { id: 'q29', text: 'I see possibilities others miss', category: 'O' },
-  { id: 'q30', text: 'I am a good listener', category: 'E' },
-  { id: 'q31', text: 'I face challenges head-on', category: 'R' },
-  { id: 'q32', text: 'I find comfort in predictability', category: 'S' },
-  { id: 'q33', text: 'I think outside the box', category: 'C' },
-  { id: 'q34', text: 'I pursue my ambitions with determination', category: 'A' },
-  { id: 'q35', text: 'I value diversity and different perspectives', category: 'O' },
+  // DOMAIN R: Sexual and Romantic Relationships (R1-R5)
+  { id: 'R1', text: 'When faced with a major life opportunity that would take time away from my partner, I feel torn between both goals because I genuinely value both my career success and my relationship equally.', category: 'R', domain: 'Relationships' },
+  { id: 'R2', text: 'Early in dating, I think it\'s better to be honest about how committed I want to be, rather than creating mystery or seeming less interested to maintain attraction.', category: 'R', domain: 'Relationships' },
+  { id: 'R3', text: 'When looking for a long-term partner, I notice I become more selective about what I want if I know other attractive people are available.', category: 'R', domain: 'Relationships' },
+  { id: 'R4', text: 'Even in a committed relationship, I find it hard to avoid noticing attractive people around me, even though I\'m deeply committed.', category: 'R', domain: 'Relationships' },
+  { id: 'R5', text: 'In my relationships, my interest in sex and my emotional connection to my partner tend to move together—either both grow stronger or both weaken.', category: 'R', domain: 'Relationships' },
+  
+  // DOMAIN S: Confidence and Status (S6-S10)
+  { id: 'S6', text: 'When I try something challenging for the first time, I can usually judge how well I\'ll do fairly accurately—I don\'t tend to overestimate or underestimate my abilities.', category: 'S', domain: 'Status' },
+  { id: 'S7', text: 'I notice I talk more about my accomplishments and strengths when I\'m speaking with people who seem more successful or important than me.', category: 'S', domain: 'Status' },
+  { id: 'S8', text: 'If I\'m in a disagreement with someone at my level, I\'d only make aggressive threats if I genuinely believed I could back them up with my strength or social influence.', category: 'S', domain: 'Status' },
+  { id: 'S9', text: 'If I could become more successful without anyone knowing about it, I\'d feel just as good as if everyone praised me for the improvement.', category: 'S', domain: 'Status' },
+  { id: 'S10', text: 'When discussing money and finances, which facts I emphasize (salary, savings, investments, home value) depends on which numbers look best compared to the people I\'m talking to.', category: 'S', domain: 'Status' },
+  
+  // DOMAIN C: Reliability and Follow-Through (C11-C15)
+  { id: 'C11', text: 'When I commit to finishing something by a certain date and it turns out to be harder than expected, I work harder to meet the original deadline instead of asking for more time.', category: 'C', domain: 'Reliability' },
+  { id: 'C12', text: 'When I look back at my work, people who know me well probably see me as organized and reliable, or maybe even more reliable than I actually am.', category: 'C', domain: 'Reliability' },
+  { id: 'C13', text: 'I keep working hard at my tasks even when nobody is watching or evaluating me, which shows that my motivation comes from within rather than from being observed.', category: 'C', domain: 'Reliability' },
+  { id: 'C14', text: 'I\'m about equally productive whether my work will be recognized and visible or whether I\'ll get no credit and it will be anonymous.', category: 'C', domain: 'Reliability' },
+  { id: 'C15', text: 'If I became a parent, the amount of time and energy I\'d actually spend with my children would match what I\'d say to others about how important parenting is to me.', category: 'C', domain: 'Reliability' },
+  
+  // DOMAIN A: Helping and Working with Others (A16-A20)
+  { id: 'A16', text: 'Whether I\'m helping someone publicly (where others see my good deed) or privately (where nobody knows), I\'m equally motivated to actually help them.', category: 'A', domain: 'Agreeableness' },
+  { id: 'A17', text: 'I can tell the difference between feeling real sympathy for someone and being aware of how I might appear to others, and these feelings usually go together for me.', category: 'A', domain: 'Agreeableness' },
+  { id: 'A18', text: 'When I\'ve gone against my public values in private moments, I felt genuine guilt about it on my own, without needing anyone else to find out.', category: 'A', domain: 'Agreeableness' },
+  { id: 'A19', text: 'In group projects where it\'s hard to track individual effort, I keep the same level of effort whether my teammates are working hard or slacking off.', category: 'A', domain: 'Agreeableness' },
+  { id: 'A20', text: 'If I promised to help a group or be part of a team, I\'d stay committed even if a much better personal opportunity came along that would benefit me more.', category: 'A', domain: 'Agreeableness' },
+  
+  // DOMAIN O: Knowledge and Open-Mindedness (O21-O25)
+  { id: 'O21', text: 'When I\'m truly unsure about something in my area of work or expertise, I can say so directly without worrying that it makes me look less knowledgeable.', category: 'O', domain: 'Openness' },
+  { id: 'O22', text: 'When someone disagrees with me about something I know well, my first instinct is to argue for my position, and I have to deliberately remind myself to fairly consider their evidence.', category: 'O', domain: 'Openness' },
+  { id: 'O23', text: 'Looking back at creative work I\'ve gotten credit for, I\'ve been honest about where the original ideas came from and haven\'t overstated my contribution.', category: 'O', domain: 'Openness' },
+  { id: 'O24', text: 'When I solve a complicated problem, I usually test my answer thoroughly by trying different approaches, instead of being confident my first solution is right.', category: 'O', domain: 'Openness' },
+  { id: 'O25', text: 'If someone only saw my best creative work without knowing about all my failed attempts and average projects, they\'d get an exaggerated sense of how good and consistent my work really is.', category: 'O', domain: 'Openness' },
+  
+  // DOMAIN E: Emotional Strength and Recovery (E26-E30)
+  { id: 'E26', text: 'It\'s natural for me to act calm and in control on the outside, even when I\'m really feeling anxious or worried on the inside.', category: 'E', domain: 'Emotional' },
+  { id: 'E27', text: 'When I handle stress well, it\'s because I genuinely have good self-control, not because I\'m fooling myself about how stressed I actually am.', category: 'E', domain: 'Emotional' },
+  { id: 'E28', text: 'When I\'m tempted by something, I can usually predict whether I\'ll resist or give in, and I\'m not often wrong about my self-control ability.', category: 'E', domain: 'Emotional' },
+  { id: 'E29', text: 'The people closest to me really understand how much I struggle emotionally because I\'m comfortable talking to them about my weaknesses and fears.', category: 'E', domain: 'Emotional' },
+  { id: 'E30', text: 'When I think about how quickly I\'ll bounce back after something difficult happens, my predictions are usually accurate—I don\'t typically overestimate how fast I\'ll recover.', category: 'E', domain: 'Emotional' },
+  
+  // VALIDITY CHECK ITEMS (V31-V35)
+  { id: 'V31', text: 'I find it easy to admit when I make a mistake or when I\'m wrong about something.', category: 'V', domain: 'Validity', isValidity: true },
+  { id: 'V32', text: 'I would say I\'m truly humble, not just appearing humble to get social approval.', category: 'V', domain: 'Validity', isValidity: true },
+  { id: 'V33', text: 'My behavior and values are pretty much the same whether I\'m with close friends, at work, with family, or meeting new people.', category: 'V', domain: 'Validity', isValidity: true },
+  { id: 'V34', text: 'I sometimes have trouble understanding my own reasons for doing things, even when I think about it carefully.', category: 'V', domain: 'Validity', isValidity: true },
+  { id: 'V35', text: 'I can remember specific times when I acted selfishly, even though I tell people that being generous is important to me.', category: 'V', domain: 'Validity', isValidity: true },
 ];
 
 // ============================================================================
-// UTILITY: API REQUEST (FIXED CONFIG + LOGGING + COLD START HANDLING)
+// UTILITY: API REQUEST (FIXED CONFIG + LOGGING)
 // ============================================================================
 
 async function apiRequest(endpoint, options = {}) {
@@ -66,7 +79,7 @@ async function apiRequest(endpoint, options = {}) {
       'Content-Type': 'application/json',
       'Origin': window.location.origin,
     },
-    timeout: 90000,
+    timeout: 30000,
   };
 
   const mergedOptions = {
@@ -110,7 +123,7 @@ async function apiRequest(endpoint, options = {}) {
       lastError = error;
       console.error(`[API] Attempt ${attempt + 1} failed:`, error.message);
       if (attempt < 2) {
-        const delay = 2000 * Math.pow(2, attempt);
+        const delay = 1000 * Math.pow(2, attempt);
         console.log(`[API] Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -118,54 +131,6 @@ async function apiRequest(endpoint, options = {}) {
   }
 
   throw new Error(`API request failed after 3 attempts: ${lastError?.message || 'Unknown error'}`);
-}
-
-// ============================================================================
-// WAKE-UP CALL: Persistent backend health check with intelligent retry
-// ============================================================================
-
-async function wakeUpBackend() {
-  const maxAttempts = 12; // ~120 seconds total (10s between attempts)
-  const backendURL = 'https://neuropersona.onrender.com';
-  
-  console.log('[STARTUP] Waking up backend service...');
-  
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      const response = await fetch(`${backendURL}/api/health`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        globalState.backendReady = true;
-        console.log('[STARTUP] ✓ Backend is awake and ready');
-        console.log('[STARTUP] Response:', data);
-        return true;
-      } else if (response.status === 503) {
-        console.log(`[STARTUP] Backend still booting (503 Service Unavailable, attempt ${attempt + 1}/${maxAttempts})`);
-        if (attempt < maxAttempts - 1) {
-          await new Promise(resolve => setTimeout(resolve, 10000)); // 10s retry delay
-        }
-      } else {
-        console.warn(`[STARTUP] Backend returned status ${response.status}`);
-        globalState.backendReady = true; // Assume ready for non-503 responses
-        return true;
-      }
-    } catch (error) {
-      console.log(`[STARTUP] Attempt ${attempt + 1}/${maxAttempts} failed: ${error.message}`);
-      
-      if (attempt < maxAttempts - 1) {
-        await new Promise(resolve => setTimeout(resolve, 10000)); // 10s retry delay
-      }
-    }
-  }
-  
-  console.warn('[STARTUP] ⚠ Backend wake-up timeout after 120 seconds, but will retry on user submit');
-  globalState.backendReady = false;
-  return false;
 }
 
 function showToast(message, type = 'success', duration = 3000) {
@@ -215,10 +180,6 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeDemographicsForm();
   initializeQuestionnaireForm();
   initializeButtons();
-  
-  // Silent wake-up call for Render free tier cold start (runs in background)
-  wakeUpBackend();
-  
   console.log('[QUESTIONNAIRE] Ready');
 });
 
@@ -304,38 +265,100 @@ async function handleDemographicsSubmit(e) {
 }
 
 // ============================================================================
-// QUESTIONNAIRE FORM (RANGE 1-10)
+// QUESTIONNAIRE FORM (RANGE 0-10, SCALE 1-10 DISPLAY)
 // ============================================================================
 
 function initializeQuestionnaireForm() {
   const form = document.getElementById('assessment-form');
   if (!form) return;
 
-  console.log('[QUESTIONNAIRE] Generating questions...');
+  console.log('[QUESTIONNAIRE] Generating 35 questions (30 core + 5 validity)...');
 
-  const html = QUESTIONS.map((q, index) => `
-    <div class="question-item" style="margin-bottom: 24px;">
-      <label style="display: block; margin-bottom: 8px; font-weight: 500;">
-        <span style="color: #208099; font-weight: 600;">Question ${index + 1}:</span> ${q.text}
-      </label>
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <input 
-          type="range" 
-          id="${q.id}" 
-          name="${q.id}" 
-          min="1" 
-          max="10" 
-          value="0"
-          style="flex: 1; cursor: pointer;"
-          data-category="${q.category}"
-        />
-        <span id="${q.id}-value" style="width: 30px; text-align: center; font-weight: 600; color: #208099;">-</span>
+  // Build HTML with domain headers and validity section
+  let html = '';
+  const domains = ['R', 'S', 'C', 'A', 'O', 'E'];
+  const domainLabels = {
+    R: 'Sexual & Romantic Relationships',
+    S: 'Confidence & Status',
+    C: 'Reliability & Follow-Through',
+    A: 'Helping & Working with Others',
+    O: 'Knowledge & Open-Mindedness',
+    E: 'Emotional Strength & Recovery'
+  };
+
+  domains.forEach(domain => {
+    const domainQuestions = QUESTIONS.filter(q => q.category === domain);
+    html += `
+      <div style="margin-bottom: 40px;">
+        <h3 style="color: #134252; font-size: 16px; font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #208099;">
+          ${domain}: ${domainLabels[domain]}
+        </h3>
+    `;
+    
+    domainQuestions.forEach((q, index) => {
+      html += `
+        <div class="question-item" style="margin-bottom: 24px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+            <span style="color: #208099; font-weight: 600;">${q.id}:</span> ${q.text}
+          </label>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <input 
+              type="range" 
+              id="${q.id}" 
+              name="${q.id}" 
+              min="0" 
+              max="10" 
+              value="0"
+              style="flex: 1; cursor: pointer;"
+              data-category="${q.category}"
+            />
+            <span id="${q.id}-value" style="width: 40px; text-align: center; font-weight: 600; color: #208099;">-</span>
+          </div>
+          <div style="font-size: 12px; color: #5a6c6d; margin-top: 4px;">
+            Strongly Disagree (0) ← → Strongly Agree (10)
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+  });
+
+  // Add Validity Check Section
+  const validityQuestions = QUESTIONS.filter(q => q.category === 'V');
+  html += `
+    <div style="margin-bottom: 40px; padding: 16px; background: rgba(32, 128, 153, 0.08); border-radius: 8px; border-left: 4px solid #208099;">
+      <h3 style="color: #134252; font-size: 16px; font-weight: 600; margin-bottom: 16px;">
+        Validity Check Items
+      </h3>
+  `;
+  
+  validityQuestions.forEach((q) => {
+    html += `
+      <div class="question-item" style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+          <span style="color: #208099; font-weight: 600;">${q.id}:</span> ${q.text}
+        </label>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input 
+            type="range" 
+            id="${q.id}" 
+            name="${q.id}" 
+            min="0" 
+            max="10" 
+            value="0"
+            style="flex: 1; cursor: pointer;"
+            data-category="${q.category}"
+            data-validity="true"
+          />
+          <span id="${q.id}-value" style="width: 40px; text-align: center; font-weight: 600; color: #208099;">-</span>
+        </div>
+        <div style="font-size: 12px; color: #5a6c6d; margin-top: 4px;">
+          Strongly Disagree (0) ← → Strongly Agree (10)
+        </div>
       </div>
-      <div style="font-size: 12px; color: #5a6c6d; margin-top: 4px;">
-        Strongly Disagree (1) ← → Strongly Agree (10)
-      </div>
-    </div>
-  `).join('');
+    `;
+  });
+  html += '</div>';
 
   form.innerHTML = html;
   console.log('[QUESTIONNAIRE] Generated 35 questions in form');
@@ -374,7 +397,7 @@ function updateQuestionValue(input) {
 }
 
 function updateProgressBar() {
-  const inputs = document.querySelectorAll('input[type="range"][name^="q"]');
+  const inputs = document.querySelectorAll('input[type="range"]');
   const answeredCount = Array.from(inputs).filter(i => i.value !== '0').length;
   const progressPercent = (answeredCount / inputs.length) * 100;
 
@@ -386,7 +409,7 @@ function updateProgressBar() {
 }
 
 function updateSubmitButton() {
-  const inputs = document.querySelectorAll('input[type="range"][name^="q"]');
+  const inputs = document.querySelectorAll('input[type="range"]');
   const allAnswered = Array.from(inputs).every(i => i.value !== '0');
   
   const submitBtn = document.querySelector('button[data-action="submit"]');
@@ -414,7 +437,7 @@ function initializeButtons() {
 }
 
 // ============================================================================
-// SUBMIT ASSESSMENT (RANGE 1-10)
+// SUBMIT ASSESSMENT (0-10 SCALE)
 // ============================================================================
 
 async function submitAssessment() {
@@ -430,12 +453,12 @@ async function submitAssessment() {
     return;
   }
 
-  const inputs = document.querySelectorAll('input[type="range"][name^="q"]');
+  const inputs = document.querySelectorAll('input[type="range"]');
   const unanswered = Array.from(inputs).filter(i => i.value === '0');
   
   if (unanswered.length > 0) {
     const answeredCount = inputs.length - unanswered.length;
-    showToast(`Please answer all questions (${answeredCount}/${inputs.length})`, 'error', 5000);
+    showToast(`Please answer all 35 items (${answeredCount}/35)`, 'error', 5000);
     return;
   }
 
@@ -497,7 +520,7 @@ async function submitAssessment() {
 
 function gatherResponses() {
   const responses = {};
-  const inputs = document.querySelectorAll('input[type="range"][name^="q"]');
+  const inputs = document.querySelectorAll('input[type="range"]');
 
   inputs.forEach(input => {
     const value = parseInt(input.value, 10);
@@ -506,6 +529,6 @@ function gatherResponses() {
     }
   });
 
-  console.log('[QUESTIONNAIRE] Gathered responses:', responses);
+  console.log('[QUESTIONNAIRE] Gathered responses (all 35 items):', responses);
   return responses;
 }
