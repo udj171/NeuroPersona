@@ -49,8 +49,9 @@ class User(db.Model):
     external_id = db.Column(db.String(255), unique=True, nullable=True)
     age = db.Column(db.Integer, nullable=False)
     sex = db.Column(db.String(1), nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
     
     assessments = db.relationship('Assessment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     
@@ -67,7 +68,7 @@ class User(db.Model):
             'external_id': str(self.external_id) if self.external_id else None,
             'age': self.age,
             'sex': self.sex,
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
             'assessment_count': self.assessments.count(),
         }
     
@@ -88,7 +89,8 @@ class Assessment(db.Model):
     completion_percentage = db.Column(db.Float, default=100.0)
     is_valid = db.Column(db.Boolean, default=True)
     validation_notes = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    created_at = db.Column(db.DateTime, default=func.now())
     completed_at = db.Column(db.DateTime, nullable=True)
     
     results = db.relationship('Result', uselist=False, backref='assessment', cascade='all, delete-orphan')
@@ -108,7 +110,7 @@ class Assessment(db.Model):
             'id': self.id,
             'external_id': str(self.external_id),
             'user_id': str(self.user_id),
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'duration_seconds': self.duration_seconds,
             'completion_percentage': self.completion_percentage,
@@ -137,8 +139,9 @@ class Result(db.Model):
     vae_input_vector = db.Column(JSONType, nullable=False)
     scaling_factors = db.Column(JSONType, nullable=True)
     
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
     
     __table_args__ = (
         Index('idx_result_assessment_id', 'assessment_id'),
@@ -153,7 +156,7 @@ class Result(db.Model):
             'deception_susceptibility': self.deception_susceptibility,
             'corrected_domain_scores': self.corrected_domain_scores,
             'domain_biases': self.domain_biases,
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
     
     def __repr__(self):
@@ -172,7 +175,8 @@ class VAEOutput(db.Model):
     local_density = db.Column(db.Float, nullable=False)
     novelty_score = db.Column(db.Float, nullable=False)
     
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    created_at = db.Column(db.DateTime, default=func.now())
     
     __table_args__ = (
         Index('idx_vae_output_assessment_id', 'assessment_id'),
@@ -188,7 +192,7 @@ class VAEOutput(db.Model):
             'latent_distance_from_mean': self.latent_distance_from_mean,
             'local_density': self.local_density,
             'novelty_score': self.novelty_score,
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
     
     def __repr__(self):
@@ -208,7 +212,8 @@ class PersonalityClassification(db.Model):
     type_description = db.Column(db.Text, nullable=True)
     key_traits = db.Column(JSONType, nullable=True)
     
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    created_at = db.Column(db.DateTime, default=func.now())
     
     __table_args__ = (
         CheckConstraint("personality_type IN ('A', 'B', 'C', 'D', 'E', 'F')", name='valid_personality_type'),
@@ -226,7 +231,7 @@ class PersonalityClassification(db.Model):
             'personality_details': self.personality_details,
             'type_description': self.type_description,
             'key_traits': self.key_traits,
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
     
     def __repr__(self):
@@ -245,7 +250,8 @@ class GeminiInterpretation(db.Model):
     response_time_ms = db.Column(db.Integer, nullable=True)
     api_status = db.Column(db.String(50), default='success')
     
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    created_at = db.Column(db.DateTime, default=func.now())
     
     __table_args__ = (
         Index('idx_gemini_assessment_id', 'assessment_id'),
@@ -259,7 +265,7 @@ class GeminiInterpretation(db.Model):
             'interpretation_text': self.interpretation_text,
             'response_time_ms': self.response_time_ms,
             'api_status': self.api_status,
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
     
     def __repr__(self):
@@ -276,7 +282,8 @@ class AuditLog(db.Model):
     user_id = db.Column(db.Integer, nullable=True)
     details = db.Column(JSONType, nullable=True)
     ip_address = db.Column(db.String(45), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    created_at = db.Column(db.DateTime, default=func.now())
     
     __table_args__ = (
         Index('idx_audit_log_action', 'action'),
