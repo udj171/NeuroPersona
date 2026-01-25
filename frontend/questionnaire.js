@@ -121,28 +121,51 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 // ============================================================================
-// WAKE-UP CALL: Silent backend health check on page load
+// WAKE-UP CALL: Persistent backend health check with intelligent retry
 // ============================================================================
 
 async function wakeUpBackend() {
+  const maxAttempts = 12; // ~120 seconds total (10s between attempts)
+  const backendURL = 'https://neuropersona.onrender.com';
+  
   console.log('[STARTUP] Waking up backend service...');
-  try {
-    const response = await fetch('https://neuropersona.onrender.com/api/health', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(90000),
-    });
-    
-    if (response.ok) {
-      globalState.backendReady = true;
-      console.log('[STARTUP] ✓ Backend is awake and ready');
-    } else {
-      console.warn('[STARTUP] Backend responded but status is not OK:', response.status);
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const response = await fetch(`${backendURL}/api/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        globalState.backendReady = true;
+        console.log('[STARTUP] ✓ Backend is awake and ready');
+        console.log('[STARTUP] Response:', data);
+        return true;
+      } else if (response.status === 503) {
+        console.log(`[STARTUP] Backend still booting (503 Service Unavailable, attempt ${attempt + 1}/${maxAttempts})`);
+        if (attempt < maxAttempts - 1) {
+          await new Promise(resolve => setTimeout(resolve, 10000)); // 10s retry delay
+        }
+      } else {
+        console.warn(`[STARTUP] Backend returned status ${response.status}`);
+        globalState.backendReady = true; // Assume ready for non-503 responses
+        return true;
+      }
+    } catch (error) {
+      console.log(`[STARTUP] Attempt ${attempt + 1}/${maxAttempts} failed: ${error.message}`);
+      
+      if (attempt < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 10000)); // 10s retry delay
+      }
     }
-  } catch (error) {
-    console.warn('[STARTUP] Backend wake-up call failed (will retry on submit):', error.message);
-    globalState.backendReady = false;
   }
+  
+  console.warn('[STARTUP] ⚠ Backend wake-up timeout after 120 seconds, but will retry on user submit');
+  globalState.backendReady = false;
+  return false;
 }
 
 function showToast(message, type = 'success', duration = 3000) {
@@ -193,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeQuestionnaireForm();
   initializeButtons();
   
-  // Silent wake-up call for Render free tier cold start
+  // Silent wake-up call for Render free tier cold start (runs in background)
   wakeUpBackend();
   
   console.log('[QUESTIONNAIRE] Ready');
