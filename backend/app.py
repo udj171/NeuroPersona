@@ -1,6 +1,6 @@
 """
 Flask Application - Personality Assessment Backend (API Only)
-FIXED: Proper db initialization from models + better database connection handling
+FIXED: Auto-detect old INTEGER id schema and reset to STRING(36) UUID
 """
 
 import os
@@ -236,9 +236,9 @@ def check_and_migrate_schema():
                 col_type = str(id_column['type'])
                 logger.info(f"[SCHEMA] Users.id column type: {col_type}")
                 
-                # If it's still GUID or CHAR type from old schema, reset
-                if 'GUID' in col_type or (col_type == 'CHAR' and 'VARCHAR' not in col_type):
-                    logger.warning("[SCHEMA] Detected old GUID schema, resetting to new String(36) schema...")
+                # If it's INTEGER, GUID, SERIAL, or CHAR type from old schema, reset
+                if any(x in col_type for x in ['INTEGER', 'SERIAL', 'GUID']) or (col_type == 'CHAR' and 'VARCHAR' not in col_type):
+                    logger.warning(f"[SCHEMA] Detected old schema with {col_type} id column. Resetting to String(36) UUID schema...")
                     try:
                         logger.info("[SCHEMA] Dropping all tables...")
                         db.drop_all()
@@ -249,7 +249,8 @@ def check_and_migrate_schema():
                         logger.info("[SCHEMA] ✓ New schema created")
                         
                         # Verify
-                        new_columns = inspector.get_columns('users')
+                        new_inspector = db.inspect(db.engine)
+                        new_columns = new_inspector.get_columns('users')
                         new_id_col = next((c for c in new_columns if c['name'] == 'id'), None)
                         logger.info(f"[SCHEMA] ✓ Migration complete. New id column type: {new_id_col['type']}")
                         return True
@@ -257,11 +258,15 @@ def check_and_migrate_schema():
                         logger.error(f"[SCHEMA] ✗ Error during schema migration: {str(e)}")
                         logger.error(traceback.format_exc())
                         return False
+                elif 'VARCHAR' in col_type or 'CHAR' in col_type:
+                    logger.info("[SCHEMA] ✓ Schema is up-to-date (VARCHAR/STRING type)")
+                    return True
                 else:
-                    logger.info("[SCHEMA] ✓ Schema is up-to-date (String/VARCHAR type)")
+                    logger.info(f"[SCHEMA] ✓ Schema appears correct (type: {col_type})")
                     return True
             else:
                 logger.warning("[SCHEMA] Could not determine id column type, attempting fresh create...")
+                db.drop_all()
                 db.create_all()
                 return True
                 
