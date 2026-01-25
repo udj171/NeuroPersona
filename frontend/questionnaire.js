@@ -8,6 +8,7 @@ let globalState = {
   responses: {},
   currentPage: 'demographics',
   assessmentId: null,
+  backendReady: false,
 };
 
 // Questions data
@@ -65,7 +66,7 @@ async function apiRequest(endpoint, options = {}) {
       'Content-Type': 'application/json',
       'Origin': window.location.origin,
     },
-    timeout: 60000,
+    timeout: 90000,
   };
 
   const mergedOptions = {
@@ -109,7 +110,7 @@ async function apiRequest(endpoint, options = {}) {
       lastError = error;
       console.error(`[API] Attempt ${attempt + 1} failed:`, error.message);
       if (attempt < 2) {
-        const delay = 1000 * Math.pow(2, attempt);
+        const delay = 2000 * Math.pow(2, attempt);
         console.log(`[API] Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -117,6 +118,31 @@ async function apiRequest(endpoint, options = {}) {
   }
 
   throw new Error(`API request failed after 3 attempts: ${lastError?.message || 'Unknown error'}`);
+}
+
+// ============================================================================
+// WAKE-UP CALL: Silent backend health check on page load
+// ============================================================================
+
+async function wakeUpBackend() {
+  console.log('[STARTUP] Waking up backend service...');
+  try {
+    const response = await fetch('https://neuropersona.onrender.com/api/health', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(90000),
+    });
+    
+    if (response.ok) {
+      globalState.backendReady = true;
+      console.log('[STARTUP] ✓ Backend is awake and ready');
+    } else {
+      console.warn('[STARTUP] Backend responded but status is not OK:', response.status);
+    }
+  } catch (error) {
+    console.warn('[STARTUP] Backend wake-up call failed (will retry on submit):', error.message);
+    globalState.backendReady = false;
+  }
 }
 
 function showToast(message, type = 'success', duration = 3000) {
@@ -166,6 +192,10 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeDemographicsForm();
   initializeQuestionnaireForm();
   initializeButtons();
+  
+  // Silent wake-up call for Render free tier cold start
+  wakeUpBackend();
+  
   console.log('[QUESTIONNAIRE] Ready');
 });
 
