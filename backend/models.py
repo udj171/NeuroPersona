@@ -1,5 +1,5 @@
 # ============================================================================
-# SCRIPT 2: models.py - Database Schema & ORM Models
+# SCRIPT 2: models.py - Database Schema & ORM Models (FIXED)
 # ============================================================================
 
 from datetime import datetime, timezone
@@ -59,7 +59,7 @@ migrate = Migrate()
 class User(db.Model):
     __tablename__ = 'users'
     
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=lambda: uuid.uuid4())
     external_id = Column(String(255), unique=True, nullable=True)
     age = db.Column(db.Integer, nullable=False)
     sex = db.Column(db.String(1), nullable=False)
@@ -77,8 +77,8 @@ class User(db.Model):
     
     def to_dict(self):
         return {
-            'id': self.id,
-            'external_id': str(self.external_id),
+            'id': str(self.id),
+            'external_id': str(self.external_id) if self.external_id else None,
             'age': self.age,
             'sex': self.sex,
             'created_at': self.created_at.isoformat(),
@@ -92,7 +92,7 @@ class Assessment(db.Model):
     __tablename__ = 'assessments'
     
     id = db.Column(db.Integer, primary_key=True)
-    external_id = db.Column(GUID(), default=uuid.uuid4, unique=True, nullable=False)
+    external_id = db.Column(GUID(), default=lambda: uuid.uuid4(), unique=True, nullable=False)
     user_id = db.Column(GUID(), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     responses_json = db.Column(JSONType, nullable=True)
     ip_address = db.Column(db.String(45), nullable=True)
@@ -120,7 +120,7 @@ class Assessment(db.Model):
         data = {
             'id': self.id,
             'external_id': str(self.external_id),
-            'user_id': self.user_id,
+            'user_id': str(self.user_id),
             'created_at': self.created_at.isoformat(),
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'duration_seconds': self.duration_seconds,
