@@ -1,52 +1,42 @@
 // ============================================================================
-// API CONFIGURATION & ENVIRONMENT SETUP
+// API CONFIGURATION & ENVIRONMENT SETUP (FIXED)
 // ============================================================================
 
-// Add after line 7, before getAPIURL function
-
-// Determine environment
+// Determine backend URL based on environment
 const getBackendURL = () => {
-  // Production: Use environment variable
+  // 1) Vercel/production: environment variable
   if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
 
-  // Staging/Testing: Allow manual override
-  const hostname = window.location.hostname;
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return localStorage.getItem('API_URL') || 'http://localhost:5000';
+  // 2) Localhost/staging: allow manual override via localStorage helper
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      const stored = localStorage.getItem('API_URL');
+      if (stored) {
+        console.log('[CONFIG] Using API URL from localStorage:', stored);
+        return stored;
+      }
+      return 'http://localhost:5000';
+    }
+
+    // 3) Frontend hosted elsewhere (e.g. Vercel production) – default to Render backend
+    const productionBackendURL = 'https://neuropersona.onrender.com';
+    console.log('[CONFIG] Using default production API URL:', productionBackendURL);
+    return productionBackendURL;
   }
 
-  // Production: Use your actual deployed backend URL
-  // REPLACE THIS WITH YOUR RENDER SERVICE URL
-  const productionBackendURL = 'https://neuropersona.onrender.com'; // ← REPLACE WITH YOUR URL
-  return productionBackendURL;
+  // Fallback (non‑browser contexts)
+  return 'https://neuropersona.onrender.com';
 };
 
-// Determine API URL based on environment
+// Compute and cache API base URL
 function getAPIURL() {
-  // Check for Vercel environment variable first (production)
-  if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-
-  // Check for window variable (if set by HTML)
-  if (window.API_BASE_URL) {
-    return window.API_BASE_URL;
-  }
-
-  // Check localStorage for override (development)
-  const storedURL = localStorage.getItem('API_URL');
-  if (storedURL) {
-    console.log('[CONFIG] Using API URL from localStorage:', storedURL);
-    return storedURL;
-  }
-
-  // Default to Render backend
-  // Replace line 62-63
-  const defaultURL = getBackendURL();
-  console.log('[CONFIG] Using API URL:', defaultURL);
-
+  const url = getBackendURL();
+  console.log('[CONFIG] Final API URL:', url);
+  return url;
 }
 
 // Global API configuration
@@ -59,9 +49,9 @@ window.API_CONFIG = {
 
 console.log('[CONFIG] API Base URL:', window.API_CONFIG.BASE_URL);
 console.log('[CONFIG] Environment:', {
-  isProduction: window.location.hostname !== 'localhost',
-  isLocalhost: window.location.hostname === 'localhost',
-  hostname: window.location.hostname,
+  isProduction: typeof window !== 'undefined' && window.location.hostname !== 'localhost',
+  isLocalhost: typeof window !== 'undefined' && window.location.hostname === 'localhost',
+  hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
 });
 
 // ============================================================================
@@ -73,6 +63,7 @@ console.log('[CONFIG] Environment:', {
  * Example: window.setAPIURL('http://localhost:5000')
  */
 window.setAPIURL = function(url) {
+  if (!url) return;
   window.API_CONFIG.BASE_URL = url;
   localStorage.setItem('API_URL', url);
   console.log('[CONFIG] API URL changed to:', url);
@@ -85,8 +76,8 @@ window.setAPIURL = function(url) {
  */
 window.resetAPIURL = function() {
   localStorage.removeItem('API_URL');
-  window.API_CONFIG.BASE_URL = 'https://neuropersona.onrender.com';
-  console.log('[CONFIG] API URL reset to default');
+  window.API_CONFIG.BASE_URL = getBackendURL();
+  console.log('[CONFIG] API URL reset to default:', window.API_CONFIG.BASE_URL);
   alert('API URL reset to default.\nReload the page to apply changes.');
 };
 
@@ -101,7 +92,6 @@ window.checkAPIHealth = async function() {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 5000,
     });
 
     if (!response.ok) {
@@ -119,7 +109,7 @@ window.checkAPIHealth = async function() {
   }
 };
 
-// Auto-check API on page load
+// Auto-check API on page load (optional, non‑blocking)
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[CONFIG] Page loaded, API config ready');
 });
