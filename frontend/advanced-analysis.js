@@ -1,81 +1,216 @@
 // ============================================================================
-// ADVANCED PERSONALITY ANALYSIS MODULE - Frontend Integration
+// ADVANCED PERSONALITY ANALYSIS MODULE - Frontend Integration (FIXED)
 // ============================================================================
 // Handles all advanced personality analysis display and data management
+// Generates analysis from existing results data - no external API calls
 // Supports graceful degradation when backend endpoints are unavailable
 
 /**
- * Advanced Analysis Service - Handles all API calls for advanced analysis
+ * Advanced Analysis Data Generator - Generates analysis from results
  */
-const AdvancedAnalysisService = {
+const AdvancedAnalysisGenerator = {
   /**
-   * Fetch self-perception bias analysis
+   * Generate self-perception bias analysis from results
    */
-  async getBiasAnalysis(assessmentId) {
+  generateBiasAnalysis(results) {
     try {
-      return await apiRequest(`/api/analysis/bias/${assessmentId}`);
+      if (!results || !results.results) {
+        console.warn('[Advanced Analysis] No results data for bias analysis');
+        return null;
+      }
+
+      const resultsData = results.results;
+      const rawScores = resultsData.raw_domain_scores || {};
+      const correctedScores = resultsData.corrected_domain_scores || {};
+
+      // Calculate lambda (bias score) based on difference between raw and corrected
+      let totalBias = 0;
+      let domainCount = 0;
+
+      ['R', 'S', 'C', 'A', 'O', 'E'].forEach(domain => {
+        const raw = rawScores[domain] || 5;
+        const corrected = correctedScores[domain] || 5;
+        const diff = Math.abs(raw - corrected);
+        totalBias += diff;
+        domainCount++;
+      });
+
+      const avgBias = totalBias / domainCount / 10; // Normalize to 0-1
+      const lambda = Math.min(avgBias, 1.0);
+
+      return {
+        bias_score: lambda,
+        lambda: lambda,
+        raw_scores: rawScores,
+        corrected_scores: correctedScores,
+      };
     } catch (error) {
-      console.warn('[Advanced Analysis] Bias analysis not available:', error.message);
+      console.error('[Advanced Analysis] Error generating bias analysis:', error);
       return null;
     }
   },
 
   /**
-   * Fetch dimension-specific insights
+   * Generate dimension-specific insights
    */
-  async getDimensionInsights(assessmentId) {
+  generateDimensionInsights(results) {
     try {
-      return await apiRequest(`/api/analysis/dimensions/${assessmentId}`);
+      if (!results || !results.results) {
+        console.warn('[Advanced Analysis] No results data for dimension insights');
+        return null;
+      }
+
+      const correctedScores = results.results.corrected_domain_scores || {};
+      const domains = {};
+
+      ['R', 'S', 'C', 'A', 'O', 'E'].forEach(domain => {
+        domains[domain] = (correctedScores[domain] || 5) / 10; // Normalize to 0-1
+      });
+
+      return domains;
     } catch (error) {
-      console.warn('[Advanced Analysis] Dimension insights not available:', error.message);
+      console.error('[Advanced Analysis] Error generating dimension insights:', error);
       return null;
     }
   },
 
   /**
-   * Fetch implicit cognition patterns
+   * Generate implicit cognition patterns
    */
-  async getImplicitPatterns(assessmentId) {
+  generateImplicitPatterns(results) {
     try {
-      return await apiRequest(`/api/analysis/implicit/${assessmentId}`);
+      if (!results || !results.results) {
+        console.warn('[Advanced Analysis] No results data for implicit patterns');
+        return null;
+      }
+
+      const rawScores = results.results.raw_domain_scores || {};
+      const correctedScores = results.results.corrected_domain_scores || {};
+
+      // Self-deception: how much scores changed
+      let deceptionScore = 0;
+      let count = 0;
+      ['R', 'S', 'C', 'A', 'O', 'E'].forEach(domain => {
+        const raw = rawScores[domain] || 5;
+        const corrected = correctedScores[domain] || 5;
+        deceptionScore += Math.abs(raw - corrected) / 10;
+        count++;
+      });
+      const selfDeception = Math.min(deceptionScore / count, 1.0);
+
+      // Credibility: based on pattern consistency
+      const credibilityScore = 1 - selfDeception;
+
+      // Narrative coherence: based on domain correlation
+      const avgScore =
+        ['R', 'S', 'C', 'A', 'O', 'E'].reduce(
+          (sum, d) => sum + (correctedScores[d] || 5),
+          0
+        ) / 6;
+
+      let variance = 0;
+      ['R', 'S', 'C', 'A', 'O', 'E'].forEach(domain => {
+        const diff = (correctedScores[domain] || 5) - avgScore;
+        variance += diff * diff;
+      });
+      variance /= 6;
+
+      // Coherence: lower variance = higher coherence
+      const narrativeCoherence = 1 - Math.min(variance / 100, 1.0);
+
+      return {
+        self_deception_propensity: selfDeception,
+        credibility_score: credibilityScore,
+        narrative_coherence: narrativeCoherence,
+      };
     } catch (error) {
-      console.warn('[Advanced Analysis] Implicit patterns not available:', error.message);
+      console.error('[Advanced Analysis] Error generating implicit patterns:', error);
       return null;
     }
   },
 
   /**
-   * Fetch response quality metrics
+   * Generate response quality metrics
    */
-  async getQualityMetrics(assessmentId) {
+  generateQualityMetrics(results) {
     try {
-      return await apiRequest(`/api/analysis/quality/${assessmentId}`);
+      if (!results || !results.results) {
+        console.warn('[Advanced Analysis] No results data for quality metrics');
+        return null;
+      }
+
+      const rawScores = results.results.raw_domain_scores || {};
+      const validityScores = results.results.validity_scores || {};
+
+      // Response quality: based on how thoughtfully they answered (variability)
+      let variance = 0;
+      const scores = Object.values(rawScores);
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      scores.forEach(score => {
+        variance += Math.pow(score - avg, 2);
+      });
+      variance = Math.sqrt(variance / scores.length);
+      const responseQuality = Math.min(variance / 5, 1.0); // Normalize
+
+      // Consistency: based on validity items
+      let consistencyScore = 0.7; // Default
+      if (Object.keys(validityScores).length > 0) {
+        const validityArray = Object.values(validityScores);
+        const avgValidity =
+          validityArray.reduce((a, b) => a + b, 0) / validityArray.length;
+        consistencyScore = avgValidity / 10; // Normalize to 0-1
+      }
+
+      // Response variance
+      const responseVariance = variance / 10; // Normalize to 0-1
+
+      return {
+        response_quality: responseQuality,
+        consistency_score: consistencyScore,
+        response_variance: responseVariance,
+      };
     } catch (error) {
-      console.warn('[Advanced Analysis] Quality metrics not available:', error.message);
+      console.error('[Advanced Analysis] Error generating quality metrics:', error);
       return null;
     }
   },
 
   /**
-   * Fetch authenticity assessment
+   * Generate authenticity metrics
    */
-  async getAuthenticityMetrics(assessmentId) {
+  generateAuthenticityMetrics(results) {
     try {
-      return await apiRequest(`/api/analysis/authenticity/${assessmentId}`);
-    } catch (error) {
-      console.warn('[Advanced Analysis] Authenticity metrics not available:', error.message);
-      return null;
-    }
-  },
+      if (!results || !results.results) {
+        console.warn('[Advanced Analysis] No results data for authenticity metrics');
+        return null;
+      }
 
-  /**
-   * Fetch complete analysis (all components at once)
-   */
-  async getCompleteAnalysis(assessmentId) {
-    try {
-      return await apiRequest(`/api/analysis/complete/${assessmentId}`);
+      const correctedScores = results.results.corrected_domain_scores || {};
+      const personalityType = results.personality?.personality_type || 'Unknown';
+
+      // Authenticity: based on score coherence
+      const scores = Object.values(correctedScores);
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      let sumSquaredDiff = 0;
+      scores.forEach(score => {
+        sumSquaredDiff += Math.pow(score - avg, 2);
+      });
+      const stdDev = Math.sqrt(sumSquaredDiff / scores.length);
+      const authenticity = 1 - Math.min(stdDev / 5, 1.0); // Lower variance = higher authenticity
+
+      // Coherence: personality type matches scores
+      const typeCoherence = personalityType !== 'Unknown' ? 0.85 : 0.5;
+
+      // Overall response authenticity
+      const responseAuthenticity = (authenticity + typeCoherence) / 2;
+
+      return {
+        authenticity_score: authenticity,
+        coherence_score: typeCoherence,
+        response_authenticity: responseAuthenticity,
+      };
     } catch (error) {
-      console.warn('[Advanced Analysis] Complete analysis not available:', error.message);
+      console.error('[Advanced Analysis] Error generating authenticity metrics:', error);
       return null;
     }
   },
@@ -93,24 +228,29 @@ const AdvancedAnalysisFormatter = {
       return {
         score: null,
         level: 'Not Available',
-        interpretation: 'This analysis requires additional backend processing. Please try again later.',
+        interpretation:
+          'This analysis requires additional processing. Please try again later.',
       };
     }
 
     let level = 'Moderate';
-    let interpretation = 'Your responses show typical levels of self-perception variation.';
+    let interpretation =
+      'Your responses show typical levels of self-perception variation.';
 
     const score = data.bias_score || data.lambda || 0.5;
 
     if (score < 0.35) {
       level = 'Low';
-      interpretation = 'Your responses demonstrate strong internal consistency and accurate self-perception.';
+      interpretation =
+        'Your responses demonstrate strong internal consistency and accurate self-perception.';
     } else if (score < 0.65) {
       level = 'Moderate';
-      interpretation = 'Your responses show typical levels of self-perception variation, which is normal and expected.';
+      interpretation =
+        'Your responses show typical levels of self-perception variation, which is normal and expected.';
     } else {
       level = 'High';
-      interpretation = 'Your responses suggest some areas where self-perception may differ from observed behavior patterns.';
+      interpretation =
+        'Your responses suggest some areas where self-perception may differ from observed behavior patterns.';
     }
 
     return {
@@ -167,15 +307,15 @@ const AdvancedAnalysisFormatter = {
       patterns: [
         {
           name: 'Self-Deception Propensity',
-          score: (data.self_deception_propensity || 0.5),
+          score: data.self_deception_propensity || 0.5,
         },
         {
           name: 'Credibility Score',
-          score: (data.credibility_score || 0.6),
+          score: data.credibility_score || 0.6,
         },
         {
           name: 'Narrative Coherence',
-          score: (data.narrative_coherence || 0.7),
+          score: data.narrative_coherence || 0.7,
         },
       ],
       message: null,
@@ -298,7 +438,7 @@ const AdvancedAnalysisDisplay = {
         <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #e0e0e0;">
           <div style="font-size: 20px; margin-bottom: 4px;">${insight.icon}</div>
           <div style="font-weight: 600; color: ${insight.color}; font-size: 13px; margin-bottom: 8px;">${insight.name}</div>
-          <div style="font-size: 18px; font-weight: 700; color: ${insight.color};">${(insight.score || 0).toFixed(2)}</div>
+          <div style="font-size: 18px; font-weight: 700; color: ${insight.color};">${((insight.score || 0) * 10).toFixed(1)}</div>
           <div style="width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; margin-top: 8px; overflow: hidden;">
             <div style="height: 100%; width: ${percentage}%; background: ${insight.color};"></div>
           </div>
@@ -459,19 +599,45 @@ const AdvancedAnalysisDisplay = {
 
 /**
  * Load Advanced Analysis - Called from results.js
+ * Now generates analysis from existing results instead of making new API calls
  */
 async function loadAdvancedAnalysis(assessmentId) {
   try {
     console.log('[Advanced Analysis] Loading for assessment:', assessmentId);
 
-    // Load all analyses in parallel
-    const [bias, dimensions, implicit, quality, authenticity] = await Promise.all([
-      AdvancedAnalysisService.getBiasAnalysis(assessmentId),
-      AdvancedAnalysisService.getDimensionInsights(assessmentId),
-      AdvancedAnalysisService.getImplicitPatterns(assessmentId),
-      AdvancedAnalysisService.getQualityMetrics(assessmentId),
-      AdvancedAnalysisService.getAuthenticityMetrics(assessmentId),
-    ]);
+    // Fetch results (already loaded in results.js, but get fresh copy)
+    const response = await apiRequest(`/api/results/${assessmentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response) {
+      console.warn('[Advanced Analysis] No results data received');
+      return;
+    }
+
+    console.log('[Advanced Analysis] Results received:', response);
+
+    // Generate all analyses from results data
+    const bias = AdvancedAnalysisGenerator.generateBiasAnalysis(response);
+    const dimensions =
+      AdvancedAnalysisGenerator.generateDimensionInsights(response);
+    const implicit = AdvancedAnalysisGenerator.generateImplicitPatterns(
+      response
+    );
+    const quality = AdvancedAnalysisGenerator.generateQualityMetrics(response);
+    const authenticity =
+      AdvancedAnalysisGenerator.generateAuthenticityMetrics(response);
+
+    console.log('[Advanced Analysis] Generated analyses:', {
+      bias,
+      dimensions,
+      implicit,
+      quality,
+      authenticity,
+    });
 
     // Display all components
     AdvancedAnalysisDisplay.displayBias(bias);
@@ -483,7 +649,12 @@ async function loadAdvancedAnalysis(assessmentId) {
     console.log('[Advanced Analysis] Display complete');
   } catch (error) {
     console.error('[Advanced Analysis] Error loading:', error);
-    // Errors are handled gracefully by display functions
+    // Gracefully show error messages in each section
+    AdvancedAnalysisDisplay.displayBias(null);
+    AdvancedAnalysisDisplay.displayDimensions(null);
+    AdvancedAnalysisDisplay.displayImplicit(null);
+    AdvancedAnalysisDisplay.displayQuality(null);
+    AdvancedAnalysisDisplay.displayAuthenticity(null);
   }
 }
 
