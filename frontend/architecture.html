@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works - PredictMyPersonality</title>
+    <meta name="description" content="A plain-language walkthrough of how the assessment works: what it asks, how it adjusts for flattering answers, and what it hands back.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <span></span> PredictMyPersonality
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#features">Features</a></li>
+                <li><a href="questionnaire.html" class="cta-button">Start Assessment</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Page hero -->
+    <section class="arch-hero">
+        <div class="arch-hero-content">
+            <h1>What happens to <span class="accent">your answers</span></h1>
+            <p>
+                Most personality quizzes take you at your word. This one starts from the assumption
+                that nobody is a perfectly reliable witness to their own motives, and treats the
+                distance between the story and the behaviour as the thing worth measuring.
+            </p>
+            <p style="margin-top: 16px; font-size: 16px;">
+                Here is the whole machine, in order, without the jargon.
+            </p>
+            <nav class="arch-toc" aria-label="Sections on this page">
+                <a href="#gap">The problem</a>
+                <a href="#babbler">Why generosity is a contest</a>
+                <a href="#questions">What we ask</a>
+                <a href="#areas">The six areas</a>
+                <a href="#adjustment">The adjustment</a>
+                <a href="#pipeline">The pipeline</a>
+                <a href="#types">Finding your type</a>
+                <a href="#stack">Under the hood</a>
+                <a href="#limits">What this isn't</a>
+            </nav>
+        </div>
+    </section>
+
+    <!-- 1. THE PROBLEM -->
+    <section class="arch-section" id="gap">
+        <div class="arch-container">
+            <span class="arch-eyebrow">The problem</span>
+            <h2>You are the least neutral person to ask about you</h2>
+            <p class="arch-lede">
+                Ask someone to rate their own honesty and you get a number. The trouble is that the
+                number is produced by the same mind that benefits from a flattering answer.
+            </p>
+            <p>
+                This is not lying. Almost nobody sits down to a questionnaire planning to deceive
+                anyone. It is quieter than that: the answer that comes to mind first is the one that
+                fits the story we already tell about ourselves, and that story was built to be told.
+                The gap opens up without anyone deciding to open it.
+            </p>
+
+            <figure class="arch-figure">
+                <div class="arch-scroll">
+                    <svg viewBox="0 0 720 228" role="img" aria-labelledby="gapTitle gapDesc">
+                        <title id="gapTitle">The gap between a self-rating and the behaviour behind it</title>
+                        <desc id="gapDesc">Two panels side by side. On the left, a self-rating shown as a bar filled close to the top. On the right, the same trait measured by behaviour, shown as a shorter bar. A bracket between them is labelled "the gap".</desc>
+
+                        <!-- Left panel: the account -->
+                        <rect x="16" y="54" width="286" height="150" rx="10" fill="#f8f8f6" stroke="#e0e0e0"/>
+                        <text x="40" y="86" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="650" fill="#1f3a42">What you would say</text>
+                        <text x="40" y="108" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" fill="#5a6c6d">"I help because I want to help."</text>
+                        <!-- bar track + fill -->
+                        <rect x="40" y="140" width="238" height="20" rx="4" fill="#dde3e4"/>
+                        <rect x="40" y="140" width="202" height="20" rx="4" fill="#9bd6e5"/>
+                        <rect x="40" y="140" width="6" height="20" fill="#9bd6e5"/>
+                        <text x="40" y="184" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" fill="#5a6c6d">Self-rating</text>
+                        <text x="278" y="184" text-anchor="end" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="14" font-weight="700" fill="#1f3a42">8.5</text>
+
+                        <!-- Right panel: the behaviour -->
+                        <rect x="418" y="54" width="286" height="150" rx="10" fill="#f8f8f6" stroke="#e0e0e0"/>
+                        <text x="442" y="86" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="650" fill="#1f3a42">What you would do</text>
+                        <text x="442" y="108" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" fill="#5a6c6d">…when nobody finds out you helped.</text>
+                        <rect x="442" y="140" width="238" height="20" rx="4" fill="#dde3e4"/>
+                        <rect x="442" y="140" width="152" height="20" rx="4" fill="#0090b0"/>
+                        <rect x="442" y="140" width="6" height="20" fill="#0090b0"/>
+                        <text x="442" y="184" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" fill="#5a6c6d">Behaviour</text>
+                        <text x="680" y="184" text-anchor="end" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="14" font-weight="700" fill="#1f3a42">6.4</text>
+
+                        <!-- The gap bracket between the panels -->
+                        <path d="M310 150 L318 150 M410 150 L402 150" stroke="#e0714f" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M322 150 L398 150" stroke="#e0714f" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
+                        <path d="M322 144 L322 156 M398 144 L398 156" stroke="#e0714f" stroke-width="2" stroke-linecap="round"/>
+                        <text x="360" y="128" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="700" fill="#e0714f">the gap</text>
+                        <text x="360" y="182" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">what we estimate</text>
+
+                        <!-- Caption strip -->
+                        <text x="16" y="30" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="650" fill="#5a6c6d">One trait, measured two ways</text>
+                    </svg>
+                </div>
+                <figcaption>
+                    The assessment never observes your behaviour directly. It infers the size of this
+                    gap from the shape of your answers, then shifts your score by that estimate.
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- 2. THE BABBLER -->
+    <section class="arch-section" id="babbler">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Where the idea comes from</span>
+            <h2>A small bird that fights for the right to be generous</h2>
+            <p class="arch-lede">
+                In the Negev Desert there is a bird called the Arabian babbler. Babblers feed each
+                other, groom each other, and take turns standing sentinel on an exposed branch,
+                watching for hawks while the rest of the group forages in safety.
+            </p>
+            <p>
+                What the biologist Amotz Zahavi noticed, watching them for decades, is that they do
+                not merely take turns. They <strong>compete</strong> for the turn. A dominant babbler
+                will shove a rival off the sentinel post and force food on a subordinate that did not
+                ask for it. The generosity is a contest, and the prize is rank.
+            </p>
+
+            <figure class="arch-figure">
+                <div class="arch-scroll">
+                    <svg viewBox="0 0 720 300" role="img" aria-labelledby="babTitle babDesc">
+                        <title id="babTitle">A sentinel bird on an exposed branch above a sheltered flock</title>
+                        <desc id="babDesc">An illustration of a single bird standing on a high, bare branch in the open, watching a distant hawk, while three other birds forage safely on a lower branch below. Annotations mark the exposed position as costly and the lower position as safe.</desc>
+
+                        <defs>
+                            <!-- One babbler silhouette, reused -->
+                            <g id="babbler-bird">
+                                <ellipse cx="0" cy="0" rx="15" ry="10" fill="#0d5f74"/>
+                                <path d="M-14 -2 L-30 8 L-12 6 Z" fill="#0d5f74"/>
+                                <circle cx="12" cy="-9" r="7" fill="#0d5f74"/>
+                                <path d="M18 -10 L28 -8 L18 -6 Z" fill="#e0714f"/>
+                                <circle cx="14" cy="-11" r="1.6" fill="#ffffff"/>
+                                <path d="M-2 9 L-3 17 M5 9 L6 17" stroke="#0d5f74" stroke-width="2" stroke-linecap="round"/>
+                            </g>
+                        </defs>
+
+                        <!-- Sky -->
+                        <rect x="16" y="16" width="688" height="268" rx="10" fill="#e8f6fa"/>
+
+                        <!-- Hawk, far off -->
+                        <path d="M612 62 q14 -10 26 0 q-14 -4 -26 0 Z" fill="#5a6c6d"/>
+                        <path d="M638 62 q14 -10 26 0 q-14 -4 -26 0 Z" fill="#5a6c6d"/>
+                        <text x="638" y="92" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">a hawk</text>
+
+                        <!-- High, bare branch -->
+                        <path d="M60 118 L330 118" stroke="#0d5f74" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M330 118 L372 106 M300 118 L322 132" stroke="#0d5f74" stroke-width="3" stroke-linecap="round"/>
+
+                        <!-- Sentinel -->
+                        <use href="#babbler-bird" x="210" y="104"/>
+
+                        <!-- Sight line to the hawk -->
+                        <path d="M240 92 Q430 52 604 62" stroke="#e0714f" stroke-width="2" stroke-dasharray="6 5" fill="none" stroke-linecap="round"/>
+
+                        <!-- Exposure annotation -->
+                        <text x="40" y="62" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="700" fill="#e0714f">Exposed</text>
+                        <text x="40" y="80" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">first to be eaten</text>
+                        <path d="M146 86 L192 102" stroke="#e0714f" stroke-width="1.5"/>
+                        <circle cx="146" cy="86" r="3" fill="#e0714f"/>
+
+                        <!-- Lower, sheltered branch: foliage sits behind the branch -->
+                        <ellipse cx="250" cy="208" rx="70" ry="26" fill="#cbe9f1"/>
+                        <ellipse cx="430" cy="204" rx="86" ry="30" fill="#cbe9f1"/>
+                        <ellipse cx="560" cy="210" rx="58" ry="22" fill="#cbe9f1"/>
+                        <path d="M110 226 L620 226" stroke="#0d5f74" stroke-width="5" stroke-linecap="round"/>
+
+                        <g transform="translate(0, 4) scale(0.82)">
+                            <use href="#babbler-bird" x="290" y="258"/>
+                            <use href="#babbler-bird" x="480" y="255"/>
+                            <use href="#babbler-bird" x="660" y="258"/>
+                        </g>
+
+                        <text x="110" y="266" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="700" fill="#0d5f74">Safe below</text>
+                        <text x="196" y="266" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">fed, groomed, and outranked</text>
+                    </svg>
+                </div>
+                <figcaption>
+                    The sentinel is not being kind at its own expense by accident. The expense is the
+                    message. Only a bird in genuinely good condition can afford to stand where the
+                    hawk can see it and still survive the week.
+                </figcaption>
+            </figure>
+
+            <p>
+                That is the logic the whole assessment is built on. A signal is believable in
+                proportion to what it costs to send. Anyone can <em>say</em> they are generous.
+                Being generous when it is expensive, unwitnessed, and uncredited is a different
+                claim entirely, because the cheap version of it is not available.
+            </p>
+
+            <div class="arch-callout">
+                <p>
+                    <strong>Where humans differ from the bird.</strong> The babbler's display is honest
+                    because it is physically costly. Ours has an extra layer: we hide the competitive
+                    motive from ourselves. A motive you have never consciously noticed is one you
+                    cannot accidentally leak through a pause or a glance, which makes the performance
+                    considerably more convincing. This idea, and the babbler with it, comes from
+                    <em>The Elephant in the Brain</em> by Kevin Simler and Robin Hanson.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. WHAT WE ASK -->
+    <section class="arch-section" id="questions">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Step one</span>
+            <h2>Thirty-five statements, two different jobs</h2>
+            <p class="arch-lede">
+                You rate each statement on a slider from 0 to 10. They look like one questionnaire.
+                They are really two, working against each other on purpose.
+            </p>
+
+            <figure class="arch-figure">
+                <div class="arch-scroll">
+                    <svg viewBox="0 0 720 300" role="img" aria-labelledby="qTitle qDesc">
+                        <title id="qTitle">The 35 statements, grouped into six sets of five plus five cross-checks</title>
+                        <desc id="qDesc">Seven rows of five squares. The first six rows, one per personality area, are teal and labelled R, S, C, A, O and E. The seventh row is a warm orange and labelled cross-checks.</desc>
+
+                        <!-- Six domain rows -->
+                        <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                            <!-- Row R -->
+                            <text x="16" y="46" font-size="14" font-weight="700" fill="#0d5f74">R</text>
+                            <text x="36" y="46" font-size="13" fill="#5a6c6d">Relationships</text>
+                            <rect x="240" y="30" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="310" y="30" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="380" y="30" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="450" y="30" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="520" y="30" width="66" height="22" rx="4" fill="#0090b0"/>
+
+                            <text x="16" y="82" font-size="14" font-weight="700" fill="#0d5f74">S</text>
+                            <text x="36" y="82" font-size="13" fill="#5a6c6d">Status</text>
+                            <rect x="240" y="66" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="310" y="66" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="380" y="66" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="450" y="66" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="520" y="66" width="66" height="22" rx="4" fill="#0090b0"/>
+
+                            <text x="16" y="118" font-size="14" font-weight="700" fill="#0d5f74">C</text>
+                            <text x="36" y="118" font-size="13" fill="#5a6c6d">Reliability</text>
+                            <rect x="240" y="102" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="310" y="102" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="380" y="102" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="450" y="102" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="520" y="102" width="66" height="22" rx="4" fill="#0090b0"/>
+
+                            <text x="16" y="154" font-size="14" font-weight="700" fill="#0d5f74">A</text>
+                            <text x="36" y="154" font-size="13" fill="#5a6c6d">Helping others</text>
+                            <rect x="240" y="138" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="310" y="138" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="380" y="138" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="450" y="138" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="520" y="138" width="66" height="22" rx="4" fill="#0090b0"/>
+
+                            <text x="16" y="190" font-size="14" font-weight="700" fill="#0d5f74">O</text>
+                            <text x="36" y="190" font-size="13" fill="#5a6c6d">Open-mindedness</text>
+                            <rect x="240" y="174" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="310" y="174" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="380" y="174" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="450" y="174" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="520" y="174" width="66" height="22" rx="4" fill="#0090b0"/>
+
+                            <text x="16" y="226" font-size="14" font-weight="700" fill="#0d5f74">E</text>
+                            <text x="36" y="226" font-size="13" fill="#5a6c6d">Emotional steadiness</text>
+                            <rect x="240" y="210" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="310" y="210" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="380" y="210" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="450" y="210" width="66" height="22" rx="4" fill="#0090b0"/>
+                            <rect x="520" y="210" width="66" height="22" rx="4" fill="#0090b0"/>
+
+                            <!-- Divider -->
+                            <path d="M16 250 L586 250" stroke="#e0e0e0" stroke-width="1"/>
+
+                            <!-- Cross-check row -->
+                            <text x="16" y="278" font-size="13" font-weight="700" fill="#e0714f">Cross-checks</text>
+                            <rect x="240" y="262" width="66" height="22" rx="4" fill="#e0714f"/>
+                            <rect x="310" y="262" width="66" height="22" rx="4" fill="#e0714f"/>
+                            <rect x="380" y="262" width="66" height="22" rx="4" fill="#e0714f"/>
+                            <rect x="450" y="262" width="66" height="22" rx="4" fill="#e0714f"/>
+                            <rect x="520" y="262" width="66" height="22" rx="4" fill="#e0714f"/>
+
+                            <!-- Counts -->
+                            <text x="606" y="130" font-size="13" font-weight="700" fill="#0d5f74">30</text>
+                            <text x="606" y="278" font-size="13" font-weight="700" fill="#e0714f">5</text>
+                        </g>
+                    </svg>
+                </div>
+                <div class="arch-legend">
+                    <span><i class="arch-swatch" style="background:#0090b0"></i> 30 scored statements, five per area</span>
+                    <span><i class="arch-swatch" style="background:#e0714f"></i> 5 cross-checks, not scored as traits</span>
+                </div>
+                <figcaption>
+                    The five cross-checks are the reason the rest can be adjusted. They never appear in
+                    your six scores.
+                </figcaption>
+            </figure>
+
+            <h3>The thirty scored statements</h3>
+            <p>
+                Every one of them is written so that the flattering answer and the accurate answer can
+                come apart. Rather than asking whether you are hard-working, it asks whether you work
+                just as hard when the work is anonymous and nobody will know it was yours. Rather than
+                asking whether you are generous, it asks whether you help as readily in private as in
+                public. The socially attractive answer is always available. It is just no longer free.
+            </p>
+
+            <h3>The five cross-checks</h3>
+            <p>
+                These ask about the machinery itself: whether you find it easy to admit a mistake,
+                whether you are genuinely humble or only performing it, whether you behave the same
+                with friends as at work, whether your own motives are ever opaque to you, and whether
+                you can recall a specific time you acted selfishly.
+            </p>
+            <p>
+                They are deliberately awkward. Someone answering carefully will produce a mixed,
+                slightly uncomfortable pattern here. Someone reaching for the good answer every time
+                produces a suspiciously tidy one, and a tidy pattern next to six confident trait scores
+                is exactly the contradiction we are looking for.
+            </p>
+        </div>
+    </section>
+
+    <!-- 4. THE SIX AREAS -->
+    <section class="arch-section" id="areas">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Step two</span>
+            <h2>Six areas, chosen for what they cost</h2>
+            <p class="arch-lede">
+                Each area collects five statements and averages them into a score out of ten. The areas
+                are not arbitrary. They are the places where being honest is most expensive, which is
+                to say the places where the pull toward a better answer is strongest.
+            </p>
+
+            <div class="arch-grid">
+                <div class="arch-card">
+                    <span class="arch-card-key">R</span>
+                    <h3>Relationships</h3>
+                    <p>Attention, commitment, and what you notice when you are already committed.</p>
+                    <p class="arch-example">Highest stakes, so the most pressure to round yourself up.</p>
+                </div>
+                <div class="arch-card">
+                    <span class="arch-card-key">S</span>
+                    <h3>Status</h3>
+                    <p>How accurately you judge your own ability, and who you adjust your story for.</p>
+                    <p class="arch-example">Asks whether success would still feel good unwitnessed.</p>
+                </div>
+                <div class="arch-card">
+                    <span class="arch-card-key">C</span>
+                    <h3>Reliability</h3>
+                    <p>Whether the effort survives the absence of a deadline, a boss, or credit.</p>
+                    <p class="arch-example">The gap between what you promise and what you deliver.</p>
+                </div>
+                <div class="arch-card">
+                    <span class="arch-card-key">A</span>
+                    <h3>Helping others</h3>
+                    <p>Public help against private help, and what you do inside a group that cannot see you.</p>
+                    <p class="arch-example">The babbler question, asked about you.</p>
+                </div>
+                <div class="arch-card">
+                    <span class="arch-card-key">O</span>
+                    <h3>Open-mindedness</h3>
+                    <p>Whether you can say you don't know, and what your first instinct is when challenged.</p>
+                    <p class="arch-example">Includes how honestly you attribute your own good ideas.</p>
+                </div>
+                <div class="arch-card">
+                    <span class="arch-card-key">E</span>
+                    <h3>Emotional steadiness</h3>
+                    <p>Composure as a real state against composure as a performance held in place.</p>
+                    <p class="arch-example">Asks how well you actually predict your own recovery.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. THE ADJUSTMENT -->
+    <section class="arch-section" id="adjustment">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Step three</span>
+            <h2>The adjustment, and how big it gets</h2>
+            <p class="arch-lede">
+                Once the six raw scores exist, the system compares them against the cross-checks and
+                asks a single question: does this set of answers hang together, or is it too good to
+                be internally consistent?
+            </p>
+            <p>
+                Suppose someone scores very high on helping others, then says they find it hard to
+                admit a mistake and cannot recall ever acting selfishly. Each answer is defensible on
+                its own. Together they describe a person who has never once been at odds with
+                themselves, which is not a kind of person that exists. That combination raises the
+                adjustment.
+            </p>
+
+            <figure class="arch-figure">
+                <svg viewBox="0 0 720 150" role="img" aria-labelledby="meterTitle meterDesc">
+                    <title id="meterTitle">The adjustment scale, from light to substantial</title>
+                    <desc id="meterDesc">A horizontal bar running from zero to one, shaded from pale to deep teal, divided into three bands labelled light, moderate and substantial, with a marker showing an example reading.</desc>
+
+                    <text x="16" y="30" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="14" font-weight="650" fill="#1f3a42">How much correction is applied</text>
+
+                    <!-- Track -->
+                    <rect x="16" y="52" width="688" height="26" rx="4" fill="#e8f6fa"/>
+                    <!-- Bands -->
+                    <rect x="16" y="52" width="238" height="26" rx="4" fill="#9bd6e5"/>
+                    <rect x="258" y="52" width="204" height="26" fill="#16a3c0"/>
+                    <rect x="466" y="52" width="238" height="26" rx="4" fill="#0d5f74"/>
+
+                    <!-- Band labels -->
+                    <text x="135" y="100" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="650" fill="#1f3a42">Light</text>
+                    <text x="135" y="118" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">answers hang together</text>
+
+                    <text x="360" y="100" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="650" fill="#1f3a42">Moderate</text>
+                    <text x="360" y="118" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">some tension between them</text>
+
+                    <text x="585" y="100" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="650" fill="#1f3a42">Substantial</text>
+                    <text x="585" y="118" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">the picture is too clean</text>
+
+                    <!-- Scale ends -->
+                    <text x="16" y="140" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">none</text>
+                    <text x="704" y="140" text-anchor="end" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#5a6c6d">maximum</text>
+
+                    <!-- Example marker -->
+                    <path d="M300 44 L300 86" stroke="#e0714f" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="300" cy="44" r="5" fill="#e0714f" stroke="#ffffff" stroke-width="2"/>
+                    <text x="300" y="32" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" fill="#e0714f">an example reading</text>
+                </svg>
+                <figcaption>
+                    A light reading is not a compliment and a substantial one is not an accusation. It
+                    describes the answers, not the person: it says how much the six numbers should be
+                    trusted at face value.
+                </figcaption>
+            </figure>
+
+            <h3>What the adjustment does to your scores</h3>
+            <p>
+                The correction is not applied evenly. It lands hardest on areas that stand out from the
+                rest of your profile, because an unusually high score is where a flattering answer would
+                have shown up. Areas already in the middle barely move.
+            </p>
+
+            <figure class="arch-figure">
+                <div class="arch-scroll">
+                    <svg viewBox="0 24 720 236" role="img" aria-labelledby="adjTitle adjDesc">
+                        <title id="adjTitle">Three areas before and after adjustment</title>
+                        <desc id="adjDesc">Grouped horizontal bars for three areas. In each pair the upper bar is the score as answered and the lower bar is the score after adjustment. Helping others falls from 8.6 to 7.1, status from 7.9 to 7.0, and open-mindedness from 5.4 to 5.3.</desc>
+
+                        <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                            <!-- Axis baseline -->
+                            <path d="M188 34 L188 226" stroke="#e0e0e0" stroke-width="1"/>
+
+                            <!-- Group 1: Helping others -->
+                            <text x="176" y="62" text-anchor="end" font-size="13" font-weight="650" fill="#1f3a42">Helping others</text>
+                            <rect x="188" y="42" width="379" height="18" rx="4" fill="#9bd6e5"><title>As answered: 8.6 out of 10</title></rect>
+                            <rect x="188" y="42" width="6" height="18" fill="#9bd6e5"/>
+                            <text x="579" y="56" font-size="13" font-weight="700" fill="#1f3a42">8.6</text>
+                            <rect x="188" y="64" width="313" height="18" rx="4" fill="#0090b0"><title>After adjustment: 7.1 out of 10</title></rect>
+                            <rect x="188" y="64" width="6" height="18" fill="#0090b0"/>
+                            <text x="513" y="78" font-size="13" font-weight="700" fill="#1f3a42">7.1</text>
+
+                            <!-- Group 2: Status -->
+                            <text x="176" y="126" text-anchor="end" font-size="13" font-weight="650" fill="#1f3a42">Status</text>
+                            <rect x="188" y="106" width="348" height="18" rx="4" fill="#9bd6e5"><title>As answered: 7.9 out of 10</title></rect>
+                            <rect x="188" y="106" width="6" height="18" fill="#9bd6e5"/>
+                            <text x="548" y="120" font-size="13" font-weight="700" fill="#1f3a42">7.9</text>
+                            <rect x="188" y="128" width="308" height="18" rx="4" fill="#0090b0"><title>After adjustment: 7.0 out of 10</title></rect>
+                            <rect x="188" y="128" width="6" height="18" fill="#0090b0"/>
+                            <text x="508" y="142" font-size="13" font-weight="700" fill="#1f3a42">7.0</text>
+
+                            <!-- Group 3: Open-mindedness -->
+                            <text x="176" y="190" text-anchor="end" font-size="13" font-weight="650" fill="#1f3a42">Open-mindedness</text>
+                            <rect x="188" y="170" width="238" height="18" rx="4" fill="#9bd6e5"><title>As answered: 5.4 out of 10</title></rect>
+                            <rect x="188" y="170" width="6" height="18" fill="#9bd6e5"/>
+                            <text x="438" y="184" font-size="13" font-weight="700" fill="#1f3a42">5.4</text>
+                            <rect x="188" y="192" width="233" height="18" rx="4" fill="#0090b0"><title>After adjustment: 5.3 out of 10</title></rect>
+                            <rect x="188" y="192" width="6" height="18" fill="#0090b0"/>
+                            <text x="433" y="206" font-size="13" font-weight="700" fill="#1f3a42">5.3</text>
+
+                            <!-- Scale -->
+                            <text x="188" y="248" font-size="12" fill="#5a6c6d">0</text>
+                            <text x="628" y="248" text-anchor="end" font-size="12" fill="#5a6c6d">10</text>
+                            <path d="M188 232 L628 232" stroke="#e0e0e0" stroke-width="1"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="arch-legend">
+                    <span><i class="arch-swatch" style="background:#9bd6e5"></i> As answered</span>
+                    <span><i class="arch-swatch" style="background:#0090b0"></i> After adjustment</span>
+                </div>
+                <figcaption>
+                    Illustrative figures, not real results. Note that the two high areas move by more
+                    than a point while the middling one barely shifts. That asymmetry is the whole
+                    mechanism.
+                </figcaption>
+            </figure>
+
+            <div class="arch-callout is-caution">
+                <p>
+                    <strong>This is an opinionated step, and worth saying plainly.</strong> Subtracting
+                    an estimated amount of self-flattery from someone's self-report is this project's
+                    central bet, not a settled method in psychology. Both numbers are kept and both are
+                    shown to you, so you can disagree with the correction and read the originals.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. THE PIPELINE -->
+    <section class="arch-section" id="pipeline">
+        <div class="arch-container">
+            <span class="arch-eyebrow">End to end</span>
+            <h2>The whole journey, in six moves</h2>
+            <p class="arch-lede">
+                From the moment you press submit, your answers pass through six stages. Each one hands
+                its output to the next, and every intermediate result is kept.
+            </p>
+
+            <figure class="arch-figure">
+                <div class="arch-scroll">
+                    <svg viewBox="0 0 960 206" role="img" aria-labelledby="pipeTitle pipeDesc">
+                        <title id="pipeTitle">The six-stage processing pipeline</title>
+                        <desc id="pipeDesc">Six boxes connected left to right by arrows: your answers, six raw scores, consistency check, adjusted scores, pattern match, and written summary. Each box carries a short description of what happens there.</desc>
+
+                        <defs>
+                            <marker id="pipeArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#5cbdd4"/>
+                            </marker>
+                        </defs>
+
+                        <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                            <!-- 1 -->
+                            <rect x="8" y="60" width="136" height="96" rx="10" fill="#ffffff" stroke="#0090b0" stroke-width="2"/>
+                            <circle cx="30" cy="82" r="13" fill="#0090b0"/>
+                            <text x="30" y="87" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">1</text>
+                            <text x="52" y="87" font-size="14" font-weight="650" fill="#1f3a42">Answers</text>
+                            <text x="24" y="114" font-size="12" fill="#5a6c6d">35 slider values,</text>
+                            <text x="24" y="132" font-size="12" fill="#5a6c6d">plus age and sex</text>
+
+                            <path d="M146 108 L166 108" stroke="#5cbdd4" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+                            <!-- 2 -->
+                            <rect x="172" y="60" width="136" height="96" rx="10" fill="#ffffff" stroke="#0090b0" stroke-width="2"/>
+                            <circle cx="194" cy="82" r="13" fill="#0090b0"/>
+                            <text x="194" y="87" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">2</text>
+                            <text x="216" y="87" font-size="14" font-weight="650" fill="#1f3a42">Raw scores</text>
+                            <text x="188" y="114" font-size="12" fill="#5a6c6d">six averages,</text>
+                            <text x="188" y="132" font-size="12" fill="#5a6c6d">five items each</text>
+
+                            <path d="M310 108 L330 108" stroke="#5cbdd4" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+                            <!-- 3 -->
+                            <rect x="336" y="60" width="136" height="96" rx="10" fill="#ffffff" stroke="#0090b0" stroke-width="2"/>
+                            <circle cx="358" cy="82" r="13" fill="#0090b0"/>
+                            <text x="358" y="87" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">3</text>
+                            <text x="380" y="87" font-size="14" font-weight="650" fill="#1f3a42">Cross-check</text>
+                            <text x="352" y="114" font-size="12" fill="#5a6c6d">how far the story</text>
+                            <text x="352" y="132" font-size="12" fill="#5a6c6d">holds together</text>
+
+                            <path d="M474 108 L494 108" stroke="#5cbdd4" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+                            <!-- 4 -->
+                            <rect x="500" y="60" width="136" height="96" rx="10" fill="#ffffff" stroke="#0090b0" stroke-width="2"/>
+                            <circle cx="522" cy="82" r="13" fill="#0090b0"/>
+                            <text x="522" y="87" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">4</text>
+                            <text x="544" y="87" font-size="14" font-weight="650" fill="#1f3a42">Adjust</text>
+                            <text x="516" y="114" font-size="12" fill="#5a6c6d">per-area correction,</text>
+                            <text x="516" y="132" font-size="12" fill="#5a6c6d">largest at the peaks</text>
+
+                            <path d="M638 108 L658 108" stroke="#5cbdd4" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+                            <!-- 5 -->
+                            <rect x="664" y="60" width="136" height="96" rx="10" fill="#ffffff" stroke="#0090b0" stroke-width="2"/>
+                            <circle cx="686" cy="82" r="13" fill="#0090b0"/>
+                            <text x="686" y="87" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">5</text>
+                            <text x="708" y="87" font-size="14" font-weight="650" fill="#1f3a42">Match</text>
+                            <text x="680" y="114" font-size="12" fill="#5a6c6d">nearest of six</text>
+                            <text x="680" y="132" font-size="12" fill="#5a6c6d">reference patterns</text>
+
+                            <path d="M802 108 L822 108" stroke="#5cbdd4" stroke-width="2" marker-end="url(#pipeArrow)"/>
+
+                            <!-- 6 -->
+                            <rect x="828" y="60" width="124" height="96" rx="10" fill="#e8f6fa" stroke="#0d5f74" stroke-width="2"/>
+                            <circle cx="850" cy="82" r="13" fill="#0d5f74"/>
+                            <text x="850" y="87" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">6</text>
+                            <text x="872" y="87" font-size="14" font-weight="650" fill="#1f3a42">Write-up</text>
+                            <text x="844" y="114" font-size="12" fill="#5a6c6d">a plain-language</text>
+                            <text x="844" y="132" font-size="12" fill="#5a6c6d">summary</text>
+
+                            <!-- Top and bottom annotations -->
+                            <text x="8" y="32" font-size="12" font-weight="700" fill="#5a6c6d">IN YOUR BROWSER</text>
+                            <path d="M8 40 L144 40" stroke="#dde3e4" stroke-width="2"/>
+                            <text x="172" y="32" font-size="12" font-weight="700" fill="#5a6c6d">ON THE SERVER</text>
+                            <path d="M172 40 L952 40" stroke="#dde3e4" stroke-width="2"/>
+
+                            <text x="172" y="192" font-size="12" fill="#5a6c6d">Everything from stage 2 onward is saved, so your results page can be reopened later.</text>
+                            <path d="M172 174 L952 174" stroke="#dde3e4" stroke-width="1" stroke-dasharray="4 4"/>
+                        </g>
+                    </svg>
+                </div>
+                <figcaption>
+                    Stages 2 through 4 are ordinary arithmetic and will give the same answer every time.
+                    Stage 5 is the pattern-matching step, and stage 6 is the only one that involves a
+                    language model.
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- 7. TYPES -->
+    <section class="arch-section" id="types">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Step five</span>
+            <h2>Finding the nearest neighbourhood</h2>
+            <p class="arch-lede">
+                Your six adjusted scores, plus the size of the adjustment and how varied your answers
+                were overall, form a short list of numbers. That list is placed on a map, and the
+                nearest of six reference patterns gives you your letter.
+            </p>
+            <p>
+                The map is not a picture of anything you would recognise. It is a compact space where
+                profiles that behave similarly end up near each other, which lets the system express
+                "this profile resembles that one" as a distance rather than a rule. The confidence
+                figure you see on your results is simply how much closer you sit to your nearest
+                pattern than to the next one along.
+            </p>
+
+            <figure class="arch-figure">
+                <div class="arch-scroll">
+                    <svg viewBox="0 0 720 330" role="img" aria-labelledby="mapTitle mapDesc">
+                        <title id="mapTitle">Six reference neighbourhoods with one profile placed among them</title>
+                        <desc id="mapDesc">Six soft circles labelled A to F, each named for a personality type, spread across a rectangular field. A single marked point labelled "your profile" sits between two of them, with a dashed line to the nearer one.</desc>
+
+                        <rect x="16" y="16" width="688" height="256" rx="10" fill="#f8f8f6" stroke="#e0e0e0"/>
+
+                        <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                            <!-- Neighbourhoods -->
+                            <circle cx="130" cy="86" r="52" fill="#cbe9f1" opacity="0.85"/>
+                            <text x="130" y="84" text-anchor="middle" font-size="18" font-weight="700" fill="#0d5f74">A</text>
+                            <text x="130" y="102" text-anchor="middle" font-size="11" fill="#5a6c6d">Analytical</text>
+
+                            <circle cx="298" cy="70" r="46" fill="#cbe9f1" opacity="0.85"/>
+                            <text x="298" y="68" text-anchor="middle" font-size="18" font-weight="700" fill="#0d5f74">B</text>
+                            <text x="298" y="86" text-anchor="middle" font-size="11" fill="#5a6c6d">Innovator</text>
+
+                            <circle cx="470" cy="92" r="50" fill="#cbe9f1" opacity="0.85"/>
+                            <text x="470" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="#0d5f74">C</text>
+                            <text x="470" y="108" text-anchor="middle" font-size="11" fill="#5a6c6d">Pragmatist</text>
+
+                            <circle cx="614" cy="176" r="48" fill="#cbe9f1" opacity="0.85"/>
+                            <text x="614" y="174" text-anchor="middle" font-size="18" font-weight="700" fill="#0d5f74">D</text>
+                            <text x="614" y="192" text-anchor="middle" font-size="11" fill="#5a6c6d">Connector</text>
+
+                            <circle cx="400" cy="204" r="46" fill="#cbe9f1" opacity="0.85"/>
+                            <text x="400" y="202" text-anchor="middle" font-size="18" font-weight="700" fill="#0d5f74">E</text>
+                            <text x="400" y="220" text-anchor="middle" font-size="11" fill="#5a6c6d">Visionary</text>
+
+                            <circle cx="176" cy="200" r="50" fill="#cbe9f1" opacity="0.85"/>
+                            <text x="176" y="198" text-anchor="middle" font-size="18" font-weight="700" fill="#0d5f74">F</text>
+                            <text x="176" y="216" text-anchor="middle" font-size="11" fill="#5a6c6d">Realist</text>
+
+                            <!-- Distances from the placed profile -->
+                            <path d="M292 146 L286 108" stroke="#e0714f" stroke-width="2" stroke-dasharray="5 4"/>
+                            <path d="M304 146 L392 168" stroke="#5a6c6d" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.7"/>
+
+                            <!-- The profile -->
+                            <circle cx="298" cy="152" r="9" fill="#e0714f" stroke="#ffffff" stroke-width="3"/>
+                            <text x="298" y="184" text-anchor="middle" font-size="13" font-weight="700" fill="#e0714f">your profile</text>
+
+                            <!-- Distance labels -->
+                            <text x="252" y="128" text-anchor="end" font-size="11" font-weight="650" fill="#e0714f">nearest</text>
+                            <text x="352" y="138" font-size="11" fill="#5a6c6d">next nearest</text>
+
+                            <!-- Footnote inside the field -->
+                            <text x="16" y="298" font-size="12" fill="#5a6c6d">The gap between "nearest" and "next nearest" is what the confidence percentage on your results reports.</text>
+                            <text x="16" y="318" font-size="12" fill="#5a6c6d">A profile sitting midway between two neighbourhoods gets a lower confidence figure, not a wrong answer.</text>
+                        </g>
+                    </svg>
+                </div>
+                <figcaption>
+                    Six letters, A through F. Landing between two of them is common and is reported
+                    honestly rather than rounded away.
+                </figcaption>
+            </figure>
+
+            <div class="arch-callout">
+                <p>
+                    <strong>A note on the six types.</strong> They are reference points for describing a
+                    profile, not boxes people belong in. Two people with the same letter can differ a
+                    great deal, and the six area scores underneath carry far more information than the
+                    letter on top of them.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. UNDER THE HOOD -->
+    <section class="arch-section" id="stack">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Under the hood</span>
+            <h2>How the pieces are actually wired</h2>
+            <p class="arch-lede">
+                For the curious: the site is a plain static front end talking to a small Python API.
+                Nothing runs in your browser except the questionnaire itself and the code that draws
+                your results.
+            </p>
+
+            <figure class="arch-figure">
+                <div class="arch-scroll">
+                    <svg viewBox="0 0 880 470" role="img" aria-labelledby="stackTitle stackDesc">
+                        <title id="stackTitle">System architecture across four layers</title>
+                        <desc id="stackDesc">Four stacked layers. The browser layer holds three pages. The API layer holds the endpoints for starting, submitting and reading an assessment. The engine layer holds the scoring engine, the pattern model and the summary writer. The storage layer holds the saved records. Arrows run downward from browser to API to engines to storage.</desc>
+
+                        <defs>
+                            <marker id="stackArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#5cbdd4"/>
+                            </marker>
+                        </defs>
+
+                        <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                            <!-- Layer 1: browser -->
+                            <rect x="8" y="8" width="864" height="104" rx="10" fill="#e8f6fa" stroke="#9bd6e5"/>
+                            <text x="28" y="36" font-size="13" font-weight="700" fill="#0d5f74">YOUR BROWSER</text>
+                            <text x="152" y="36" font-size="12" fill="#5a6c6d">static pages, no framework, no build step</text>
+
+                            <rect x="28" y="48" width="256" height="48" rx="8" fill="#ffffff" stroke="#0090b0"/>
+                            <text x="44" y="70" font-size="13" font-weight="650" fill="#1f3a42">Landing and this page</text>
+                            <text x="44" y="88" font-size="12" fill="#5a6c6d">explains the method</text>
+
+                            <rect x="300" y="48" width="256" height="48" rx="8" fill="#ffffff" stroke="#0090b0"/>
+                            <text x="316" y="70" font-size="13" font-weight="650" fill="#1f3a42">Questionnaire</text>
+                            <text x="316" y="88" font-size="12" fill="#5a6c6d">collects the 35 sliders</text>
+
+                            <rect x="572" y="48" width="280" height="48" rx="8" fill="#ffffff" stroke="#0090b0"/>
+                            <text x="588" y="70" font-size="13" font-weight="650" fill="#1f3a42">Results</text>
+                            <text x="588" y="88" font-size="12" fill="#5a6c6d">draws the charts and panels</text>
+
+                            <path d="M440 116 L440 140" stroke="#5cbdd4" stroke-width="2" marker-end="url(#stackArrow)"/>
+                            <text x="452" y="134" font-size="12" fill="#5a6c6d">requests over HTTPS</text>
+
+                            <!-- Layer 2: API -->
+                            <rect x="8" y="148" width="864" height="104" rx="10" fill="#f8f8f6" stroke="#e0e0e0"/>
+                            <text x="28" y="176" font-size="13" font-weight="700" fill="#0d5f74">API</text>
+                            <text x="72" y="176" font-size="12" fill="#5a6c6d">a small Python service</text>
+
+                            <rect x="28" y="188" width="256" height="48" rx="8" fill="#ffffff" stroke="#5cbdd4"/>
+                            <text x="44" y="210" font-size="13" font-weight="650" fill="#1f3a42">Start an assessment</text>
+                            <text x="44" y="228" font-size="12" fill="#5a6c6d">creates the record, returns an id</text>
+
+                            <rect x="300" y="188" width="256" height="48" rx="8" fill="#ffffff" stroke="#5cbdd4"/>
+                            <text x="316" y="210" font-size="13" font-weight="650" fill="#1f3a42">Submit answers</text>
+                            <text x="316" y="228" font-size="12" fill="#5a6c6d">runs the whole pipeline</text>
+
+                            <rect x="572" y="188" width="280" height="48" rx="8" fill="#ffffff" stroke="#5cbdd4"/>
+                            <text x="588" y="210" font-size="13" font-weight="650" fill="#1f3a42">Read results</text>
+                            <text x="588" y="228" font-size="12" fill="#5a6c6d">returns everything computed</text>
+
+                            <path d="M440 256 L440 280" stroke="#5cbdd4" stroke-width="2" marker-end="url(#stackArrow)"/>
+
+                            <!-- Layer 3: engines -->
+                            <rect x="8" y="288" width="864" height="104" rx="10" fill="#f8f8f6" stroke="#e0e0e0"/>
+                            <text x="28" y="316" font-size="13" font-weight="700" fill="#0d5f74">ENGINES</text>
+                            <text x="112" y="316" font-size="12" fill="#5a6c6d">each one independent, so a failure in one does not take the page down</text>
+
+                            <rect x="28" y="328" width="256" height="48" rx="8" fill="#ffffff" stroke="#0090b0"/>
+                            <text x="44" y="350" font-size="13" font-weight="650" fill="#1f3a42">Scoring</text>
+                            <text x="44" y="368" font-size="12" fill="#5a6c6d">averages, cross-check, adjustment</text>
+
+                            <rect x="300" y="328" width="256" height="48" rx="8" fill="#ffffff" stroke="#0090b0"/>
+                            <text x="316" y="350" font-size="13" font-weight="650" fill="#1f3a42">Pattern model</text>
+                            <text x="316" y="368" font-size="12" fill="#5a6c6d">places you on the map</text>
+
+                            <rect x="572" y="328" width="280" height="48" rx="8" fill="#ffffff" stroke="#0090b0"/>
+                            <text x="588" y="350" font-size="13" font-weight="650" fill="#1f3a42">Summary writer</text>
+                            <text x="588" y="368" font-size="12" fill="#5a6c6d">language model, with a plain fallback</text>
+
+                            <path d="M440 396 L440 420" stroke="#5cbdd4" stroke-width="2" marker-end="url(#stackArrow)"/>
+
+                            <!-- Layer 4: storage -->
+                            <rect x="8" y="428" width="864" height="34" rx="10" fill="#0d5f74"/>
+                            <text x="28" y="450" font-size="13" font-weight="700" fill="#ffffff">STORAGE</text>
+                            <text x="112" y="450" font-size="12" fill="#cbe9f1">your answers, both sets of scores, the adjustment, the match, and the write-up</text>
+                        </g>
+                    </svg>
+                </div>
+                <figcaption>
+                    The results page loads your headline result first and fills in the deeper panels
+                    afterwards, so a slow or missing panel never blocks the part you came for.
+                </figcaption>
+            </figure>
+
+            <h3>Plain-language glossary</h3>
+            <dl class="arch-terms">
+                <div class="arch-term">
+                    <dt>Raw score</dt>
+                    <dd>The straight average of your five answers in one area, before anything is subtracted.</dd>
+                </div>
+                <div class="arch-term">
+                    <dt>Cross-check</dt>
+                    <dd>One of the five statements that probes how you answer, rather than what you are like.</dd>
+                </div>
+                <div class="arch-term">
+                    <dt>Adjustment</dt>
+                    <dd>How much the system thinks your answers were shaded, expressed as a number between none and maximum.</dd>
+                </div>
+                <div class="arch-term">
+                    <dt>Adjusted score</dt>
+                    <dd>The raw score with the estimated shading removed. This is the number your type is based on.</dd>
+                </div>
+                <div class="arch-term">
+                    <dt>Confidence</dt>
+                    <dd>How clearly your profile sits nearer one reference pattern than the others. Low confidence means you are between two, not that something went wrong.</dd>
+                </div>
+                <div class="arch-term">
+                    <dt>Novelty</dt>
+                    <dd>How unusual your combination of scores is compared with the reference patterns. Unusual is not better or worse.</dd>
+                </div>
+            </dl>
+        </div>
+    </section>
+
+    <!-- 9. LIMITS -->
+    <section class="arch-section" id="limits">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Honest limits</span>
+            <h2>What this is, and what it isn't</h2>
+            <p class="arch-lede">
+                A method this opinionated should be equally clear about where it stops.
+            </p>
+
+            <div class="arch-grid">
+                <div class="arch-card">
+                    <h3>It is a research prototype</h3>
+                    <p>
+                        The scoring runs the same way every time and every intermediate number is kept,
+                        but the method has not been checked against any outside measure of behaviour.
+                    </p>
+                </div>
+                <div class="arch-card">
+                    <h3>It is not a clinical instrument</h3>
+                    <p>
+                        Nothing here diagnoses anything. It should not inform decisions about hiring,
+                        admissions, treatment, or anyone's standing.
+                    </p>
+                </div>
+                <div class="arch-card">
+                    <h3>The adjustment is a hypothesis</h3>
+                    <p>
+                        Correcting a self-report for estimated self-flattery is this project's argument,
+                        not established practice. Your uncorrected scores are kept and shown alongside.
+                    </p>
+                </div>
+                <div class="arch-card">
+                    <h3>A single sitting is a thin sample</h3>
+                    <p>
+                        Thirty-five sliders on one afternoon capture a mood as much as a disposition.
+                        Read the result as a prompt for reflection, not a verdict.
+                    </p>
+                </div>
+            </div>
+
+            <div class="arch-callout is-caution" style="margin-top: 32px;">
+                <p>
+                    <strong>On the elephant, one last time.</strong> The uncomfortable part of the
+                    argument is that it applies to the people making the argument too. A test built to
+                    detect flattering self-accounts is itself a flattering self-account of what tests
+                    can do. Treat the number it gives you the way it asks you to treat the number you
+                    gave it.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="arch-cta">
+        <h2>See where your answers land</h2>
+        <p>Thirty-five statements, roughly eight to ten minutes, no account needed.</p>
+        <div class="hero-buttons">
+            <a href="questionnaire.html" class="btn btn-primary">Start Assessment</a>
+            <a href="index.html" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </section>
+
+    <!-- Scripts - LOAD IN ORDER -->
+    <!-- 1. Configuration MUST load first -->
+    <script src="config.js"></script>
+    <!-- 2. Common utilities -->
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[ARCHITECTURE] Page loaded');
+            initSmoothScroll();
+        });
+    </script>
+</body>
+</html>
