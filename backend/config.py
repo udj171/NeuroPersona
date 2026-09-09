@@ -9,7 +9,7 @@ from pathlib import Path
 
 class Config:
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
-    SECRET_KEY = os.getenv('SECRET_KEY', 'atharvajagtap0107080133446677cybeydbs')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-change-me')
     DEBUG = os.getenv('DEBUG', 'False') == 'True'
     TESTING = False
     
@@ -45,10 +45,12 @@ class Config:
     JSON_SORT_KEYS = False
     JSONIFY_PRETTYPRINT_REGULAR = os.getenv('FLASK_ENV') != 'production'
     
-    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-    GEMINI_API_TIMEOUT = int(os.getenv('GEMINI_API_TIMEOUT', '30'))
-    GEMINI_MAX_RETRIES = int(os.getenv('GEMINI_MAX_RETRIES', '3'))
-    GEMINI_RETRY_DELAY = int(os.getenv('GEMINI_RETRY_DELAY', '2'))
+    # Written interpretations are generated locally. 'template' needs nothing;
+    # 'llm' loads a local open-weights GGUF model from LLM_MODEL_PATH.
+    NARRATIVE_BACKEND = os.getenv('NARRATIVE_BACKEND', 'template')
+    LLM_MODEL_PATH = os.getenv('LLM_MODEL_PATH', '')
+    LLM_THREADS = int(os.getenv('LLM_THREADS', '2'))
+    MODEL_WEIGHTS_PATH = os.getenv('MODEL_WEIGHTS_PATH', '')
     
     VAE_MODEL_PATH = os.path.join(MODEL_FOLDER, 'vae_model.pkl')
     VAE_SCALER_PATH = os.path.join(MODEL_FOLDER, 'vae_scaler.pkl')

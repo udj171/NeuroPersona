@@ -7,7 +7,7 @@
 import os
 import logging
 from app import app, db
-from models import User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation, AuditLog
+from models import User, Assessment, Result, ModelOutput, PersonalityClassification, Interpretation, AuditLog
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

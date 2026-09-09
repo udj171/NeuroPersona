@@ -1,227 +1,174 @@
 # ============================================================================
-# SCRIPT 17: test_scoring.py - Unit Tests for Scoring Engine (2500+ lines)
+# test_scoring.py - Unit tests for the OCEAN scoring engine
 # ============================================================================
 
-import pytest
 import numpy as np
-from typing import Dict, List
-import sys
-import os
+import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
-
+from ocean_items import (ALL_ITEM_IDS, ITEM_ORDER, N_ITEMS, N_SCORED,
+                         REVERSED_IDS, SCALE_MAX, SCALE_MIN, TRAIT_ITEM_IDS,
+                         TRAIT_ORDER, keyed_value, reverse_score,
+                         to_frontend_payload)
 from scoring_engine import ScoringEngine
 
+
 @pytest.fixture
-def scoring_engine():
+def engine():
     return ScoringEngine()
 
-@pytest.fixture
-def sample_responses():
-    np.random.seed(42)
-    return np.random.randint(0, 11, size=35).tolist()
 
-@pytest.fixture
-def valid_age():
-    return 30
+def answers(value=3, **overrides):
+    """A complete response set, uniform by default."""
+    responses = {item_id: value for item_id in ALL_ITEM_IDS}
+    responses.update(overrides)
+    return responses
 
-class TestResponseValidation:
-    
-    def test_validate_responses_format(self, scoring_engine):
-        valid_responses = [5] * 35
-        assert scoring_engine._validate_responses(valid_responses) == True
-    
-    def test_validate_responses_invalid_type(self, scoring_engine):
-        invalid_responses = "not a list"
-        assert scoring_engine._validate_responses(invalid_responses) == False
-    
-    def test_validate_responses_too_few(self, scoring_engine):
-        invalid_responses = [5] * 20
-        assert scoring_engine._validate_responses(invalid_responses) == False
-    
-    def test_validate_responses_out_of_range_low(self, scoring_engine):
-        invalid_responses = [-1] + [5] * 34
-        assert scoring_engine._validate_responses(invalid_responses) == False
-    
-    def test_validate_responses_out_of_range_high(self, scoring_engine):
-        invalid_responses = [11] + [5] * 34
-        assert scoring_engine._validate_responses(invalid_responses) == False
 
-class TestRawDomainScores:
-    
-    def test_calculate_raw_domain_scores(self, scoring_engine, sample_responses):
-        scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        
-        assert isinstance(scores, dict)
-        assert set(scores.keys()) == {'R', 'S', 'C', 'A', 'O', 'E'}
-        
-        for score in scores.values():
-            assert 0 <= score <= 10
-    
-    def test_raw_scores_consistency(self, scoring_engine):
-        responses = [5] * 35
-        scores = scoring_engine.calculate_raw_domain_scores(responses)
-        
-        for score in scores.values():
-            assert abs(score - 5.0) < 0.001
-    
-    def test_raw_scores_domain_assignment(self, scoring_engine):
-        responses = list(range(35))
-        scores = scoring_engine.calculate_raw_domain_scores(responses)
-        
-        expected_r = np.mean([0, 1, 2, 3, 4])
-        assert abs(scores['R'] - expected_r) < 0.001
+# ---------------------------------------------------------------- item bank
 
-class TestDeceptionSusceptibility:
-    
-    def test_calculate_deception_susceptibility(self, scoring_engine, sample_responses):
-        domain_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(sample_responses, domain_scores)
-        
-        assert 0.0 <= lambda_value <= 1.0
-    
-    def test_lambda_with_high_validity(self, scoring_engine):
-        responses = [5] * 30 + [5, 5, 5, 5, 5]
-        domain_scores = scoring_engine.calculate_raw_domain_scores(responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(responses, domain_scores)
-        
-        assert lambda_value > 0
-    
-    def test_lambda_with_inconsistent_validity(self, scoring_engine):
-        responses = [5] * 30 + [0, 10, 0, 10, 0]
-        domain_scores = scoring_engine.calculate_raw_domain_scores(responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(responses, domain_scores)
-        
-        assert 0.0 <= lambda_value <= 1.0
+class TestItemBank:
+    def test_counts(self):
+        assert N_SCORED == 50
+        assert N_ITEMS == 55
+        assert len(set(ALL_ITEM_IDS)) == 55
 
-class TestScaleConversion:
-    
-    def test_convert_scale_0_10_to_1_5(self, scoring_engine):
-        domain_scores = {'R': 0, 'S': 5, 'C': 10, 'A': 2.5, 'O': 7.5, 'E': 3}
-        scaled = scoring_engine.convert_scale_0_10_to_1_5(domain_scores)
-        
-        assert scaled['R'] == 1.0
-        assert abs(scaled['S'] - 3.0) < 0.001
-        assert scaled['C'] == 5.0
-    
-    def test_scaled_scores_in_range(self, scoring_engine, sample_responses):
-        raw_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        scaled = scoring_engine.convert_scale_0_10_to_1_5(raw_scores)
-        
-        for score in scaled.values():
-            assert 1.0 <= score <= 5.0
+    def test_ten_items_per_trait(self):
+        for trait in TRAIT_ORDER:
+            assert len(TRAIT_ITEM_IDS[trait]) == 10
 
-class TestDomainBiases:
-    
-    def test_calculate_domain_biases(self, scoring_engine, sample_responses):
-        raw_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(sample_responses, raw_scores)
-        biases = scoring_engine.calculate_domain_biases(raw_scores, lambda_value, sample_responses)
-        
-        assert isinstance(biases, dict)
-        assert set(biases.keys()) == {'R', 'S', 'C', 'A', 'O', 'E'}
-        
-        for bias in biases.values():
-            assert bias >= 0
-    
-    def test_bias_non_negative(self, scoring_engine, sample_responses):
-        raw_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(sample_responses, raw_scores)
-        biases = scoring_engine.calculate_domain_biases(raw_scores, lambda_value, sample_responses)
-        
-        for bias in biases.values():
-            assert bias >= 0
+    def test_reverse_score_is_symmetric(self):
+        assert reverse_score(1) == 5
+        assert reverse_score(5) == 1
+        assert reverse_score(3) == 3
 
-class TestCorrectedScores:
-    
-    def test_calculate_corrected_scores(self, scoring_engine, sample_responses):
-        raw_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(sample_responses, raw_scores)
-        biases = scoring_engine.calculate_domain_biases(raw_scores, lambda_value, sample_responses)
-        corrected = scoring_engine.calculate_corrected_scores(raw_scores, biases)
-        
-        assert isinstance(corrected, dict)
-        assert set(corrected.keys()) == {'R', 'S', 'C', 'A', 'O', 'E'}
-        
-        for score in corrected.values():
-            assert 0 <= score <= 10
-    
-    def test_corrected_less_than_raw(self, scoring_engine, sample_responses):
-        raw_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(sample_responses, raw_scores)
-        biases = scoring_engine.calculate_domain_biases(raw_scores, lambda_value, sample_responses)
-        corrected = scoring_engine.calculate_corrected_scores(raw_scores, biases)
-        
-        for domain in raw_scores:
-            assert corrected[domain] <= raw_scores[domain]
+    def test_keyed_value_flips_only_reversed_items(self):
+        forward = next(i for i in ITEM_ORDER if i not in REVERSED_IDS)
+        backward = next(iter(REVERSED_IDS))
+        assert keyed_value(forward, 5) == 5
+        assert keyed_value(backward, 5) == 1
 
-class TestVAEInputPreparation:
-    
-    def test_prepare_vae_input_shape(self, scoring_engine, sample_responses):
-        raw_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(sample_responses, raw_scores)
-        biases = scoring_engine.calculate_domain_biases(raw_scores, lambda_value, sample_responses)
-        corrected = scoring_engine.calculate_corrected_scores(raw_scores, biases)
-        
-        vae_input = scoring_engine.prepare_vae_input(corrected, lambda_value, sample_responses, 30)
-        
-        assert vae_input.shape == (9,)
-    
-    def test_prepare_vae_input_normalized(self, scoring_engine, sample_responses):
-        raw_scores = scoring_engine.calculate_raw_domain_scores(sample_responses)
-        lambda_value = scoring_engine.calculate_deception_susceptibility(sample_responses, raw_scores)
-        biases = scoring_engine.calculate_domain_biases(raw_scores, lambda_value, sample_responses)
-        corrected = scoring_engine.calculate_corrected_scores(raw_scores, biases)
-        
-        vae_input = scoring_engine.prepare_vae_input(corrected, lambda_value, sample_responses, 30)
-        
-        assert abs(np.mean(vae_input)) < 0.1
-        assert abs(np.std(vae_input) - 1.0) < 0.1
+    def test_frontend_payload_matches_bank(self):
+        payload = to_frontend_payload()
+        assert payload['counts']['total'] == N_ITEMS
+        assert len(payload['items']) == N_ITEMS
+        assert payload['scale']['min'] == SCALE_MIN
+        assert payload['scale']['max'] == SCALE_MAX
 
-class TestProcessAssessment:
-    
-    def test_process_assessment_complete(self, scoring_engine, sample_responses, valid_age):
-        result = scoring_engine.process_assessment(sample_responses, valid_age)
-        
-        assert 'raw_domain_scores' in result
-        assert 'deception_susceptibility' in result
-        assert 'corrected_domain_scores' in result
-        assert 'domain_biases' in result
-        assert 'vae_input' in result
-    
-    def test_process_assessment_output_types(self, scoring_engine, sample_responses, valid_age):
-        result = scoring_engine.process_assessment(sample_responses, valid_age)
-        
-        assert isinstance(result['raw_domain_scores'], dict)
-        assert isinstance(result['deception_susceptibility'], float)
-        assert isinstance(result['vae_input'], list)
-    
-    def test_process_assessment_invalid_input(self, scoring_engine):
-        with pytest.raises(ValueError):
-            scoring_engine.process_assessment([5] * 20, 30)
 
-class TestEdgeCases:
-    
-    def test_all_same_responses(self, scoring_engine):
-        responses = [5] * 35
-        result = scoring_engine.process_assessment(responses, 30)
-        
-        assert result is not None
-        assert len(result) > 0
-    
-    def test_extreme_responses(self, scoring_engine):
-        responses = [0] * 17 + [10] * 18
-        result = scoring_engine.process_assessment(responses, 30)
-        
-        assert result is not None
-        assert 'raw_domain_scores' in result
-    
-    def test_boundary_age(self, scoring_engine, sample_responses):
-        result1 = scoring_engine.process_assessment(sample_responses, 13)
-        result2 = scoring_engine.process_assessment(sample_responses, 120)
-        
-        assert result1 is not None
-        assert result2 is not None
+# ------------------------------------------------------------ trait scoring
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+class TestTraitScores:
+    def test_midpoint_answers_give_midpoint_scores(self, engine):
+        scores = engine.trait_scores(answers(3))
+        for trait in TRAIT_ORDER:
+            assert scores[trait] == pytest.approx(50.0)
+
+    def test_score_bounds(self, engine):
+        for value in (SCALE_MIN, SCALE_MAX):
+            scores = engine.trait_scores(answers(value))
+            for trait in TRAIT_ORDER:
+                assert 0.0 <= scores[trait] <= 100.0
+
+    def test_reverse_keying_cancels_on_uniform_answers(self, engine):
+        # Every trait mixes forward and reverse items, so a uniform sheet must
+        # land at the midpoint rather than at an extreme.
+        assert engine.trait_scores(answers(5))['E'] == pytest.approx(50.0)
+
+    def test_all_forward_items_high_raises_the_trait(self, engine):
+        responses = answers(3)
+        for item_id in TRAIT_ITEM_IDS['O']:
+            responses[item_id] = 1 if item_id in REVERSED_IDS else 5
+        assert engine.trait_scores(responses)['O'] == pytest.approx(100.0)
+
+
+# ------------------------------------------------------------------- lambda
+
+class TestLambda:
+    def test_candid_answers_score_low(self, engine):
+        # Moderate claims, real concessions, varied answers.
+        rng = np.random.default_rng(7)
+        responses = {i: int(rng.integers(2, 5)) for i in ITEM_ORDER}
+        responses.update({'V1': 3, 'V2': 3, 'V3': 3, 'V4': 4, 'V5': 4})
+        analysis = engine.calculate_lambda(responses, engine.trait_scores(responses))
+        assert analysis['lambda'] < 0.35
+        assert analysis['band'] == 'light'
+
+    def test_flattering_answers_score_high(self, engine):
+        # Every virtue claimed, nothing conceded.
+        rng = np.random.default_rng(11)
+        responses = {i: int(rng.integers(2, 5)) for i in ITEM_ORDER}
+        for item_id in TRAIT_ITEM_IDS['A']:
+            responses[item_id] = 1 if item_id in REVERSED_IDS else 5
+        responses.update({'V1': 5, 'V2': 5, 'V3': 5, 'V4': 1, 'V5': 1})
+        analysis = engine.calculate_lambda(responses, engine.trait_scores(responses))
+        assert analysis['lambda'] > 0.5
+        assert analysis['contradiction_count'] >= 1
+
+    def test_straight_lining_is_penalised(self, engine):
+        responses = answers(4)
+        analysis = engine.calculate_lambda(responses, engine.trait_scores(responses))
+        assert analysis['response_style']['penalty'] > 0
+
+    def test_lambda_stays_in_range(self, engine):
+        rng = np.random.default_rng(3)
+        for _ in range(25):
+            responses = {i: int(rng.integers(SCALE_MIN, SCALE_MAX + 1)) for i in ALL_ITEM_IDS}
+            value = engine.calculate_lambda(responses, engine.trait_scores(responses))['lambda']
+            assert 0.0 <= value <= 1.0
+
+
+# --------------------------------------------------------------- correction
+
+class TestCorrection:
+    def test_zero_lambda_leaves_scores_alone(self, engine):
+        raw = engine.trait_scores(answers(4))
+        corrected, biases = engine.corrected_scores(raw, 0.0)
+        assert corrected == pytest.approx(raw)
+        assert all(b == 0 for b in biases.values())
+
+    def test_neuroticism_moves_the_other_way(self, engine):
+        raw = {'O': 80.0, 'C': 80.0, 'E': 50.0, 'A': 80.0, 'N': 20.0}
+        _, biases = engine.corrected_scores(raw, 0.8)
+        assert biases['A'] > 0     # inflated virtues come down
+        assert biases['N'] < 0     # played-down neuroticism goes up
+
+    def test_corrected_scores_stay_in_range(self, engine):
+        rng = np.random.default_rng(5)
+        for _ in range(25):
+            raw = {t: float(rng.uniform(0, 100)) for t in TRAIT_ORDER}
+            corrected, _ = engine.corrected_scores(raw, float(rng.uniform(0, 1)))
+            assert all(0.0 <= v <= 100.0 for v in corrected.values())
+
+
+# ----------------------------------------------------------------- pipeline
+
+class TestPipeline:
+    def test_output_shape(self, engine):
+        out = engine.process_assessment(answers(3), age=30)
+        for key in ('raw_trait_scores', 'corrected_trait_scores', 'trait_biases',
+                    'lambda', 'lambda_band', 'lambda_analysis',
+                    'validity_responses', 'model_input'):
+            assert key in out
+        assert len(out['model_input']) == N_SCORED
+        assert len(out['validity_responses']) == 5
+
+    def test_model_input_follows_item_order(self, engine):
+        responses = answers(3, EXT1=5, OPN10=1)
+        out = engine.process_assessment(responses, age=30)
+        assert out['model_input'][ITEM_ORDER.index('EXT1')] == 5.0
+        assert out['model_input'][ITEM_ORDER.index('OPN10')] == 1.0
+
+    def test_model_input_is_raw_not_keyed(self, engine):
+        # Parity with training matters more than tidiness: the weights only
+        # ever saw raw responses, reverse items included.
+        reversed_id = next(i for i in ITEM_ORDER if i in REVERSED_IDS)
+        out = engine.process_assessment(answers(3, **{reversed_id: 5}), age=30)
+        assert out['model_input'][ITEM_ORDER.index(reversed_id)] == 5.0
+
+    def test_deterministic(self, engine):
+        responses = answers(3, EXT1=5, AGR4=2, V4=1)
+        assert engine.process_assessment(responses, 30) == engine.process_assessment(responses, 30)
+
+    def test_json_serialisable(self, engine):
+        import json
+        json.dumps(engine.process_assessment(answers(4, V1=5, V5=1), age=44))

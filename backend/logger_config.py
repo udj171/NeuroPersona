@@ -68,11 +68,11 @@ def setup_logging(config):
                 'level': 'DEBUG',
                 'handlers': ['console', 'file', 'performance'],
             },
-            'vae_inference': {
+            'model_inference': {
                 'level': 'DEBUG',
                 'handlers': ['console', 'file', 'performance'],
             },
-            'gemini_client': {
+            'narrative': {
                 'level': 'INFO',
                 'handlers': ['console', 'file'],
             },

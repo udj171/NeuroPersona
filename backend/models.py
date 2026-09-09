@@ -8,12 +8,10 @@ from sqlalchemy.types import TypeDecorator
 import json
 import uuid
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from sqlalchemy import Column, Integer
 import uuid
 
 db = SQLAlchemy()
-migrate = Migrate()
 
 
 class JSONType(TypeDecorator):
@@ -94,9 +92,9 @@ class Assessment(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     
     results = db.relationship('Result', uselist=False, backref='assessment', cascade='all, delete-orphan')
-    vae_outputs = db.relationship('VAEOutput', uselist=False, backref='assessment', cascade='all, delete-orphan')
+    model_outputs = db.relationship('ModelOutput', uselist=False, backref='assessment', cascade='all, delete-orphan')
     personality_classifications = db.relationship('PersonalityClassification', uselist=False, backref='assessment', cascade='all, delete-orphan')
-    gemini_interpretations = db.relationship('GeminiInterpretation', uselist=False, backref='assessment', cascade='all, delete-orphan')
+    interpretations = db.relationship('Interpretation', uselist=False, backref='assessment', cascade='all, delete-orphan')
     
     __table_args__ = (
         Index('idx_assessment_user_id', 'user_id'),
@@ -125,151 +123,161 @@ class Assessment(db.Model):
 
 
 class Result(db.Model):
+    """Scoring output: the five trait scores before and after the correction."""
     __tablename__ = 'results'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id', ondelete='CASCADE'), nullable=False, unique=True)
-    
-    raw_domain_scores = db.Column(JSONType, nullable=False)
-    deception_susceptibility = db.Column(db.Float, nullable=False)
-    corrected_domain_scores = db.Column(JSONType, nullable=False)
-    domain_biases = db.Column(JSONType, nullable=False)
-    validity_scores = db.Column(JSONType, nullable=True)
-    
-    vae_input_vector = db.Column(JSONType, nullable=False)
-    scaling_factors = db.Column(JSONType, nullable=True)
-    
-    # Use func.now() for server-side defaults (PostgreSQL compatible)
+
+    raw_trait_scores = db.Column(JSONType, nullable=False)        # O,C,E,A,N on 0-100
+    corrected_trait_scores = db.Column(JSONType, nullable=False)  # after the lambda shift
+    trait_biases = db.Column(JSONType, nullable=False)            # signed shift per trait
+
+    lambda_score = db.Column(db.Float, nullable=False)            # 0-1
+    lambda_band = db.Column(db.String(20), nullable=False)        # light | moderate | substantial
+    lambda_analysis = db.Column(JSONType, nullable=True)          # contradictions, style flags
+
+    validity_responses = db.Column(JSONType, nullable=True)       # V1-V5 as answered
+    model_input_vector = db.Column(JSONType, nullable=False)      # the 50 raw responses
+
     created_at = db.Column(db.DateTime, default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
-    
+
     __table_args__ = (
         Index('idx_result_assessment_id', 'assessment_id'),
         Index('idx_result_created_at', 'created_at'),
+        Index('idx_result_lambda', 'lambda_score'),
     )
-    
+
     def to_dict(self):
         return {
             'id': self.id,
             'assessment_id': self.assessment_id,
-            'raw_domain_scores': self.raw_domain_scores,
-            'deception_susceptibility': self.deception_susceptibility,
-            'corrected_domain_scores': self.corrected_domain_scores,
-            'domain_biases': self.domain_biases,
+            'raw_trait_scores': self.raw_trait_scores,
+            'corrected_trait_scores': self.corrected_trait_scores,
+            'trait_biases': self.trait_biases,
+            'lambda_score': self.lambda_score,
+            'lambda_band': self.lambda_band,
+            'lambda_analysis': self.lambda_analysis,
+            'validity_responses': self.validity_responses,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
-    
+
     def __repr__(self):
         return f'<Result {self.id}: assessment_id={self.assessment_id}>'
 
 
-class VAEOutput(db.Model):
-    __tablename__ = 'vae_outputs'
-    
+class ModelOutput(db.Model):
+    """Latent embedding and novelty from the trained VAE."""
+    __tablename__ = 'model_outputs'
+
     id = db.Column(db.Integer, primary_key=True)
     assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id', ondelete='CASCADE'), nullable=False, unique=True)
-    
-    latent_representation = db.Column(JSONType, nullable=False)
-    reconstruction_error = db.Column(db.Float, nullable=False)
-    latent_distance_from_mean = db.Column(db.Float, nullable=False)
-    local_density = db.Column(db.Float, nullable=False)
-    novelty_score = db.Column(db.Float, nullable=False)
-    
-    # Use func.now() for server-side defaults (PostgreSQL compatible)
+
+    weights_loaded = db.Column(db.Boolean, nullable=False, default=False)
+    model_version = db.Column(db.String(64), nullable=True)
+
+    latent_representation = db.Column(JSONType, nullable=True)
+    reconstruction_error = db.Column(db.Float, nullable=True)
+    latent_distance_from_mean = db.Column(db.Float, nullable=True)
+    novelty_score = db.Column(db.Float, nullable=True)
+    percentiles = db.Column(JSONType, nullable=True)
+
     created_at = db.Column(db.DateTime, default=func.now())
-    
+
     __table_args__ = (
-        Index('idx_vae_output_assessment_id', 'assessment_id'),
-        Index('idx_vae_output_novelty_score', 'novelty_score'),
+        Index('idx_model_output_assessment_id', 'assessment_id'),
+        Index('idx_model_output_novelty', 'novelty_score'),
     )
-    
+
     def to_dict(self):
         return {
             'id': self.id,
             'assessment_id': self.assessment_id,
+            'weights_loaded': self.weights_loaded,
+            'model_version': self.model_version,
             'latent_representation': self.latent_representation,
             'reconstruction_error': self.reconstruction_error,
             'latent_distance_from_mean': self.latent_distance_from_mean,
-            'local_density': self.local_density,
             'novelty_score': self.novelty_score,
+            'percentiles': self.percentiles,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
-    
+
     def __repr__(self):
-        return f'<VAEOutput {self.id}: novelty={self.novelty_score:.4f}>'
+        return f'<ModelOutput {self.id}: trained={self.weights_loaded}>'
 
 
 class PersonalityClassification(db.Model):
+    """Which of the learned clusters this profile fell nearest to."""
     __tablename__ = 'personality_classifications'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id', ondelete='CASCADE'), nullable=False, unique=True)
-    
-    personality_type = db.Column(db.String(1), nullable=False)
-    confidence_score = db.Column(db.Float, nullable=False)
-    
-    personality_details = db.Column(JSONType, nullable=True)
-    type_description = db.Column(db.Text, nullable=True)
-    key_traits = db.Column(JSONType, nullable=True)
-    
-    # Use func.now() for server-side defaults (PostgreSQL compatible)
+
+    type_index = db.Column(db.Integer, nullable=False)
+    type_name = db.Column(db.String(80), nullable=False)
+    confidence_score = db.Column(db.Float, nullable=True)   # null when untrained
+    runner_up_name = db.Column(db.String(80), nullable=True)
+    type_traits = db.Column(JSONType, nullable=True)        # centroid profile, 0-100
+    type_probabilities = db.Column(JSONType, nullable=True)
+
     created_at = db.Column(db.DateTime, default=func.now())
-    
+
     __table_args__ = (
-        CheckConstraint("personality_type IN ('A', 'B', 'C', 'D', 'E', 'F')", name='valid_personality_type'),
         Index('idx_personality_assessment_id', 'assessment_id'),
-        Index('idx_personality_type', 'personality_type'),
-        Index('idx_personality_confidence', 'confidence_score'),
+        Index('idx_personality_type_index', 'type_index'),
     )
-    
+
     def to_dict(self):
         return {
             'id': self.id,
             'assessment_id': self.assessment_id,
-            'personality_type': self.personality_type,
+            'type_index': self.type_index,
+            'type_name': self.type_name,
             'confidence_score': self.confidence_score,
-            'personality_details': self.personality_details,
-            'type_description': self.type_description,
-            'key_traits': self.key_traits,
+            'runner_up_name': self.runner_up_name,
+            'type_traits': self.type_traits,
+            'type_probabilities': self.type_probabilities,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
-    
+
     def __repr__(self):
-        return f'<PersonalityClassification {self.id}: type={self.personality_type}, confidence={self.confidence_score:.2f}>'
+        return f'<PersonalityClassification {self.id}: {self.type_name}>'
 
 
-class GeminiInterpretation(db.Model):
-    __tablename__ = 'gemini_interpretations'
-    
+class Interpretation(db.Model):
+    """The written reading. Generated locally; no third-party API is involved."""
+    __tablename__ = 'interpretations'
+
     id = db.Column(db.Integer, primary_key=True)
     assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id', ondelete='CASCADE'), nullable=False, unique=True)
-    
-    prompt_text = db.Column(db.Text, nullable=False)
+
     interpretation_text = db.Column(db.Text, nullable=False)
-    tokens_used = db.Column(db.Integer, nullable=True)
-    response_time_ms = db.Column(db.Integer, nullable=True)
-    api_status = db.Column(db.String(50), default='success')
-    
-    # Use func.now() for server-side defaults (PostgreSQL compatible)
+    backend = db.Column(db.String(20), nullable=False, default='template')
+    model_name = db.Column(db.String(120), nullable=True)
+    generation_time_ms = db.Column(db.Integer, nullable=True)
+
     created_at = db.Column(db.DateTime, default=func.now())
-    
+
     __table_args__ = (
-        Index('idx_gemini_assessment_id', 'assessment_id'),
-        Index('idx_gemini_created_at', 'created_at'),
+        Index('idx_interpretation_assessment_id', 'assessment_id'),
+        Index('idx_interpretation_created_at', 'created_at'),
     )
-    
+
     def to_dict(self):
         return {
             'id': self.id,
             'assessment_id': self.assessment_id,
             'interpretation_text': self.interpretation_text,
-            'response_time_ms': self.response_time_ms,
-            'api_status': self.api_status,
+            'backend': self.backend,
+            'model_name': self.model_name,
+            'generation_time_ms': self.generation_time_ms,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
-    
+
     def __repr__(self):
-        return f'<GeminiInterpretation {self.id}: status={self.api_status}>'
+        return f'<Interpretation {self.id}: backend={self.backend}>'
 
 
 class AuditLog(db.Model):
