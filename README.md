@@ -106,6 +106,7 @@ backend/                        Flask API (deployed to Render)
 frontend/                       Static site (deployed to Vercel)
   index.html                    Landing page, carries the babbler essay
   architecture.html             Plain-language walkthrough with inline SVG diagrams
+  features.html                 What the assessment gives you, with diagrams and a comparison table
   questionnaire.html/.js        Demographics form and the 35 items
   results.html/.js              Results rendering
   advanced-analysis.js          Derives the advanced panels client-side

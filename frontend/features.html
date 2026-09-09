@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - PredictMyPersonality</title>
+    <meta name="description" content="What the assessment gives you: an adjustment for flattering answers, both sets of scores, a full profile rather than a label, and almost no personal data collected.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <span></span> PredictMyPersonality
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="architecture.html">How It Works</a></li>
+                <li><a href="questionnaire.html" class="cta-button">Start Assessment</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Page hero -->
+    <section class="arch-hero">
+        <div class="arch-hero-content">
+            <h1>What you actually <span class="accent">get back</span></h1>
+            <p>
+                Six things this assessment does that a personality quiz usually does not. Each one is
+                a consequence of the same starting assumption: that the person answering has a stake
+                in the answer.
+            </p>
+            <nav class="arch-toc" aria-label="Sections on this page">
+                <a href="#adjusts">It adjusts for flattery</a>
+                <a href="#both">Both sets of numbers</a>
+                <a href="#profile">A profile, not a label</a>
+                <a href="#fast">One pass, then saved</a>
+                <a href="#privacy">Almost nothing about you</a>
+                <a href="#grounding">Built on a published argument</a>
+                <a href="#compare">Side by side</a>
+            </nav>
+        </div>
+    </section>
+
+    <!-- 1. ADJUSTS -->
+    <section class="arch-section" id="adjusts">
+        <div class="arch-container">
+            <div class="arch-feature">
+                <span class="arch-eyebrow">Feature one</span>
+                <h3>It adjusts for the answer you wanted to give</h3>
+                <p class="arch-lede">
+                    Five of the thirty-five statements are never scored as traits. Their job is to
+                    catch the moments where your answers describe someone slightly better than anyone
+                    actually is.
+                </p>
+                <p>
+                    Each of those five is compared against the six trait scores. A high score paired
+                    with a cross-check that should have moved with it, and didn't, is a contradiction.
+                    Contradictions are counted, and the count sets how much correction is applied.
+                </p>
+
+                <figure class="arch-figure">
+                    <div class="arch-scroll">
+                        <svg viewBox="0 0 720 250" role="img" aria-labelledby="contraTitle contraDesc">
+                            <title id="contraTitle">How a contradiction between a trait answer and a cross-check is spotted</title>
+                            <desc id="contraDesc">Two answer rows. The first, a scored statement about helping others when nobody will know, is rated nine out of ten. The second, a cross-check asking whether the person can recall acting selfishly, is rated one out of ten. A bracket joins them to a note saying the pair rarely holds together and raises the adjustment.</desc>
+
+                            <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                                <!-- Row 1: a scored statement -->
+                                <rect x="16" y="26" width="172" height="20" rx="4" fill="#e8f6fa"/>
+                                <text x="26" y="40" font-size="11" font-weight="700" fill="#0d5f74">SCORED · HELPING OTHERS</text>
+                                <text x="16" y="70" font-size="13" fill="#1f3a42">"I help just as readily when nobody will know it was me."</text>
+                                <rect x="16" y="84" width="440" height="14" rx="4" fill="#dde3e4"/>
+                                <rect x="16" y="84" width="396" height="14" rx="4" fill="#9bd6e5"/>
+                                <rect x="16" y="84" width="6" height="14" fill="#9bd6e5"/>
+                                <text x="470" y="96" font-size="14" font-weight="700" fill="#1f3a42">9</text>
+
+                                <!-- Row 2: a cross-check -->
+                                <rect x="16" y="126" width="106" height="20" rx="4" fill="#fdf1ec"/>
+                                <text x="26" y="140" font-size="11" font-weight="700" fill="#c2542f">CROSS-CHECK</text>
+                                <text x="16" y="170" font-size="13" fill="#1f3a42">"I can recall a specific time I acted selfishly."</text>
+                                <rect x="16" y="184" width="440" height="14" rx="4" fill="#dde3e4"/>
+                                <rect x="16" y="184" width="44" height="14" rx="4" fill="#e0714f"/>
+                                <rect x="16" y="184" width="6" height="14" fill="#e0714f"/>
+                                <text x="470" y="196" font-size="14" font-weight="700" fill="#1f3a42">1</text>
+
+                                <!-- Brace joining the two rows -->
+                                <path d="M500 84 L512 84 L512 198 L500 198" fill="none" stroke="#e0714f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M512 141 L524 141" stroke="#e0714f" stroke-width="2" stroke-linecap="round"/>
+
+                                <!-- Verdict -->
+                                <text x="534" y="122" font-size="13" font-weight="700" fill="#e0714f">Rarely true</text>
+                                <text x="534" y="140" font-size="13" font-weight="700" fill="#e0714f">of one person</text>
+                                <text x="534" y="164" font-size="12" fill="#5a6c6d">The pair raises</text>
+                                <text x="534" y="180" font-size="12" fill="#5a6c6d">the adjustment.</text>
+
+                                <!-- Scale hint -->
+                                <text x="16" y="228" font-size="11" fill="#5a6c6d">Every statement is answered on the same 0 to 10 slider, so the two are directly comparable.</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <figcaption>
+                        Neither answer is wrong on its own. It is the combination that carries the
+                        information, which is why the cross-checks only work as a set.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. BOTH NUMBERS -->
+    <section class="arch-section" id="both">
+        <div class="arch-container">
+            <div class="arch-feature">
+                <span class="arch-eyebrow">Feature two</span>
+                <h3>You are shown both sets of numbers, not the tidier one</h3>
+                <p class="arch-lede">
+                    The correction is an argument, not a fact, so hiding the originals would be
+                    dishonest. Your results keep the scores as you gave them, the scores after
+                    adjustment, and the size of the adjustment itself.
+                </p>
+                <p>
+                    That means you can disagree with the method and still use the output. If you think
+                    the correction has read you wrong, the uncorrected profile is right there to read
+                    instead.
+                </p>
+
+                <figure class="arch-figure">
+                    <div class="arch-scroll">
+                        <svg viewBox="0 0 720 430" role="img" aria-labelledby="anatomyTitle anatomyDesc">
+                            <title id="anatomyTitle">The anatomy of a results page</title>
+                            <desc id="anatomyDesc">A simplified results screen on the left with five labelled parts called out on the right: the type card with its letter and name, a confidence bar, a written interpretation, six area score bars, and deeper analysis panels beneath them.</desc>
+
+                            <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                                <!-- Screen frame -->
+                                <rect x="16" y="16" width="392" height="398" rx="12" fill="#ffffff" stroke="#dde3e4" stroke-width="2"/>
+
+                                <!-- Type card -->
+                                <rect x="36" y="36" width="352" height="92" rx="8" fill="#0d5f74"/>
+                                <text x="212" y="88" text-anchor="middle" font-size="40" font-weight="800" fill="#ffffff">B</text>
+                                <text x="212" y="110" text-anchor="middle" font-size="13" fill="#cbe9f1">The Builder</text>
+
+                                <!-- Confidence -->
+                                <text x="36" y="154" font-size="12" font-weight="650" fill="#1f3a42">Confidence</text>
+                                <text x="388" y="154" text-anchor="end" font-size="12" font-weight="700" fill="#0090b0">76%</text>
+                                <rect x="36" y="162" width="352" height="10" rx="4" fill="#dde3e4"/>
+                                <rect x="36" y="162" width="268" height="10" rx="4" fill="#0090b0"/>
+
+                                <!-- Interpretation placeholder lines -->
+                                <text x="36" y="200" font-size="12" font-weight="650" fill="#1f3a42">What this means</text>
+                                <rect x="36" y="210" width="352" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="36" y="224" width="330" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="36" y="238" width="268" height="8" rx="4" fill="#eceeef"/>
+
+                                <!-- Six area bars -->
+                                <text x="36" y="272" font-size="12" font-weight="650" fill="#1f3a42">Your six areas</text>
+                                <rect x="36" y="282" width="62" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="112" y="282" width="276" height="8" rx="4" fill="#dde3e4"/>
+                                <rect x="112" y="282" width="196" height="8" rx="4" fill="#0090b0"/>
+
+                                <rect x="36" y="299" width="62" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="112" y="299" width="276" height="8" rx="4" fill="#dde3e4"/>
+                                <rect x="112" y="299" width="234" height="8" rx="4" fill="#0090b0"/>
+
+                                <rect x="36" y="316" width="62" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="112" y="316" width="276" height="8" rx="4" fill="#dde3e4"/>
+                                <rect x="112" y="316" width="150" height="8" rx="4" fill="#0090b0"/>
+
+                                <rect x="36" y="333" width="62" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="112" y="333" width="276" height="8" rx="4" fill="#dde3e4"/>
+                                <rect x="112" y="333" width="212" height="8" rx="4" fill="#0090b0"/>
+
+                                <rect x="36" y="350" width="62" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="112" y="350" width="276" height="8" rx="4" fill="#dde3e4"/>
+                                <rect x="112" y="350" width="124" height="8" rx="4" fill="#0090b0"/>
+
+                                <rect x="36" y="367" width="62" height="8" rx="4" fill="#eceeef"/>
+                                <rect x="112" y="367" width="276" height="8" rx="4" fill="#dde3e4"/>
+                                <rect x="112" y="367" width="178" height="8" rx="4" fill="#0090b0"/>
+
+                                <!-- Deeper panels -->
+                                <rect x="36" y="386" width="170" height="14" rx="4" fill="#e8f6fa" stroke="#9bd6e5"/>
+                                <rect x="218" y="386" width="170" height="14" rx="4" fill="#e8f6fa" stroke="#9bd6e5"/>
+
+                                <!-- Callouts -->
+                                <path d="M408 82 L440 82" stroke="#5cbdd4" stroke-width="1.5"/>
+                                <circle cx="440" cy="82" r="3" fill="#5cbdd4"/>
+                                <text x="452" y="78" font-size="13" font-weight="650" fill="#1f3a42">Your type and its name</text>
+                                <text x="452" y="96" font-size="12" fill="#5a6c6d">the nearest of six patterns</text>
+
+                                <path d="M408 167 L440 167" stroke="#5cbdd4" stroke-width="1.5"/>
+                                <circle cx="440" cy="167" r="3" fill="#5cbdd4"/>
+                                <text x="452" y="163" font-size="13" font-weight="650" fill="#1f3a42">How clearly it fits</text>
+                                <text x="452" y="181" font-size="12" fill="#5a6c6d">low means you sit between two</text>
+
+                                <path d="M408 224 L440 224" stroke="#5cbdd4" stroke-width="1.5"/>
+                                <circle cx="440" cy="224" r="3" fill="#5cbdd4"/>
+                                <text x="452" y="220" font-size="13" font-weight="650" fill="#1f3a42">A written reading</text>
+                                <text x="452" y="238" font-size="12" fill="#5a6c6d">generated from your numbers</text>
+
+                                <path d="M408 325 L440 325" stroke="#5cbdd4" stroke-width="1.5"/>
+                                <circle cx="440" cy="325" r="3" fill="#5cbdd4"/>
+                                <text x="452" y="321" font-size="13" font-weight="650" fill="#1f3a42">The six area scores</text>
+                                <text x="452" y="339" font-size="12" fill="#5a6c6d">the part that carries the detail</text>
+
+                                <path d="M408 393 L440 393" stroke="#5cbdd4" stroke-width="1.5"/>
+                                <circle cx="440" cy="393" r="3" fill="#5cbdd4"/>
+                                <text x="452" y="389" font-size="13" font-weight="650" fill="#1f3a42">Deeper panels</text>
+                                <text x="452" y="407" font-size="12" fill="#5a6c6d">bias, coherence, response quality</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <figcaption>
+                        A simplified view of the results screen. The headline loads first and the
+                        deeper panels fill in behind it, so a slow panel never holds up the rest.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. PROFILE NOT LABEL -->
+    <section class="arch-section" id="profile">
+        <div class="arch-container">
+            <div class="arch-feature">
+                <span class="arch-eyebrow">Feature three</span>
+                <h3>A profile, not just a label</h3>
+                <p class="arch-lede">
+                    The letter on your results is a summary of six numbers, and a summary always
+                    throws information away. The six numbers underneath are the part worth reading.
+                </p>
+                <p>
+                    Two people can share a letter and differ sharply in the areas that produced it.
+                    That is why the type is presented with a confidence figure rather than as a
+                    category you belong to, and why the area scores get more room on the page than the
+                    letter does.
+                </p>
+
+                <figure class="arch-figure">
+                    <div class="arch-scroll">
+                        <svg viewBox="0 0 720 250" role="img" aria-labelledby="profileTitle profileDesc">
+                            <title id="profileTitle">Six area scores summarised into one letter</title>
+                            <desc id="profileDesc">On the left, six labelled bars showing scores for the six areas. An arrow points right to a single large letter B, illustrating that the letter is a compression of the six numbers.</desc>
+
+                            <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                                <text x="16" y="30" font-size="12" font-weight="700" fill="#5a6c6d">ALL OF THIS</text>
+
+                                <text x="16" y="62" font-size="12" fill="#5a6c6d">Relationships</text>
+                                <rect x="150" y="52" width="230" height="12" rx="4" fill="#dde3e4"/>
+                                <rect x="150" y="52" width="163" height="12" rx="4" fill="#0090b0"/>
+                                <text x="392" y="62" font-size="12" font-weight="700" fill="#1f3a42">7.1</text>
+
+                                <text x="16" y="90" font-size="12" fill="#5a6c6d">Status</text>
+                                <rect x="150" y="80" width="230" height="12" rx="4" fill="#dde3e4"/>
+                                <rect x="150" y="80" width="122" height="12" rx="4" fill="#0090b0"/>
+                                <text x="392" y="90" font-size="12" font-weight="700" fill="#1f3a42">5.3</text>
+
+                                <text x="16" y="118" font-size="12" fill="#5a6c6d">Reliability</text>
+                                <rect x="150" y="108" width="230" height="12" rx="4" fill="#dde3e4"/>
+                                <rect x="150" y="108" width="198" height="12" rx="4" fill="#0090b0"/>
+                                <text x="392" y="118" font-size="12" font-weight="700" fill="#1f3a42">8.6</text>
+
+                                <text x="16" y="146" font-size="12" fill="#5a6c6d">Helping others</text>
+                                <rect x="150" y="136" width="230" height="12" rx="4" fill="#dde3e4"/>
+                                <rect x="150" y="136" width="145" height="12" rx="4" fill="#0090b0"/>
+                                <text x="392" y="146" font-size="12" font-weight="700" fill="#1f3a42">6.3</text>
+
+                                <text x="16" y="174" font-size="12" fill="#5a6c6d">Open-mindedness</text>
+                                <rect x="150" y="164" width="230" height="12" rx="4" fill="#dde3e4"/>
+                                <rect x="150" y="164" width="106" height="12" rx="4" fill="#0090b0"/>
+                                <text x="392" y="174" font-size="12" font-weight="700" fill="#1f3a42">4.6</text>
+
+                                <text x="16" y="202" font-size="12" fill="#5a6c6d">Emotional steadiness</text>
+                                <rect x="150" y="192" width="230" height="12" rx="4" fill="#dde3e4"/>
+                                <rect x="150" y="192" width="175" height="12" rx="4" fill="#0090b0"/>
+                                <text x="392" y="202" font-size="12" font-weight="700" fill="#1f3a42">7.6</text>
+
+                                <!-- Arrow -->
+                                <path d="M440 128 L492 128" stroke="#5cbdd4" stroke-width="2"/>
+                                <path d="M486 122 L494 128 L486 134" fill="none" stroke="#5cbdd4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <text x="466" y="104" text-anchor="middle" font-size="11" fill="#5a6c6d">summarised as</text>
+
+                                <!-- The letter -->
+                                <text x="588" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#5a6c6d">BECOMES THIS</text>
+                                <rect x="518" y="60" width="140" height="140" rx="12" fill="#0d5f74"/>
+                                <text x="588" y="146" text-anchor="middle" font-size="56" font-weight="800" fill="#ffffff">B</text>
+                                <text x="588" y="226" text-anchor="middle" font-size="12" fill="#5a6c6d">one letter, at 76% confidence</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <figcaption>
+                        Read left to right. The letter is convenient shorthand, but almost everything
+                        that distinguishes you from someone else with the same letter lives in the bars.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. SPEED -->
+    <section class="arch-section" id="fast">
+        <div class="arch-container">
+            <div class="arch-feature">
+                <span class="arch-eyebrow">Feature four</span>
+                <h3>Computed in one pass, then kept</h3>
+                <p class="arch-lede">
+                    Everything is worked out the moment you submit: the averages, the cross-check
+                    comparison, the adjustment, the pattern match, and the write-up. There is no queue
+                    and nothing to wait for afterwards.
+                </p>
+                <p>
+                    All of it is stored against your assessment, so the link to your results reopens
+                    the same page with the same numbers rather than recomputing and drifting. The
+                    arithmetic steps are deterministic, which means the same answers always produce
+                    the same scores.
+                </p>
+
+                <figure class="arch-figure">
+                    <div class="arch-scroll">
+                        <svg viewBox="0 0 720 170" role="img" aria-labelledby="timeTitle timeDesc">
+                            <title id="timeTitle">What happens between pressing submit and seeing results</title>
+                            <desc id="timeDesc">A timeline with four points: you submit, the answers are scored and matched, the summary is written, and the results appear on screen. A note underneath says everything is saved so the link reopens the same result.</desc>
+
+                            <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                                <path d="M56 84 L604 84" stroke="#0090b0" stroke-width="3" stroke-linecap="round"/>
+
+                                <circle cx="56" cy="84" r="8" fill="#0090b0" stroke="#ffffff" stroke-width="3"/>
+                                <text x="56" y="58" text-anchor="middle" font-size="13" font-weight="650" fill="#1f3a42">You submit</text>
+
+                                <circle cx="238" cy="84" r="8" fill="#0090b0" stroke="#ffffff" stroke-width="3"/>
+                                <text x="238" y="116" text-anchor="middle" font-size="13" font-weight="650" fill="#1f3a42">Scored and matched</text>
+                                <text x="238" y="134" text-anchor="middle" font-size="11" fill="#5a6c6d">averages, adjustment, nearest pattern</text>
+
+                                <circle cx="420" cy="84" r="8" fill="#0090b0" stroke="#ffffff" stroke-width="3"/>
+                                <text x="420" y="58" text-anchor="middle" font-size="13" font-weight="650" fill="#1f3a42">Summary written</text>
+
+                                <circle cx="604" cy="84" r="9" fill="#e0714f" stroke="#ffffff" stroke-width="3"/>
+                                <text x="604" y="116" text-anchor="middle" font-size="13" font-weight="650" fill="#e0714f">On your screen</text>
+                                <text x="604" y="134" text-anchor="middle" font-size="11" fill="#5a6c6d">headline first, panels behind it</text>
+
+                                <text x="16" y="24" font-size="12" fill="#5a6c6d">Everything below is saved, so returning to your link reopens the same result rather than recalculating it.</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <figcaption>
+                        The one step that can vary between runs is the written summary, because it is
+                        produced by a language model. The numbers do not vary.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. PRIVACY -->
+    <section class="arch-section" id="privacy">
+        <div class="arch-container">
+            <div class="arch-feature">
+                <span class="arch-eyebrow">Feature five</span>
+                <h3>It asks for almost nothing about you</h3>
+                <p class="arch-lede">
+                    There is no account, no sign-up, and no password. The assessment needs your age
+                    and your sex because both feed the scoring, and after that it only needs your
+                    answers.
+                </p>
+                <p>
+                    Your record cannot be looked up by name or email, because neither is ever
+                    collected. What identifies an assessment is the link you are given at the end.
+                </p>
+
+                <figure class="arch-figure">
+                    <div class="arch-scroll">
+                        <svg viewBox="0 0 720 290" role="img" aria-labelledby="privTitle privDesc">
+                            <title id="privTitle">What is stored against an assessment and what is never asked for</title>
+                            <desc id="privDesc">Two columns. The left lists what is stored: your age, your sex, your 35 answers, when you took it, and a technical record of the request. The right lists what is never asked for: name, email address, phone number, password or account, location, and anything from your contacts or social accounts.</desc>
+
+                            <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                                <!-- Stored -->
+                                <rect x="16" y="16" width="330" height="258" rx="10" fill="#e8f6fa" stroke="#9bd6e5"/>
+                                <text x="40" y="48" font-size="14" font-weight="700" fill="#0d5f74">What is stored</text>
+
+                                <circle cx="46" cy="82" r="4" fill="#0090b0"/>
+                                <text x="62" y="87" font-size="13" fill="#1f3a42">Your age</text>
+
+                                <circle cx="46" cy="114" r="4" fill="#0090b0"/>
+                                <text x="62" y="119" font-size="13" fill="#1f3a42">Your sex</text>
+
+                                <circle cx="46" cy="146" r="4" fill="#0090b0"/>
+                                <text x="62" y="151" font-size="13" fill="#1f3a42">Your 35 answers</text>
+
+                                <circle cx="46" cy="178" r="4" fill="#0090b0"/>
+                                <text x="62" y="183" font-size="13" fill="#1f3a42">When you took it</text>
+
+                                <circle cx="46" cy="210" r="4" fill="#0090b0"/>
+                                <text x="62" y="215" font-size="13" fill="#1f3a42">Your scores and write-up</text>
+
+                                <circle cx="46" cy="242" r="4" fill="#0090b0"/>
+                                <text x="62" y="247" font-size="13" fill="#1f3a42">A technical record of the request</text>
+
+                                <!-- Never asked -->
+                                <rect x="374" y="16" width="330" height="258" rx="10" fill="#f8f8f6" stroke="#e0e0e0"/>
+                                <text x="398" y="48" font-size="14" font-weight="700" fill="#5a6c6d">What is never asked for</text>
+
+                                <path d="M401 78 L409 86 M409 78 L401 86" stroke="#5a6c6d" stroke-width="2" stroke-linecap="round"/>
+                                <text x="420" y="87" font-size="13" fill="#5a6c6d">Your name</text>
+
+                                <path d="M401 110 L409 118 M409 110 L401 118" stroke="#5a6c6d" stroke-width="2" stroke-linecap="round"/>
+                                <text x="420" y="119" font-size="13" fill="#5a6c6d">An email address</text>
+
+                                <path d="M401 142 L409 150 M409 142 L401 150" stroke="#5a6c6d" stroke-width="2" stroke-linecap="round"/>
+                                <text x="420" y="151" font-size="13" fill="#5a6c6d">A phone number</text>
+
+                                <path d="M401 174 L409 182 M409 174 L401 182" stroke="#5a6c6d" stroke-width="2" stroke-linecap="round"/>
+                                <text x="420" y="183" font-size="13" fill="#5a6c6d">A password or account</text>
+
+                                <path d="M401 206 L409 214 M409 206 L401 214" stroke="#5a6c6d" stroke-width="2" stroke-linecap="round"/>
+                                <text x="420" y="215" font-size="13" fill="#5a6c6d">Your location</text>
+
+                                <path d="M401 238 L409 246 M409 238 L401 246" stroke="#5a6c6d" stroke-width="2" stroke-linecap="round"/>
+                                <text x="420" y="247" font-size="13" fill="#5a6c6d">Contacts or social accounts</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <figcaption>
+                        The technical record is the ordinary web-server kind: the address the request
+                        came from and which browser sent it.
+                    </figcaption>
+                </figure>
+
+                <div class="arch-callout is-caution">
+                    <p>
+                        <strong>Being straight about what this is not.</strong> Collecting little is
+                        not the same as being secure, and this is a prototype rather than a hardened
+                        product. Treat your results link as semi-public: anyone who has it can open
+                        your results. Do not put anything in this assessment you would mind a stranger
+                        reading.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. GROUNDING -->
+    <section class="arch-section" id="grounding">
+        <div class="arch-container">
+            <div class="arch-feature">
+                <span class="arch-eyebrow">Feature six</span>
+                <h3>The categories come from an argument, not a hunch</h3>
+                <p class="arch-lede">
+                    Most personality tests pick their dimensions by convention or by factor analysis of
+                    older tests. The six areas here were chosen for a specific reason: they are where
+                    honesty is most expensive, and expense is what makes a signal believable.
+                </p>
+                <p>
+                    That reasoning has a traceable lineage. It starts with fieldwork on birds, becomes
+                    a general principle about signalling, and gets applied to human self-knowledge in a
+                    book published by Oxford University Press.
+                </p>
+
+                <figure class="arch-figure">
+                    <div class="arch-scroll">
+                        <svg viewBox="0 0 880 210" role="img" aria-labelledby="lineTitle lineDesc">
+                            <title id="lineTitle">Where the method comes from</title>
+                            <desc id="lineDesc">Four connected boxes tracing the idea: Zahavi's Arabian babbler fieldwork, the handicap principle, The Elephant in the Brain by Simler and Hanson, and this assessment's thirty costly-signal statements with five cross-checks.</desc>
+
+                            <defs>
+                                <marker id="lineArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#5cbdd4"/>
+                                </marker>
+                            </defs>
+
+                            <g font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+                                <rect x="8" y="52" width="194" height="106" rx="10" fill="#ffffff" stroke="#9bd6e5" stroke-width="2"/>
+                                <text x="26" y="82" font-size="11" font-weight="700" fill="#5a6c6d">FIELDWORK</text>
+                                <text x="26" y="106" font-size="14" font-weight="650" fill="#1f3a42">Arabian babblers</text>
+                                <text x="26" y="128" font-size="12" fill="#5a6c6d">Amotz Zahavi, in the</text>
+                                <text x="26" y="144" font-size="12" fill="#5a6c6d">Negev, from the 1970s</text>
+
+                                <path d="M206 105 L228 105" stroke="#5cbdd4" stroke-width="2" marker-end="url(#lineArrow)"/>
+
+                                <rect x="234" y="52" width="194" height="106" rx="10" fill="#ffffff" stroke="#9bd6e5" stroke-width="2"/>
+                                <text x="252" y="82" font-size="11" font-weight="700" fill="#5a6c6d">PRINCIPLE</text>
+                                <text x="252" y="106" font-size="14" font-weight="650" fill="#1f3a42">The handicap principle</text>
+                                <text x="252" y="128" font-size="12" fill="#5a6c6d">a signal is believable</text>
+                                <text x="252" y="144" font-size="12" fill="#5a6c6d">in proportion to its cost</text>
+
+                                <path d="M432 105 L454 105" stroke="#5cbdd4" stroke-width="2" marker-end="url(#lineArrow)"/>
+
+                                <rect x="460" y="52" width="194" height="106" rx="10" fill="#ffffff" stroke="#9bd6e5" stroke-width="2"/>
+                                <text x="478" y="82" font-size="11" font-weight="700" fill="#5a6c6d">APPLIED TO PEOPLE</text>
+                                <text x="478" y="106" font-size="14" font-weight="650" fill="#1f3a42">The Elephant in the Brain</text>
+                                <text x="478" y="128" font-size="12" fill="#5a6c6d">Simler and Hanson,</text>
+                                <text x="478" y="144" font-size="12" fill="#5a6c6d">Oxford Univ. Press, 2018</text>
+
+                                <path d="M658 105 L680 105" stroke="#5cbdd4" stroke-width="2" marker-end="url(#lineArrow)"/>
+
+                                <rect x="686" y="52" width="186" height="106" rx="10" fill="#e8f6fa" stroke="#0d5f74" stroke-width="2"/>
+                                <text x="704" y="82" font-size="11" font-weight="700" fill="#0d5f74">THIS ASSESSMENT</text>
+                                <text x="704" y="106" font-size="14" font-weight="650" fill="#1f3a42">35 statements</text>
+                                <text x="704" y="128" font-size="12" fill="#5a6c6d">30 written to cost</text>
+                                <text x="704" y="144" font-size="12" fill="#5a6c6d">something, 5 to check</text>
+
+                                <text x="8" y="30" font-size="12" fill="#5a6c6d">Each step is public and checkable. You can read the source and decide whether the reasoning holds.</text>
+                                <text x="8" y="192" font-size="12" fill="#5a6c6d">What the lineage does not provide is validation of this particular questionnaire, which has not been tested against any outside measure.</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <figcaption>
+                        A good pedigree for an idea is not evidence that an implementation of it works.
+                        The two are worth keeping separate.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="arch-section" id="compare">
+        <div class="arch-container">
+            <span class="arch-eyebrow">Side by side</span>
+            <h2>Where this differs from an ordinary quiz</h2>
+            <p class="arch-lede">
+                None of the differences below are about being cleverer. They follow from one decision:
+                treating your answers as evidence about a person with an interest in the outcome.
+            </p>
+
+            <div class="arch-table-wrap">
+                <table class="arch-table">
+                    <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">A typical personality quiz</th>
+                            <th scope="col">This assessment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">What it does with your answers</th>
+                            <td>Takes them at face value and averages them.</td>
+                            <td>Estimates how much they were shaded, then adjusts each area by that estimate.</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">What the questions ask</th>
+                            <td>Whether you have a trait.</td>
+                            <td>What you do in the situations where having the trait is expensive.</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">What you are shown</th>
+                            <td>A label, and a paragraph about the label.</td>
+                            <td>Both score sets, the size of the correction, the label, and how well it fits.</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Where the categories come from</th>
+                            <td>Convention, or the structure of older tests.</td>
+                            <td>A published argument about why people flatter themselves, with a traceable lineage.</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">What it says about itself</th>
+                            <td>That it is accurate.</td>
+                            <td>That it is a prototype, and exactly where it stops being trustworthy.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="arch-callout">
+                <p>
+                    <strong>The honest caveat, kept in view.</strong> This is a research prototype, not
+                    a validated psychological test and not a clinical instrument. It should not inform
+                    decisions about hiring, admissions, care, or anyone's standing.
+                    <a href="architecture.html#limits" style="color: #208099; font-weight: 600;">The full limits are here</a>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="arch-cta">
+        <h2>Try it on yourself</h2>
+        <p>Thirty-five statements, roughly eight to ten minutes, no account needed.</p>
+        <div class="hero-buttons">
+            <a href="questionnaire.html" class="btn btn-primary">Start Assessment</a>
+            <a href="architecture.html" class="btn btn-secondary">See How It Works</a>
+        </div>
+    </section>
+
+    <!-- Scripts - LOAD IN ORDER -->
+    <!-- 1. Configuration MUST load first -->
+    <script src="config.js"></script>
+    <!-- 2. Common utilities -->
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[FEATURES] Page loaded');
+            initSmoothScroll();
+        });
+    </script>
+</body>
+</html>

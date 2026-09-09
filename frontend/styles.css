@@ -926,3 +926,80 @@ nav {
         gap: 4px;
     }
 }
+
+/* Comparison table — used on the features page */
+.arch-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: var(--spacing-xl) 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    background-color: var(--color-white);
+}
+
+.arch-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.arch-table th,
+.arch-table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.arch-table thead th {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-light);
+    background-color: var(--color-bg);
+}
+
+.arch-table thead th:last-child {
+    color: var(--data-teal-700);
+}
+
+.arch-table tbody th {
+    font-weight: 650;
+    color: var(--color-text);
+    width: 26%;
+}
+
+.arch-table td {
+    color: var(--color-text-light);
+    line-height: 1.6;
+}
+
+.arch-table td:last-child {
+    color: var(--color-text);
+    background-color: var(--data-teal-50);
+}
+
+.arch-table tbody tr:last-child th,
+.arch-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* A feature block: prose and its figure, stacked */
+.arch-feature + .arch-feature {
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-2xl);
+    border-top: 1px solid var(--color-border);
+}
+
+.arch-feature h3 {
+    font-size: clamp(19px, 3vw, 23px);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: var(--spacing-sm);
+}
+
+.arch-feature .arch-eyebrow {
+    margin-bottom: 2px;
+}
