@@ -27,7 +27,7 @@
             <div id="loading-state" style="text-align: center; padding: 40px;">
                 <div style="font-size: 48px; margin-bottom: 20px;"></div>
                 <h2 style="color: #208099; margin-bottom: 10px;">Loading Your Results...</h2>
-                <p style="color: #5a6c6d;">Analyzing your assessment responses...</p>
+                <p style="color: #5a6c6d;">Scoring your answers...</p>
                 <div class="spinner" style="margin: 20px auto; display: inline-block; width: 40px; height: 40px; border: 3px solid #e0e0e0; border-top-color: #208099; border-radius: 50%; animation: spin 1s linear infinite;"></div>
             </div>
 
@@ -43,15 +43,15 @@
             <div id="results-state" style="display: none;">
                 <!-- Personality Type Card -->
                 <div style="background: linear-gradient(135deg, #208099, #1a6a7f); color: white; padding: 40px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
-                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">YOUR PERSONALITY TYPE</p>
+                    <p style="font-size: 13px; letter-spacing: 0.08em; margin-bottom: 10px; color: #cbe9f1;">YOUR NEAREST PATTERN</p>
                     <h1 id="type-letter" style="font-size: 72px; font-weight: 800; margin: 10px 0;">A</h1>
                     <h2 id="type-name" style="font-size: 24px; margin: 10px 0 5px 0; font-weight: 600;">The Analytical</h2>
-                    <p id="type-description" style="font-size: 16px; opacity: 0.95; margin: 0;">Detail-oriented, logical, and systematic thinker</p>
+                    <p id="type-description" style="font-size: 15px; margin: 0; color: #e8f6fa; line-height: 1.6; max-width: 560px; margin-left: auto; margin-right: auto;"></p>
                 </div>
 
                 <!-- Confidence Score -->
-                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <h3 style="color: #1f3a42; margin-bottom: 15px; font-size: 16px;">Assessment Confidence</h3>
+                <div id="confidence-section" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color: #1f3a42; margin-bottom: 15px; font-size: 16px;">How clearly the pattern fits</h3>
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <div style="flex: 1; height: 24px; background-color: #e0e0e0; border-radius: 12px; overflow: hidden;">
                             <div 
@@ -65,66 +65,41 @@
 
                 <!-- Interpretation -->
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <h3 style="color: #1f3a42; margin-bottom: 12px;">Your Interpretation</h3>
-                    <p id="interpretation-text" style="color: #5a6c6d; line-height: 1.6;">
+                    <h3 style="color: #1f3a42; margin-bottom: 12px; text-align: left;">What this means</h3>
+                    <p id="interpretation-text" style="color: #5a6c6d; line-height: 1.7; text-align: left;">
                         Your assessment is being processed...
                     </p>
                 </div>
 
                 <!-- Domain Scores -->
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <h3 style="color: #1f3a42; margin-bottom: 15px;">Personality Dimensions</h3>
-                    <div id="domain-scores-grid">
+                    <h3 style="color: #1f3a42; margin-bottom: 15px; text-align: left;">Your five traits</h3>
+                    <div id="trait-scores-grid" style="text-align: left;">
                         <!-- Scores will be populated here -->
                     </div>
                 </div>
 
                 <!-- ADVANCED ANALYSIS SECTION -->
-                <div style="margin-top: 50px; padding-top: 30px; border-top: 3px solid #e0e0e0;">
+                <div style="margin-top: 50px; padding-top: 30px; border-top: 3px solid #e0e0e0; text-align: left;">
                     <div style="background: rgba(32, 128, 153, 0.08); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                        <h2 style="color: #134252; margin-top: 0; font-size: 20px;">🔬 Advanced Personality Analysis</h2>
-                        <p style="color: #5a6c6d; margin-bottom: 0; font-size: 14px;">Scientific assessment with corrections for self-perception bias and implicit cognition patterns</p>
+                        <h2 style="color: #134252; margin-top: 0; font-size: 20px;">The detail behind your result</h2>
+                        <p style="color: #5a6c6d; margin-bottom: 0; font-size: 14px;">The working behind the headline: what the correction did, which answer pairs triggered it, and where you sit in the reference sample</p>
                     </div>
 
                     <!-- Lambda Analysis Section -->
-                    <div id="advanced-lambda-section" style="margin-bottom: 30px;">
-                        <div style="background: rgba(230, 126, 34, 0.08); border-left: 4px solid #e67e22; padding: 16px; border-radius: 8px;">
-                            <h4 style="color: #134252; margin: 0 0 12px 0; font-weight: 600;">Self-Perception Bias Analysis</h4>
-                            <p style="color: #666; font-size: 13px; margin: 0; line-height: 1.5;">Advanced analysis assesses how much your responses reflect true behavior versus self-perception. Data loading...</p>
-                        </div>
-                    </div>
+                    <div id="advanced-correction-section" style="margin-bottom: 30px;"></div>
 
                     <!-- Domain Costs Section -->
-                    <div id="advanced-costs-section" style="margin-bottom: 30px;">
-                        <div style="background: rgba(52, 152, 219, 0.08); border-left: 4px solid #3498db; padding: 16px; border-radius: 8px;">
-                            <h4 style="color: #134252; margin: 0 0 12px 0; font-weight: 600;">Dimension-Specific Insights</h4>
-                            <p style="color: #666; font-size: 13px; margin: 0; line-height: 1.5;">Analysis of deception tendencies across different personality dimensions. Data loading...</p>
-                        </div>
-                    </div>
+                    <div id="advanced-contradictions-section" style="margin-bottom: 30px;"></div>
 
                     <!-- Elephant Module Section -->
-                    <div id="advanced-elephant-section" style="margin-bottom: 30px;">
-                        <div style="background: rgba(155, 89, 182, 0.08); border-left: 4px solid #9b59b6; padding: 16px; border-radius: 8px;">
-                            <h4 style="color: #134252; margin: 0 0 12px 0; font-weight: 600;">Implicit Cognition Patterns</h4>
-                            <p style="color: #666; font-size: 13px; margin: 0; line-height: 1.5;">Analyzes unconscious patterns and implicit beliefs revealed through your responses. Data loading...</p>
-                        </div>
-                    </div>
+                    <div id="advanced-standing-section" style="margin-bottom: 30px;"></div>
 
                     <!-- Validity Metrics Section -->
-                    <div id="advanced-validity-section" style="margin-bottom: 30px;">
-                        <div style="background: rgba(46, 204, 113, 0.08); border-left: 4px solid #2ecc71; padding: 16px; border-radius: 8px;">
-                            <h4 style="color: #134252; margin: 0 0 12px 0; font-weight: 600;">Response Quality & Validity</h4>
-                            <p style="color: #666; font-size: 13px; margin: 0; line-height: 1.5;">Measures the quality, consistency, and reliability of your responses. Data loading...</p>
-                        </div>
-                    </div>
+                    <div id="advanced-quality-section" style="margin-bottom: 30px;"></div>
 
                     <!-- Authenticity Section -->
-                    <div id="advanced-authenticity-section" style="margin-bottom: 30px;">
-                        <div style="background: rgba(26, 188, 156, 0.08); border-left: 4px solid #1abc9c; padding: 16px; border-radius: 8px;">
-                            <h4 style="color: #134252; margin: 0 0 12px 0; font-weight: 600;">Authenticity Assessment</h4>
-                            <p style="color: #666; font-size: 13px; margin: 0; line-height: 1.5;">Evaluates the authenticity and coherence of your self-presentation. Data loading...</p>
-                        </div>
-                    </div>
+                    <div id="advanced-novelty-section" style="margin-bottom: 30px;"></div>
                 </div>
 
                 <!-- Action Buttons -->
@@ -153,8 +128,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    </footer>
 
     <!-- Scripts - LOAD IN ORDER -->
     <!-- 1. Configuration MUST load first -->

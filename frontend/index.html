@@ -35,10 +35,10 @@
         <div class="hero-content">
             <h1>Discover <span class="accent">Your Personality</span> Type</h1>
             <p>
-                Thirty-five statements, six areas of life, and one unusual step in the middle: before
-                your profile is built, the assessment estimates how much your own answers were shaded
-                in your favour, then adjusts for it. You see both the original scores and the
-                corrected ones.
+                A standard Big Five questionnaire with one unusual step added. Fifty public-domain
+                statements measure the five traits. Five more ask how you are answering, and what they
+                reveal is used to estimate how far your answers were shaded in your favour. You see
+                both the original scores and the corrected ones.
             </p>
             <div class="hero-buttons">
                 <a href="questionnaire.html" class="btn btn-primary">Start Assessment Now</a>
@@ -55,23 +55,23 @@
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon"></div>
-                    <h3>AI-Powered Analysis</h3>
-                    <p>Our VAE neural network analyzes patterns beyond surface responses to uncover hidden personality dimensions.</p>
+                    <h3>Trained On Real Data</h3>
+                    <p>An autoencoder trained on a million public Big Five responses places your profile among six patterns learned from that data.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon"></div>
                     <h3>Adjusts For Flattery</h3>
-                    <p>Five cross-check statements reveal how much your answers were shaded, and every area score is corrected accordingly.</p>
+                    <p>Five cross-check statements reveal how much your answers were shaded, and every trait score is corrected accordingly.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon"></div>
                     <h3>Instant Results</h3>
-                    <p>Get comprehensive personality analysis and AI-generated interpretation in seconds.</p>
+                    <p>Scored, matched and written up in a single pass when you submit, then saved so your link reopens the same result.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon"></div>
                     <h3>Detailed Report</h3>
-                    <p>One of six types with a written reading, your six area scores, and the size of the correction applied.</p>
+                    <p>Your five trait scores before and after correction, your nearest pattern, and where you sit against a million-response reference sample.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon"></div>
@@ -81,7 +81,7 @@
                 <div class="feature-card">
                     <div class="feature-icon"></div>
                     <h3>Science-Based</h3>
-                    <p>The six areas come from a traceable argument about costly signals, running from Zahavi's fieldwork to Simler and Hanson.</p>
+                    <p>Public-domain IPIP items for the traits, and a costly-signal argument running from Zahavi to Simler and Hanson for the correction.</p>
                 </div>
             </div>
             <p style="text-align: center; margin-top: 36px;">
@@ -94,51 +94,48 @@
     <section class="arch-section" id="measures">
         <div class="arch-container">
             <span class="arch-eyebrow">What it measures</span>
-            <h2>Six areas, chosen for what honesty costs</h2>
+            <h2>The five traits, measured the standard way</h2>
             <p class="arch-lede">
-                Each area gathers five statements and averages them into a score out of ten. They are
-                the corners of life where the pull toward a better answer is strongest, which is
-                exactly why they are worth asking about carefully.
+                The trait half of the questionnaire is the IPIP Big-Five Factor Markers: fifty
+                public-domain statements, ten per trait, the same instrument used to collect the
+                million-response dataset this project's model is trained on. Nothing bespoke, so
+                your scores mean the same thing they mean everywhere else.
             </p>
 
             <div class="arch-grid">
                 <div class="arch-card">
-                    <span class="arch-card-key">R</span>
-                    <h3>Relationships</h3>
-                    <p>Attention, commitment, and what you notice when you are already committed.</p>
-                </div>
-                <div class="arch-card">
-                    <span class="arch-card-key">S</span>
-                    <h3>Status</h3>
-                    <p>How accurately you judge your own ability, and who you adjust your story for.</p>
+                    <span class="arch-card-key">O</span>
+                    <h3>Openness</h3>
+                    <p>Curiosity, imagination, and appetite for the unfamiliar.</p>
                 </div>
                 <div class="arch-card">
                     <span class="arch-card-key">C</span>
-                    <h3>Reliability</h3>
-                    <p>Whether effort survives the absence of a deadline, a boss, or any credit.</p>
-                </div>
-                <div class="arch-card">
-                    <span class="arch-card-key">A</span>
-                    <h3>Helping others</h3>
-                    <p>Public help against private help, and what you do inside a group that cannot see you.</p>
-                </div>
-                <div class="arch-card">
-                    <span class="arch-card-key">O</span>
-                    <h3>Open-mindedness</h3>
-                    <p>Whether you can say you don't know, and your first instinct when challenged.</p>
+                    <h3>Conscientiousness</h3>
+                    <p>Order, follow-through, and attention to detail.</p>
                 </div>
                 <div class="arch-card">
                     <span class="arch-card-key">E</span>
-                    <h3>Emotional steadiness</h3>
-                    <p>Composure as a real state against composure as a performance held in place.</p>
+                    <h3>Extraversion</h3>
+                    <p>Sociability, assertiveness, and energy around people.</p>
+                </div>
+                <div class="arch-card">
+                    <span class="arch-card-key">A</span>
+                    <h3>Agreeableness</h3>
+                    <p>Warmth, empathy, and concern for other people.</p>
+                </div>
+                <div class="arch-card">
+                    <span class="arch-card-key">N</span>
+                    <h3>Neuroticism</h3>
+                    <p>Proneness to worry, tension, and shifting moods.</p>
                 </div>
             </div>
 
             <p style="margin-top: 28px;">
-                Alongside these thirty statements sit five more that are never scored as traits. They
-                ask about the answering itself: whether you find it easy to admit a mistake, whether
-                your behaviour changes between friends and colleagues, whether your own motives are
-                ever unclear to you. Those five are what make the correction possible.
+                Five more statements follow, and none of them is scored as a trait. They ask about the
+                answering itself: whether you find it easy to admit a mistake, whether your behaviour
+                changes between friends and colleagues, whether your own motives are ever unclear to
+                you, whether you can recall acting selfishly. Those five are what make the correction
+                possible, and they are the part of this test you will not find elsewhere.
             </p>
         </div>
     </section>
@@ -151,22 +148,22 @@
                 <div class="step">
                     <div class="step-number">1</div>
                     <h3>Start</h3>
-                    <p>Complete 35 carefully designed questions on a Likert scale, taking about 8-10 minutes.</p>
+                    <p>Answer 55 statements on a five-point scale, taking about eight minutes.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
                     <h3>Analyze</h3>
-                    <p>Our machine learning model analyzes your responses across 6 key personality dimensions.</p>
+                    <p>Fifty of them are scored into the five Big Five traits, using standard public-domain keying.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <h3>Detect</h3>
-                    <p>Five cross-check statements reveal how much your answers were shaded, and each area score is corrected for it.</p>
+                    <p>The other five reveal how much your answers were shaded, and each trait score is corrected for it.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">4</div>
                     <h3>Discover</h3>
-                    <p>Receive your personality type (A-F) with AI-generated insights and recommendations.</p>
+                    <p>See your nearest of six learned patterns, both sets of trait scores, and a written reading.</p>
                 </div>
             </div>
             <p style="text-align: center; margin-top: 36px;">
@@ -187,17 +184,17 @@
 
             <div class="arch-grid">
                 <div class="arch-card">
-                    <h3>Your type, A through F</h3>
+                    <h3>Your nearest pattern</h3>
                     <p>
-                        The nearest of six reference patterns, with a confidence figure showing how
-                        clearly you sit closer to that one than to the next.
+                        One of six patterns found in the training data rather than invented in advance,
+                        with a figure showing how clearly you sit closer to it than to the next.
                     </p>
                 </div>
                 <div class="arch-card">
-                    <h3>Six area scores</h3>
+                    <h3>Five trait scores, twice</h3>
                     <p>
-                        Your adjusted score in each area, out of ten. These carry far more information
-                        than the single letter above them.
+                        Each trait out of 100, as you answered and after correction, with your standing
+                        against the reference sample beside it.
                     </p>
                 </div>
                 <div class="arch-card">

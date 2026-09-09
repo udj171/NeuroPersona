@@ -5,30 +5,35 @@
 from flask import Blueprint, request, jsonify, current_app
 from sqlalchemy import desc, func
 import logging
-from datetime import datetime, timezone
-import uuid
+import time
 import traceback
-from models import db, User, Assessment, Result, VAEOutput, PersonalityClassification, GeminiInterpretation
+from datetime import datetime, timezone
 
+from models import (db, User, Assessment, Result, ModelOutput,
+                    PersonalityClassification, Interpretation)
+from ocean_items import (ALL_ITEM_IDS, N_ITEMS, SCALE_MAX, SCALE_MIN,
+                         TRAIT_ORDER, TRAITS, to_frontend_payload)
 
-# These will be injected by app.py
 api_bp = Blueprint('api', __name__)
 logger = logging.getLogger(__name__)
 
 scoring_engine = None
-vae_engine = None
-gemini_client = None
+model_engine = None
+narrative_generator = None
 
-def set_engines(scoring, vae, gemini):
+
+def set_engines(scoring, model, narrative):
     """Set engine references from app.py"""
-    global scoring_engine, vae_engine, gemini_client
+    global scoring_engine, model_engine, narrative_generator
     scoring_engine = scoring
-    vae_engine = vae
-    gemini_client = gemini
-    logger.info("[API_ROUTES] Engines configured:")
+    model_engine = model
+    narrative_generator = narrative
+    logger.info('[API_ROUTES] Engines configured:')
     logger.info(f"  - ScoringEngine: {'Ready' if scoring else 'None'}")
-    logger.info(f"  - VAEInferenceEngine: {'Ready' if vae else 'None'}")
-    logger.info(f"  - GeminiClient: {'Ready' if gemini else 'None'}")
+    logger.info(f"  - ModelInferenceEngine: {'Ready' if model else 'None'}"
+                + (f" (trained={model.is_trained})" if model else ''))
+    logger.info(f"  - NarrativeGenerator: {'Ready' if narrative else 'None'}"
+                + (f" (backend={narrative.active_backend})" if narrative else ''))
 
 
 @api_bp.before_request
@@ -56,6 +61,24 @@ def health_check():
             'status': 'unhealthy',
             'error': str(e),
             'timestamp': datetime.now(timezone.utc).isoformat(),
+        }), 500
+
+
+@api_bp.route('/questionnaire', methods=['GET'])
+def get_questionnaire():
+    """The item bank the questionnaire page renders.
+
+    Served from the same module the scorer reads, so the wording, the item
+    ids and the answer scale cannot drift apart between the two.
+    """
+    try:
+        return jsonify({'status': 'success', **to_frontend_payload()}), 200
+    except Exception as e:
+        logger.error(f'[QUESTIONNAIRE] Error: {str(e)}')
+        return jsonify({
+            'status': 'error',
+            'message': 'Could not load the questionnaire',
+            'code': 'QUESTIONNAIRE_UNAVAILABLE'
         }), 500
 
 
@@ -204,62 +227,37 @@ def start_assessment():
 
 @api_bp.route('/submit-assessment', methods=['POST'])
 def submit_assessment():
-    """Submit assessment responses"""
+    """Score one completed questionnaire and store every intermediate result."""
     try:
         data = request.get_json(force=True, silent=True)
-        
         if data is None:
             return jsonify({
                 'status': 'error',
                 'message': 'Request body must be JSON',
                 'code': 'INVALID_JSON'
             }), 400
-        
+
         assessment_id = data.get('assessment_id')
         responses = data.get('responses')
-        
-        if not assessment_id or not responses:
+
+        if not assessment_id or responses is None:
             return jsonify({
                 'status': 'error',
                 'message': 'Missing required fields: assessment_id, responses',
                 'code': 'MISSING_FIELDS'
             }), 400
-        
+
         if not isinstance(responses, dict):
             return jsonify({
                 'status': 'error',
-                'message': 'Responses must be an object/dict',
+                'message': 'Responses must be an object keyed by item id',
                 'code': 'INVALID_RESPONSES_FORMAT'
             }), 400
-        
-        if len(responses) < 30:
-            return jsonify({
-                'status': 'error',
-                'message': 'Must provide at least 30 responses',
-                'code': 'INSUFFICIENT_RESPONSES'
-            }), 400
-        
-        # Validate response values
-        response_list = []
-        for key in sorted(responses.keys()):
-            val = responses[key]
-            if not isinstance(val, (int, float)):
-                return jsonify({
-                    'status': 'error',
-                    'message': f'Response {key} must be a number',
-                    'code': 'INVALID_RESPONSE_TYPE'
-                }), 400
-            
-            val = int(val)
-            if val < 1 or val > 10:
-                return jsonify({
-                    'status': 'error',
-                    'message': f'Response {key} must be between 1 and 10',
-                    'code': 'RESPONSE_OUT_OF_RANGE'
-                }), 400
-            response_list.append(val)
-        
-        # Get assessment
+
+        clean, error = _validate_responses(responses)
+        if error:
+            return jsonify(error), 400
+
         assessment = Assessment.query.get(assessment_id)
         if not assessment:
             return jsonify({
@@ -267,99 +265,95 @@ def submit_assessment():
                 'message': 'Assessment not found',
                 'code': 'ASSESSMENT_NOT_FOUND'
             }), 404
-        
-        # Save responses
-        assessment.responses_json = responses
+
+        assessment.responses_json = clean
         assessment.completed_at = datetime.now(timezone.utc)
         db.session.commit()
-        
         logger.info(f'[SUBMIT_ASSESSMENT] Assessment {assessment_id} responses saved')
-        
+
+        if not scoring_engine:
+            logger.error('[SUBMIT_ASSESSMENT] Scoring engine not initialized')
+            return jsonify({
+                'status': 'error',
+                'message': 'Scoring engine not available',
+                'code': 'ENGINE_NOT_READY'
+            }), 503
+
         try:
-            # Process with scoring engine
-            if not scoring_engine:
-                logger.error('[SUBMIT_ASSESSMENT] Scoring engine not initialized')
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Scoring engine not available',
-                    'code': 'ENGINE_NOT_READY'
-                }), 503
-            
-            result_data = scoring_engine.process_assessment(response_list, assessment.user.age)
-            
-            result = Result(
+            scored = scoring_engine.process_assessment(clean, assessment.user.age)
+
+            db.session.add(Result(
                 assessment_id=assessment.id,
-                raw_domain_scores=result_data['raw_domain_scores'],
-                deception_susceptibility=result_data['deception_susceptibility'],
-                corrected_domain_scores=result_data['corrected_domain_scores'],
-                domain_biases=result_data['domain_biases'],
-                validity_scores=result_data.get('validity_scores'),
-                vae_input_vector=result_data['vae_input'],
-            )
-            db.session.add(result)
+                raw_trait_scores=scored['raw_trait_scores'],
+                corrected_trait_scores=scored['corrected_trait_scores'],
+                trait_biases=scored['trait_biases'],
+                lambda_score=scored['lambda'],
+                lambda_band=scored['lambda_band'],
+                lambda_analysis=scored['lambda_analysis'],
+                validity_responses=scored['validity_responses'],
+                model_input_vector=scored['model_input'],
+            ))
             db.session.commit()
-            
-            logger.info(f'[SUBMIT_ASSESSMENT] Scoring completed for assessment {assessment_id}')
-            
-            # Process with VAE engine
-            if vae_engine:
-                vae_result = vae_engine.process_assessment(result_data['vae_input'])
-                
-                vae_output = VAEOutput(
+            logger.info(f'[SUBMIT_ASSESSMENT] Scoring completed for {assessment_id}')
+
+            # Model inference. An untrained engine still answers, and says so.
+            inference = model_engine.process(
+                scored['model_input'], scored['raw_trait_scores'])
+
+            db.session.add(ModelOutput(
+                assessment_id=assessment.id,
+                weights_loaded=inference['weights_loaded'],
+                model_version=inference['model_version'],
+                latent_representation=inference['latent'],
+                reconstruction_error=inference['reconstruction_error'],
+                latent_distance_from_mean=inference['latent_distance_from_mean'],
+                novelty_score=inference['novelty_score'],
+                percentiles=inference['percentiles'],
+            ))
+            db.session.add(PersonalityClassification(
+                assessment_id=assessment.id,
+                type_index=inference['type_index'],
+                type_name=inference['type_name'],
+                confidence_score=inference['confidence'],
+                runner_up_name=inference['runner_up_name'],
+                type_traits=inference['type_traits'],
+                type_probabilities=inference['type_probabilities'],
+            ))
+            db.session.commit()
+            logger.info(f'[SUBMIT_ASSESSMENT] Inference completed for {assessment_id} '
+                        f"(trained={inference['weights_loaded']})")
+
+            if narrative_generator:
+                started = time.perf_counter()
+                written = narrative_generator.generate({
+                    'type_name': inference['type_name'],
+                    'confidence': inference['confidence'],
+                    'weights_loaded': inference['weights_loaded'],
+                    'percentiles': inference['percentiles'],
+                    'lambda': scored['lambda'],
+                    'lambda_band': scored['lambda_band'],
+                    'raw_trait_scores': scored['raw_trait_scores'],
+                    'corrected_trait_scores': scored['corrected_trait_scores'],
+                })
+                db.session.add(Interpretation(
                     assessment_id=assessment.id,
-                    latent_representation=vae_result['latent_representation'],
-                    reconstruction_error=vae_result['reconstruction_error'],
-                    latent_distance_from_mean=vae_result['latent_distance_from_mean'],
-                    local_density=vae_result['local_density'],
-                    novelty_score=vae_result['novelty_score'],
-                )
-                db.session.add(vae_output)
-                
-                personality_classification = PersonalityClassification(
-                    assessment_id=assessment.id,
-                    personality_type=vae_result['personality_type'],
-                    confidence_score=vae_result['personality_details']['confidence'],
-                    personality_details=vae_result['personality_details'],
-                    type_description=vae_result['type_description']['description'],
-                    key_traits=vae_result['type_description']['traits'],
-                )
-                db.session.add(personality_classification)
+                    interpretation_text=written['interpretation'],
+                    backend=written['backend'],
+                    model_name=written['model'],
+                    generation_time_ms=int((time.perf_counter() - started) * 1000),
+                ))
                 db.session.commit()
-                
-                logger.info(f'[SUBMIT_ASSESSMENT] VAE processing completed for assessment {assessment_id}')
-                
-                # Process with Gemini if available
-                if gemini_client:
-                    assessment_context = {
-                        'assessment_id': assessment.id,
-                        'personality_type': vae_result['personality_type'],
-                        'confidence_score': vae_result['personality_details']['confidence'],
-                        'deception_susceptibility': result_data['deception_susceptibility'],
-                        'corrected_domain_scores': result_data['corrected_domain_scores'],
-                        'novelty_score': vae_result['novelty_score'],
-                    }
-                    
-                    interpretation_result = gemini_client.process_assessment_with_interpretation(assessment_context)
-                    
-                    gemini_interpretation = GeminiInterpretation(
-                        assessment_id=assessment.id,
-                        prompt_text='Assessment interpretation request',
-                        interpretation_text=interpretation_result['interpretation'],
-                        api_status='success' if interpretation_result['api_success'] else 'fallback',
-                    )
-                    db.session.add(gemini_interpretation)
-                    db.session.commit()
-                    
-                    logger.info(f'[SUBMIT_ASSESSMENT] Gemini interpretation completed for assessment {assessment_id}')
-            
+                logger.info(f"[SUBMIT_ASSESSMENT] Interpretation written for {assessment_id} "
+                            f"({written['backend']})")
+
             return jsonify({
                 'status': 'success',
                 'assessment_id': assessment.id,
                 'message': 'Assessment submitted and processed',
             }), 202
-        
+
         except Exception as e:
-            logger.error(f'[SUBMIT_ASSESSMENT] Error processing assessment data: {str(e)}')
+            logger.error(f'[SUBMIT_ASSESSMENT] Error processing assessment: {str(e)}')
             logger.error(traceback.format_exc())
             db.session.rollback()
             return jsonify({
@@ -368,21 +362,61 @@ def submit_assessment():
                 'code': 'PROCESSING_ERROR',
                 'error': str(e) if current_app.debug else None,
             }), 500
-    
+
     except Exception as e:
         logger.error(f'[SUBMIT_ASSESSMENT] Unexpected error: {str(e)}')
         logger.error(traceback.format_exc())
         try:
             db.session.rollback()
-        except:
+        except Exception:
             pass
-        
         return jsonify({
             'status': 'error',
             'message': 'Internal server error',
             'code': 'INTERNAL_ERROR',
             'error': str(e) if current_app.debug else None,
         }), 500
+
+
+def _validate_responses(responses):
+    """Require every item id exactly once, each an integer on the answer scale."""
+    missing = [i for i in ALL_ITEM_IDS if i not in responses]
+    if missing:
+        return None, {
+            'status': 'error',
+            'message': f'Missing {len(missing)} of {N_ITEMS} responses',
+            'code': 'INCOMPLETE_RESPONSES',
+            'missing': missing[:10],
+        }
+
+    unknown = [k for k in responses if k not in set(ALL_ITEM_IDS)]
+    if unknown:
+        return None, {
+            'status': 'error',
+            'message': 'Unrecognised item ids in responses',
+            'code': 'UNKNOWN_ITEM_IDS',
+            'unknown': unknown[:10],
+        }
+
+    clean = {}
+    for item_id in ALL_ITEM_IDS:
+        value = responses[item_id]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None, {
+                'status': 'error',
+                'message': f'Response {item_id} must be a number',
+                'code': 'INVALID_RESPONSE_TYPE',
+            }
+        value = int(value)
+        if value < SCALE_MIN or value > SCALE_MAX:
+            return None, {
+                'status': 'error',
+                'message': f'Response {item_id} must be between {SCALE_MIN} and {SCALE_MAX}',
+                'code': 'RESPONSE_OUT_OF_RANGE',
+            }
+        clean[item_id] = value
+
+    return clean, None
 
 
 @api_bp.route('/results/<int:assessment_id>', methods=['GET'])
@@ -395,7 +429,7 @@ def get_results(assessment_id):
                 'message': 'Assessment not found',
                 'code': 'ASSESSMENT_NOT_FOUND'
             }), 404
-        
+
         result = assessment.results
         if not result:
             return jsonify({
@@ -403,26 +437,27 @@ def get_results(assessment_id):
                 'message': 'Results not yet available',
                 'code': 'RESULTS_NOT_AVAILABLE'
             }), 404
-        
-        vae_output = assessment.vae_outputs
+
+        model_output = assessment.model_outputs
         personality = assessment.personality_classifications
-        gemini = assessment.gemini_interpretations
-        
-        response_data = {
+        interpretation = assessment.interpretations
+
+        return jsonify({
             'status': 'success',
             'assessment_id': assessment.id,
-            'user': {
-                'age': assessment.user.age,
-                'sex': assessment.user.sex,
+            'user': {'age': assessment.user.age, 'sex': assessment.user.sex},
+            'traits': {
+                'order': TRAIT_ORDER,
+                'names': {k: v['name'] for k, v in TRAITS.items()},
+                'blurbs': {k: v['blurb'] for k, v in TRAITS.items()},
             },
             'results': result.to_dict(),
-            'vae': vae_output.to_dict() if vae_output else None,
+            'model': model_output.to_dict() if model_output else None,
             'personality': personality.to_dict() if personality else None,
-            'interpretation': gemini.interpretation_text if gemini else None,
-        }
-        
-        return jsonify(response_data), 200
-    
+            'interpretation': interpretation.interpretation_text if interpretation else None,
+            'interpretation_backend': interpretation.backend if interpretation else None,
+        }), 200
+
     except Exception as e:
         logger.error(f'[GET_RESULTS] Error: {str(e)}')
         logger.error(traceback.format_exc())
@@ -504,15 +539,13 @@ def get_statistics():
         completed_assessments = Assessment.query.filter_by(is_valid=True).count()
         
         personality_distribution = db.session.query(
-            PersonalityClassification.personality_type,
+            PersonalityClassification.type_name,
             func.count(PersonalityClassification.id)
-        ).group_by(PersonalityClassification.personality_type).all()
-        
-        personality_stats = {
-            ptype: count for ptype, count in personality_distribution
-        }
-        
-        avg_deception = db.session.query(func.avg(Result.deception_susceptibility)).scalar()
+        ).group_by(PersonalityClassification.type_name).all()
+
+        personality_stats = {name: count for name, count in personality_distribution}
+
+        avg_lambda = db.session.query(func.avg(Result.lambda_score)).scalar()
         
         return jsonify({
             'status': 'success',
@@ -522,7 +555,7 @@ def get_statistics():
                 'completed_assessments': completed_assessments,
                 'completion_rate': completed_assessments / total_assessments if total_assessments > 0 else 0,
                 'personality_distribution': personality_stats,
-                'average_deception_susceptibility': float(avg_deception) if avg_deception else None,
+                'average_lambda': float(avg_lambda) if avg_lambda else None,
             },
         }), 200
     

@@ -71,13 +71,14 @@ logger.info("[CORS] ✓ CORS enabled for all /api/* routes")
 # ============================================================================
 
 scoring_engine = None
-vae_engine = None
-gemini_client = None
+model_engine = None
+narrative_generator = None
 
 def initialize_engines():
-    """Initialize AI engines at startup"""
-    global scoring_engine, vae_engine, gemini_client
-    
+    """Build the three engines at startup. Each one is independent: a failure
+    leaves that engine as None and the app still serves."""
+    global scoring_engine, model_engine, narrative_generator
+
     try:
         logger.info("[ENGINES] Initializing scoring engine...")
         from scoring_engine import ScoringEngine
@@ -86,30 +87,30 @@ def initialize_engines():
     except Exception as e:
         logger.error(f"[ENGINES] ✗ Failed to initialize scoring engine: {str(e)}")
         scoring_engine = None
-    
+
     try:
-        logger.info("[ENGINES] Initializing VAE inference engine...")
-        from vae_inference import VAEInferenceEngine
-        vae_engine = VAEInferenceEngine()
-        logger.info("[ENGINES] ✓ VAE engine initialized")
-    except Exception as e:
-        logger.error(f"[ENGINES] ✗ Failed to initialize VAE engine: {str(e)}")
-        vae_engine = None
-    
-    try:
-        logger.info("[ENGINES] Initializing Gemini client...")
-        from gemini_client import GeminiClient
-        gemini_api_key = os.getenv('GEMINI_API_KEY')
-        if gemini_api_key:
-            gemini_client = GeminiClient(api_key=gemini_api_key)
-            logger.info("[ENGINES] ✓ Gemini client initialized with API key")
+        logger.info("[ENGINES] Initializing model inference engine...")
+        from model_inference import ModelInferenceEngine
+        model_engine = ModelInferenceEngine()
+        if model_engine.is_trained:
+            logger.info("[ENGINES] ✓ Model engine initialized with trained weights")
         else:
-            logger.warning("[ENGINES] ⚠ No GEMINI_API_KEY environment variable found. Gemini will use fallback mode.")
-            gemini_client = GeminiClient(api_key=None)
-            logger.info("[ENGINES] ✓ Gemini client initialized in fallback mode")
+            logger.warning("[ENGINES] ⚠ Model engine initialized WITHOUT weights. "
+                           "Results will be scored but no type will be claimed. "
+                           "See training/ to produce model_weights/ocean_vae.npz")
     except Exception as e:
-        logger.error(f"[ENGINES] ✗ Failed to initialize Gemini client: {str(e)}")
-        gemini_client = None
+        logger.error(f"[ENGINES] ✗ Failed to initialize model engine: {str(e)}")
+        model_engine = None
+
+    try:
+        logger.info("[ENGINES] Initializing narrative generator...")
+        from narrative import NarrativeGenerator
+        narrative_generator = NarrativeGenerator()
+        logger.info(f"[ENGINES] ✓ Narrative generator initialized "
+                    f"(backend: {narrative_generator.active_backend})")
+    except Exception as e:
+        logger.error(f"[ENGINES] ✗ Failed to initialize narrative generator: {str(e)}")
+        narrative_generator = None
 
 # ============================================================================
 # IMPORT AND REGISTER BLUEPRINT (MUST BE AFTER app CREATION)
@@ -297,6 +298,7 @@ def frontend_redirect(path=None):
         'message': 'Visit: https://www.predictmypersonality.com',
         'api_endpoints': [
             'GET /api/health',
+            'GET /api/questionnaire',
             'POST /api/start-assessment',
             'POST /api/submit-assessment',
             'GET /api/results/<assessment_id>'
@@ -336,7 +338,7 @@ with app.app_context():
 # Initialize engines after app context
 with app.app_context():
     initialize_engines()
-    set_engines(scoring_engine, vae_engine, gemini_client)
+    set_engines(scoring_engine, model_engine, narrative_generator)
     logger.info("[ENGINES] ✓ All engines passed to API routes")
 
 # ============================================================================
@@ -350,10 +352,13 @@ logger.info("[APP] ✓ All routes served via blueprint")
 logger.info("[APP] ✓ Frontend: Served from Vercel (https://www.predictmypersonality.com)")
 logger.info("[APP] ✓ Engine Status:")
 logger.info(f"     - Scoring Engine: {'✓ Ready' if scoring_engine else '✗ Failed'}")
-logger.info(f"     - VAE Engine: {'✓ Ready' if vae_engine else '✗ Failed'}")
-logger.info(f"     - Gemini Client: {'✓ Ready' if gemini_client else '✗ Failed'}")
+logger.info(f"     - Model Engine: {'✓ Ready' if model_engine else '✗ Failed'}"
+            + (f" (trained: {model_engine.is_trained})" if model_engine else ''))
+logger.info(f"     - Narrative: {'✓ Ready' if narrative_generator else '✗ Failed'}"
+            + (f" (backend: {narrative_generator.active_backend})" if narrative_generator else ''))
 logger.info("[APP] ✓ API endpoints ready:")
 logger.info("     - GET /api/health")
+logger.info("     - GET /api/questionnaire")
 logger.info("     - POST /api/start-assessment")
 logger.info("     - POST /api/submit-assessment")
 logger.info("     - GET /api/results/<assessment_id>")

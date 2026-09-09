@@ -1,10 +1,17 @@
 # NeuroPersona
 
-A personality assessment that assumes you are not a reliable narrator of your own motives, and tries to measure the gap.
+A Big Five personality assessment that assumes you are not a reliable narrator of
+your own motives, and tries to measure the gap.
 
-NeuroPersona is a 35-item questionnaire with a Flask API behind it. It scores six personality domains, estimates how much the respondent's self-report is distorted by self-flattery, subtracts that distortion, and runs the corrected profile through a latent-variable model to assign one of six personality types. A Gemini call turns the numbers into prose.
+Fifty public-domain IPIP items score the five traits the ordinary way. Five more
+ask how you are answering, and what they reveal is used to estimate how far your
+answers were shaded in your favour. Both sets of scores are shown. A small
+autoencoder, trained on just over a million public responses to the same fifty
+items, places your profile among six patterns found in that data. The written
+reading is generated on the same server, with no external model API involved.
 
-The whole design rests on one idea borrowed from a book.
+The trait half is conventional and the correction is not. Keeping them separable,
+and showing both numbers, is the point.
 
 ---
 
@@ -28,96 +35,108 @@ NeuroPersona treats that gap as something to instrument.
 
 | Idea from the book | How it appears in this repo |
 | --- | --- |
-| The press secretary produces a polished self-account | The 30 core items ask about behaviour under conditions where nobody is watching, where credit is anonymous, where the flattering answer and the true answer diverge |
-| Self-deception leaks under cross-examination | Five validity items (`V31`–`V35`) ask directly about admitting mistakes, real humility, cross-context consistency, opacity of one's own motives, and remembered selfishness |
-| The gap between the account and the behaviour is measurable | **Lambda (λ)**, a 0–1 deception-susceptibility score derived from contradictions between domain scores and validity items |
-| Costly signals are honest signals | **Domain cost functions**: each domain carries an `honesty_barrier` weight, so honesty about mating and status is priced higher than honesty about openness |
-| The elephant is the part of cognition you cannot introspect | The **Elephant Module**, which weights each domain's credibility by inferred implicit bias rather than by the stated score |
-| A self-account can be coherent and still be a performance | **Authenticity index** = `(1 − λ) × coherence` |
+| The press secretary produces a polished self-account | Five cross-check items (`V1`–`V5`) ask about admitting mistakes, real humility, cross-context consistency, opacity of one's own motives, and remembered selfishness |
+| Self-deception leaks under cross-examination | The gap between the three claims and the two concessions is the largest single term in λ |
+| The gap is measurable | **Lambda (λ)**, 0–1, from that claim gap, four named contradictions between traits and cross-checks, and response-style flags |
+| Costly signals are honest signals | Per-trait desirability weights: agreeableness and conscientiousness are corrected hardest, because they are the ones worth inflating |
+| The elephant runs in the direction that flatters | Neuroticism is corrected **upward**, since it is the trait people play down rather than talk up |
 
 The landing page essay in `frontend/index.html` retells the babbler story as the project's thesis statement. Nothing in the code cites the book directly; the mapping above is the reading the implementation encodes.
 
-The internal name for this layer is **EFOPA** — Enhanced Framework for Personality Observation and Assessment. It appears throughout the older design documents and in backend module names. The user-facing UI deliberately avoids the term and says "advanced analysis" instead.
+Note what the book does **not** touch: the fifty trait items. Those are the standard
+IPIP markers, chosen because they are what the training dataset used, and they carry
+no costly-signal reasoning at all. The argument lives entirely in the five
+cross-checks and the correction built on them.
+
+The internal name **EFOPA** is retired. It survives only in the filename of
+`EFOPA_ARCHITECTURE.md`, kept so existing links resolve.
 
 ---
 
 ## What the system actually does
 
 ```
-demographics  ──▶  35 questions  ──▶  scoring  ──▶  latent model  ──▶  interpretation
-  age, sex          0–10 scale       λ + bias        6 types          Gemini prose
-                                     correction
+demographics  ──▶  55 items  ──▶  scoring  ──▶  trained model  ──▶  interpretation
+  age, sex         1-5 scale     λ + per-trait    6 learned         local, no API
+                                 correction       patterns
 ```
 
 1. **Start.** The browser posts age and sex to `POST /api/start-assessment` and receives an integer `assessment_id`.
-2. **Answer.** The respondent rates 35 statements on a 0–10 scale: 30 core items across six domains, plus five validity items.
+2. **Answer.** `GET /api/questionnaire` serves the item bank; the respondent rates 55 statements from 1 to 5.
 3. **Score.** `POST /api/submit-assessment` runs `ScoringEngine.process_assessment`:
-   - mean each domain's five items into a raw score (`R`, `S`, `C`, `A`, `O`, `E`);
-   - compute λ from the divergence between validity-item responses and domain responses;
-   - compute a per-domain bias from λ, the domain's z-score, and validity-item variability;
-   - subtract bias from raw to get corrected scores, clamped to 0–10;
-   - assemble a 9-dimensional vector (six corrected scores, λ, response standard deviation, an age term).
-4. **Classify.** `VAEInferenceEngine` encodes that vector into a 16-dimensional latent space, measures reconstruction error, distance from the latent mean, and local density, derives a novelty score, and assigns the nearest of six reference types (`A`–`F`).
-5. **Interpret.** `GeminiClient` receives type, confidence, λ, corrected scores, and novelty, and returns a written interpretation. It falls back to templated text when no API key is present.
-6. **Display.** `results.html` fetches `GET /api/results/<id>` and renders the type, confidence, interpretation, and domain bars. `advanced-analysis.js` then derives the bias, implicit-cognition, quality, and authenticity panels client-side from the same payload.
+   - reverse-key the 22 backward items, average each trait's ten, rescale to 0–100;
+   - compute λ from the claim/concession gap in the cross-checks, four named contradictions, and response-style flags;
+   - shift each trait by λ × its standout z-score × a per-trait desirability weight, capped at 18 points. Neuroticism moves up rather than down.
+4. **Infer.** `ModelInferenceEngine` standardises the 50 raw responses, runs a numpy forward pass through the trained encoder, and picks the nearest of six k-means centroids. It also returns reconstruction error, novelty, and per-trait percentiles against the reference sample.
+5. **Write up.** `NarrativeGenerator` composes the reading locally.
+6. **Display.** `results.html` renders the type, both score sets, and the panels behind them.
 
-### The six domains
+### The five traits
 
-| Key | Domain | Items | What the items probe |
+| Key | Trait | Items | Reverse-keyed |
 | --- | --- | --- | --- |
-| `R` | Relationships | R1–R5 | Mating effort, honesty in courtship, attention to alternatives |
-| `S` | Status | S6–S10 | Self-assessment accuracy, audience-dependent self-promotion |
-| `C` | Reliability / Conscientiousness | C11–C15 | Effort when unobserved, credit-blind productivity |
-| `A` | Agreeableness | A16–A20 | Public versus private helping, free-riding, private guilt |
-| `O` | Openness | O21–O25 | Admitting ignorance, motivated reasoning, credit attribution |
-| `E` | Emotional stability | E26–E30 | Composure as performance, accuracy of self-prediction |
+| `O` | Openness | `OPN1`–`OPN10` | 2, 4, 6 |
+| `C` | Conscientiousness | `CSN1`–`CSN10` | 2, 4, 6, 8 |
+| `E` | Extraversion | `EXT1`–`EXT10` | 2, 4, 6, 8, 10 |
+| `A` | Agreeableness | `AGR1`–`AGR10` | 1, 3, 5, 7 |
+| `N` | Neuroticism | `EST1`–`EST10` | 2, 4 |
 
-Every core item is written so that the socially attractive answer and the accurate answer can come apart. That is the point.
+The item codes are the training dataset's column names. Renaming them would
+transpose the model's inputs, so the loader refuses a weight file whose stored
+item order does not match.
+
+### The training data
+
+**Open-Source Psychometrics Project, "Big Five Personality Test"**: 1,015,342
+responses to the same 50 items, 1–5 scale, public domain.
+[Kaggle](https://www.kaggle.com/datasets/tunguz/big-five-personality-test) ·
+[original archive](https://openpsychometrics.org/_rawdata/). See `training/README.md`.
 
 ### The six types
 
-`A` Analytical Leader, `B` Dynamic Innovator, `C` Balanced Pragmatist, `D` Empathetic Connector, `E` Visionary Dreamer, `F` Grounded Realist.
-
-Note that the frontend labels these differently: The Analytical, The Builder, The Connector, The Driver, The Explorer, The Facilitator. See "Known gaps" below.
+Not fixed letters. Six k-means clusters found in the training latents, each named
+after whichever trait most separates it from the others. A retrain on different
+data renames them rather than mislabelling them.
 
 ---
 
 ## Repository layout
 
 ```
-backend/                        Flask API (deployed to Render)
+backend/                        Flask API
+  ocean_items.py                The 55-item bank. Single source of truth
+  scoring_engine.py             Trait scores, lambda, the correction
+  model_inference.py            numpy forward pass over the exported weights
+  narrative.py                  Template and local-LLM interpretation backends
+  api_routes.py                 The blueprint served at /api
   app.py                        App object, CORS, schema check, engine wiring
-  api_routes.py                 The blueprint that is actually served, at /api
-  scoring_engine.py             Raw scores, lambda, biases, corrected scores, VAE input
-  vae_inference.py              Latent encoding, novelty, type assignment
-  personality_classifier.py     Standalone rule-based classifier (not in the live path)
-  gemini_client.py              Interpretation generation with fallback
-  models.py                     User, Assessment, Result, VAEOutput, Classification, Interpretation
+  models.py                     User, Assessment, Result, ModelOutput,
+                                PersonalityClassification, Interpretation
   config.py                     Config classes by environment
-  test_scoring.py               Unit tests for ScoringEngine
+  model_weights/                ocean_vae.npz goes here
+  test_scoring.py               21 tests over the scoring layer
+  test_model_contract.py        14 tests over the trainer/server boundary
 
-  efopa_enhancement_module.py   The full EFOPA engine: lambda, costs, elephant, validity, authenticity
-  scoring_integration.py        Layer combining ScoringEngine with the EFOPA engine
-  models_efopa_extension.py     Six EFOPA tables
-  api_routes_efopa.py           Eight /api/efopa/* endpoints
-  efopa_data_persistence.py     Save and load helpers for EFOPA tables
-  efopa_config.py               Thresholds, weights, feature flags
+training/
+  train_vae_ocean.py            The trainer. Kaggle or local
+  kaggle_train_ocean.ipynb      The notebook to upload to Kaggle
+  README.md                     Dataset details and the run protocol
 
 frontend/                       Static site (deployed to Vercel)
   index.html                    Landing page, carries the babbler essay
   architecture.html             Plain-language walkthrough with inline SVG diagrams
-  features.html                 What the assessment gives you, with diagrams and a comparison table
-  questionnaire.html/.js        Demographics form and the 35 items
+  features.html                 What the assessment gives you
+  questionnaire.html/.js        Fetches the item bank, renders 55 items
   results.html/.js              Results rendering
-  advanced-analysis.js          Derives the advanced panels client-side
-  efopa-integration.js          Earlier client for /api/efopa/*, no longer loaded
+  advanced-analysis.js          The deeper panels, all from server data
   config.js                     API base URL resolution
   app.js                        apiRequest with retry, toasts, validators
 ```
 
-The five `EFOPA_*.md` files plus `COMPATIBILITY_CHECKLIST.md`, `DEBUGGING_GUIDE.md`, `FRONTEND_*.md`, and `README_EFOPA_INTEGRATION.md` are design and integration notes written during the EFOPA build. They describe the intended system. Where they disagree with the code, the code is authoritative — see "Known gaps".
-
----
+`EFOPA_ARCHITECTURE.md` is the current architecture document. The remaining
+`EFOPA_*.md` files and `COMPATIBILITY_CHECKLIST.md`, `DEBUGGING_GUIDE.md`,
+`FRONTEND_*.md` and `README_EFOPA_INTEGRATION.md` describe the retired
+six-domain system and are kept only as history.
 
 ## Running it locally
 
@@ -130,6 +149,9 @@ pip install -r requirements.txt
 cp .env .env.local   # then edit; see Configuration below
 python app.py        # serves on http://localhost:5000
 ```
+
+Startup logs whether the trained weights loaded. Without them the app still runs
+and still scores every profile; it simply does not claim a type.
 
 `app.py` exposes a module-level `app`, so production runs as:
 
@@ -154,16 +176,22 @@ window.resetAPIURL()                        // back to the default
 window.checkAPIHealth()                     // pings /api/health
 ```
 
-Without an override, `config.js` uses `http://localhost:5000` on localhost and `https://neuropersona.onrender.com` everywhere else.
+Without an override, `config.js` uses `http://localhost:5000` on localhost and the
+hardcoded production URL everywhere else. That URL still points at the old Render
+deployment; see `EFOPA_ARCHITECTURE.md` section 7 for where to move it.
 
 ### Tests
 
 ```bash
 cd backend
-pytest test_scoring.py --noconftest
+pytest                       # 35 tests, no flags needed
 ```
 
-`--noconftest` is currently required. `conftest.py` imports a `create_app` factory that `app.py` does not define, so collection fails without it. The tests in `test_scoring.py` do not use those fixtures.
+`test_scoring.py` covers the item bank, trait scoring, lambda and the correction.
+`test_model_contract.py` pins the boundary between the Kaggle trainer and the numpy
+server: that the trainer's embedded item bank still matches `ocean_items.py`, that
+its trait scoring agrees with the backend's, and that the exported matrices
+reproduce a PyTorch `nn.Linear` forward pass exactly. It needs no PyTorch to do it.
 
 ---
 
@@ -175,70 +203,84 @@ Backend environment variables, read via `python-dotenv`:
 | --- | --- | --- |
 | `DATABASE_URL` | SQLAlchemy connection string | `sqlite:///assessment.db` |
 | `SECRET_KEY` | Flask secret | a development placeholder |
-| `GEMINI_API_KEY` | Enables real interpretations | unset, falls back to templates |
-| `VAE_MODEL_PATH` | Pickled VAE model | unset, falls back to a mock model |
-| `VAE_SCALER_PATH` | Pickled scaler | unset, fits a default scaler |
+| `MODEL_WEIGHTS_PATH` | Trained weight file | `backend/model_weights/ocean_vae.npz` |
+| `NARRATIVE_BACKEND` | `template` or `llm` | `template` |
+| `LLM_MODEL_PATH` | GGUF file, when `NARRATIVE_BACKEND=llm` | unset |
+| `LLM_THREADS` | Threads for the local model | `2` |
 | `PORT` | Listen port | `5000` |
 | `FLASK_ENV` | `development` turns on debug | unset |
-| `CORS_ORIGINS` | Present in `.env`, not currently read by `app.py` | — |
 
-Frontend: `vercel.json` sets `NEXT_PUBLIC_API_URL`. Since this is a plain static site with no bundler, `process.env` is undefined in the browser and `config.js` falls through to its hardcoded defaults. Changing the production API URL means editing `config.js`.
+Frontend: `vercel.json` sets `NEXT_PUBLIC_API_URL`, which has no effect. This is a
+plain static site with no bundler, so `process.env` is undefined in the browser and
+`config.js` falls through to its hardcoded defaults. Change the production API URL
+in `config.js`.
 
----
+## Written interpretations
+
+No third-party API. Two local backends, selected with `NARRATIVE_BACKEND`:
+
+- **`template`** (default) — a deterministic generator. No model, no network, no
+  key, no rate limit, no per-request cost. Bands each trait, picks the two
+  furthest from the profile's own mean, and composes the reading. Phrasing varies
+  by a hash of the profile, so the same answers always give the same page.
+- **`llm`** (opt-in) — a local open-weights GGUF instruct model through
+  `llama-cpp-python`, such as Qwen2.5-0.5B-Instruct or SmolLM2-360M-Instruct, both
+  Apache-2.0. Nothing leaves the host. Any failure falls back to `template`.
 
 ## API
 
-Served today, under `/api`:
-
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/health` | Liveness, no database access |
-| `POST` | `/start-assessment` | Create user and assessment, return `assessment_id` |
-| `POST` | `/submit-assessment` | Score, classify, interpret, persist |
-| `GET` | `/results/<int:id>` | Full result payload |
-| `GET` | `/assessments` | Paginated list |
-| `GET` | `/users/<user_id>/assessments` | Per-user history |
-| `GET` | `/stats` | Aggregate counts |
+| `GET` | `/api/health` | Liveness, no database access |
+| `GET` | `/api/questionnaire` | The item bank, scale and trait metadata |
+| `POST` | `/api/start-assessment` | Create user and assessment, return `assessment_id` |
+| `POST` | `/api/submit-assessment` | Validate, score, infer, write up, persist |
+| `GET` | `/api/results/<int:id>` | Full result payload |
+| `GET` | `/api/assessments` | Paginated list |
+| `GET` | `/api/users/<user_id>/assessments` | Per-user history |
+| `GET` | `/api/stats` | Counts, type distribution, mean lambda |
 
-Defined in `api_routes_efopa.py` but **not currently reachable**, because `app.py` never registers the `efopa` blueprint: `/api/efopa/lambda-analysis/<id>`, `/domain-costs/<id>`, `/elephant-module/<id>`, `/validity-metrics/<id>`, `/authenticity-metrics/<id>`, `/assessment-metadata/<id>`, `/complete-analysis/<id>`, `/health`.
-
-`EFOPA_ARCHITECTURE.md` documents those endpoints as live. They are not. The frontend was changed to compute the equivalent panels in the browser instead.
-
----
+Submission requires all 55 item ids exactly once, each an integer from 1 to 5.
 
 ## Deployment
 
-- **Backend** on Render, Python 3.11.7 (`runtime.txt`), started with gunicorn against `app:app`. Non-API routes return a 404 JSON body pointing at the frontend.
-- **Frontend** on Vercel as a static site with `cleanUrls`, no build step.
+- **Backend**: any host that runs Python. The runtime needs Flask, SQLAlchemy and
+  numpy, roughly 120 MB installed; PyTorch is a training-only dependency.
+  `EFOPA_ARCHITECTURE.md` section 7 compares the free options. Oracle Cloud Always
+  Free is the recommendation. Hugging Face Spaces is no longer free for Docker.
+- **Frontend**: Vercel, static, no build step.
 - CORS is open to all origins on `/api/*`.
 
----
+## Known issues
 
-## Known gaps
-
-These are real divergences between the documentation, the design, and the running code. They are listed here so nobody rediscovers them the hard way.
-
-1. **The EFOPA blueprint is not registered.** `efopa_bp` exists with eight endpoints; `app.py` only registers `api_bp`. Every `/api/efopa/*` route 404s.
-2. **The EFOPA tables are never created.** `models_efopa_extension.py` defines six tables, but nothing imports it into the app, so `db.create_all()` never sees them.
-3. **`EFOPAEnhancementEngine` is not in the request path.** The live scoring uses the simpler λ in `scoring_engine.py`, not the contradiction-detection λ in `efopa_enhancement_module.py`. Contradiction rules, cost functions, and the elephant module are implemented and unused.
-4. **The advanced panels are client-derived.** `advanced-analysis.js` reconstructs bias, implicit cognition, quality, and authenticity from raw and corrected scores in the browser. They are not the server's EFOPA metrics.
-5. **The VAE is a mock.** Without `VAE_MODEL_PATH`, `_create_mock_model` returns random latent vectors, and reference type vectors are random as well. Type assignment and confidence are not meaningful in that mode.
-6. **Response range mismatch.** `ScoringEngine` accepts 0–10; `submit_assessment` rejects anything below 1. A legitimate 0 answer is refused with `RESPONSE_OUT_OF_RANGE`.
-7. **Three different domain vocabularies.** `personality_classifier.py` reads `R`/`S`/`A`/`E` as Resilience, Social Awareness, Adaptability, Extroversion. The questionnaire and the EFOPA engine read them as Relationships, Status, Agreeableness, Emotional Stability. That classifier is not in the live path, but the naming will mislead.
-8. **Two sets of type names.** Backend says Analytical Leader; frontend says The Analytical.
-9. **`conftest.py` is broken.** It imports a `create_app` factory that does not exist.
-10. **`efopa-integration.js` is dead code.** `results.html` no longer loads it.
-11. **`backend/.env` is committed** even though `.gitignore` lists it. Treat every credential in it as exposed and rotate it.
-12. **Startup can drop the database.** The schema check in `app.py` drops all tables when it sees an unexpected `users.id` type, including in its exception-recovery path.
-13. **The landing page claims "95%+ accuracy"** for deception detection. No validation study in this repository supports that number.
-
----
+1. **Results are enumerable.** `/api/results/<int:id>` takes a sequential integer,
+   so the range can be walked to read other people's results. The `assessments`
+   table already has a UUID `external_id` that would fix this. Most serious open
+   issue in the system.
+2. **Startup can drop the database.** `check_and_migrate_schema` in `app.py` calls
+   `db.drop_all()` when it finds an unexpected `users.id` type, including in its
+   exception-recovery path.
+3. **Without trained weights, no type is claimed.** The app still scores, corrects
+   and writes up every profile, but `weights_loaded` is `false`, confidence is
+   `null` rather than invented, and percentiles and novelty are omitted. See
+   `training/` to produce the weights.
+4. **The correction is unvalidated.** Its weights and thresholds are reasoned, not
+   fitted, and have not been checked against any external criterion.
+5. **`backend/.env` is committed** despite being listed in `.gitignore`. The Gemini
+   key has been removed from the file but remains in git history; it and the Flask
+   secret and SMTP credentials should be treated as exposed and rotated.
+6. **CORS is open to all origins** with `supports_credentials=True`.
+7. **`NEXT_PUBLIC_API_URL` does nothing.** See Configuration above.
+8. **No CI.** The test suite has to be run by hand.
 
 ## Status
 
-Working prototype. The assessment runs end to end and produces stable, reproducible scores from the deterministic parts of the pipeline. The latent classification is not meaningful without a trained model, and none of the psychometric claims have been validated against an external criterion.
+Working prototype. The trait half rests on a long-established public instrument and
+a model trained on over a million public responses. The correction on top of it is
+this project's argument, not a finding.
 
-This is not a clinical instrument and not a validated psychometric test. Do not use its output to make decisions about hiring, admission, care, or anyone's life.
+This is not a validated psychological test and not a clinical instrument. Do not
+use its output to make decisions about hiring, admission, care, or anyone's life.
 
 ---
 
@@ -246,4 +288,6 @@ This is not a clinical instrument and not a validated psychometric test. Do not 
 
 Kevin Simler and Robin Hanson, _The Elephant in the Brain: Hidden Motives in Everyday Life_, Oxford University Press, 2018.
 
-Amotz Zahavi and Avishag Zahavi, _The Handicap Principle: A Missing Piece of Darwin's Puzzle_, Oxford University Press, 1997, for the babbler fieldwork and the costly-signalling argument the project's framing rests on.
+Amotz Zahavi and Avishag Zahavi, _The Handicap Principle: A Missing Piece of Darwin's Puzzle_, Oxford University Press, 1997.
+
+Lewis R. Goldberg, "The development of markers for the Big-Five factor structure", _Psychological Assessment_ 4(1), 1992, and the International Personality Item Pool at <https://ipip.ori.org>.
