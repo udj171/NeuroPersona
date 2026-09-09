@@ -40,7 +40,7 @@ Python is pinned to 3.11.7 in `runtime.txt`. There is no linter, formatter, or C
 
 **The EFOPA modules are not in that path.** `efopa_enhancement_module.py`, `scoring_integration.py`, `models_efopa_extension.py`, `api_routes_efopa.py`, `efopa_data_persistence.py`, and `efopa_config.py` are complete, self-consistent, and entirely unreferenced by `app.py`. Read them as a designed-but-unwired subsystem, not as live code.
 
-**Frontend** is four static pages with no bundler and no framework. `architecture.html` is a content-only explainer: it loads `config.js` and `app.js` for the shared nav behaviour and nothing else, and its diagrams are hand-written inline SVG with no chart library. Script order on `results.html` matters and is load-bearing: `config.js` sets `window.API_CONFIG`, `app.js` defines the global `apiRequest` and `showToast`, `advanced-analysis.js` defines the panel generators, `results.js` orchestrates on `DOMContentLoaded`. Everything communicates through globals on `window`.
+**Frontend** is five static pages with no bundler and no framework. `architecture.html` and `features.html` are content-only explainers: each loads `config.js` and `app.js` for the shared nav behaviour and nothing else, and their diagrams are hand-written inline SVG with no chart library. Script order on `results.html` matters and is load-bearing: `config.js` sets `window.API_CONFIG`, `app.js` defines the global `apiRequest` and `showToast`, `advanced-analysis.js` defines the panel generators, `results.js` orchestrates on `DOMContentLoaded`. Everything communicates through globals on `window`.
 
 **Domain keys** are `R`, `S`, `C`, `A`, `O`, `E` throughout — Relationships, Status, Reliability/Conscientiousness, Agreeableness, Openness, Emotional Stability. Personality types are the letters `A` through `F`, which is an unfortunate collision with the domain keys. Read carefully at every call site.
 
@@ -68,7 +68,7 @@ Verified against the code. Do not assume any of these have been fixed.
 - Scoring functions take and return plain dicts and lists, round floats to 4 places, and clamp with `np.clip`. Keep numeric output JSON-serialisable — cast NumPy scalars with `float()` before they reach a response.
 - Frontend logs are prefixed the same way: `[RESULTS]`, `[API]`, `[CONFIG]`, `[Advanced Analysis]`.
 - Frontend rendering is template strings assigned to `innerHTML`, with inline styles. That is the house style here. If you interpolate anything a user typed, escape it.
-- Static pages use semantic classes from `styles.css`, not inline styles. The `.arch-*` block at the end of that file styles `architecture.html` and the marketing sections on `index.html`.
+- Static pages use semantic classes from `styles.css`, not inline styles. The `.arch-*` block at the end of that file styles `architecture.html`, `features.html`, and the marketing sections on `index.html`.
 - Diagram marks use the `--data-teal*` and `--data-accent` tokens, deliberately brighter than the `--color-primary` chrome so fills clear the contrast floor against the page surface. Chrome keeps `--color-primary`. Every diagram is inline SVG with a `<title>` and `<desc>`, wrapped in `.arch-scroll` so it scrolls inside its own box on narrow screens rather than shrinking or pushing the page sideways.
 - Backend files open with a banner comment naming the script. Preserve it when editing.
 
